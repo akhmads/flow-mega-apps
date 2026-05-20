@@ -107,8 +107,27 @@ function applyRoleVisibility() {
 }
 
 function bindNav() {
+  // Mobile sidebar toggle
+  const sidebar = document.querySelector(".sidebar");
+  const overlay = $("sidebarOverlay");
+  const toggle = $("menuToggle");
+  function closeMobileNav() {
+    sidebar?.classList.remove("open");
+    overlay?.classList.remove("open");
+  }
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      sidebar?.classList.toggle("open");
+      overlay?.classList.toggle("open");
+    });
+  }
+  if (overlay) overlay.addEventListener("click", closeMobileNav);
+
   document.querySelectorAll(".nav button[data-menu]").forEach(btn => {
-    btn.addEventListener("click", () => switchPage(btn.dataset.menu, btn));
+    btn.addEventListener("click", () => {
+      closeMobileNav();
+      switchPage(btn.dataset.menu, btn);
+    });
   });
 
   // Daily Tracker sub-tab switching (Tasks vs Weekly Report)
