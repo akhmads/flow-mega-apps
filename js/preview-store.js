@@ -274,21 +274,59 @@ export function seedDemoData(currentEmail) {
   const THREE_DAYS_AGO = new Date(Date.now() - 3 * 86_400_000).toISOString().split("T")[0];
   const me = currentEmail || "demo@flowgistik.id";
 
-  // Daily issues — show what the tracker looks like with data
+  // Daily issues — rich seed set for testing MBR export, data health,
+  // charts, and SLA reporting. Includes some deliberately dirty data
+  // so the data health card has warnings to display.
   if (_col("daily_issues").size === 0) {
+    const _d = (daysAgo) => new Date(Date.now() - daysAgo * 86_400_000).toISOString().split("T")[0];
     const seeds = [
-      { updateBy: "Yoga",  client: "PERO",      complainDate: TODAY,           orderCode: "FLOW_DEMO_001", issueSite: "Outbound",    categoriComplain: "Customer received wrong SKU",       detailsComplain: "Customer reported receiving wrong product code", rootCause: "Picking error",         shortTermSolution: "Replace product",                longTermSolution: "Add second QC step",                  status: "Open",  notes: "Awaiting client confirmation",  orderCount: 1 },
-      { updateBy: "Farah", client: "Kintakun",  complainDate: YESTERDAY,       orderCode: "FLOW_DEMO_002", issueSite: "Inbound",     categoriComplain: "Damaged carton on arrival",         detailsComplain: "3 of 12 cartons crushed",                       rootCause: "Courier handling",      shortTermSolution: "Photo + claim filed",            longTermSolution: "Switch courier on this lane",         status: "Open",  notes: "",                              orderCount: 3 },
-      { updateBy: "Asih",  client: "SummerID",  complainDate: THREE_DAYS_AGO, solvingDate: YESTERDAY, orderCode: "FLOW_DEMO_003", issueSite: "Marketplace", categoriComplain: "Late dispatch (SLA breach)",       detailsComplain: "Order shipped 2 days after SLA",                rootCause: "Stock-out at pick face", shortTermSolution: "Express courier",                longTermSolution: "Lower reorder point for this SKU",    status: "Close", notes: "Resolved with client",          orderCount: 1 }
+      // --- PERO (5 issues, mixed status) ---
+      { updateBy: "Yoga",  client: "PERO",     complainDate: TODAY,    orderCode: "FLOW_P001",              issueSite: "Outbound",    categoriComplain: "Customer received wrong SKU",  detailsComplain: "Customer reported receiving wrong product code",  rootCause: "Picking error",            shortTermSolution: "Replace product",              longTermSolution: "Add second QC step",                status: "Open",  notes: "Awaiting client confirmation" },
+      { updateBy: "Yoga",  client: "PERO",     complainDate: _d(5),   orderCode: "FLOW_P002, FLOW_P003",   issueSite: "Outbound",    categoriComplain: "Short shipment",               detailsComplain: "2 of 10 items missing in box",                   rootCause: "Picking error",            shortTermSolution: "Send remaining items",         longTermSolution: "Cross-check pick list vs pack list", status: "Open",  notes: "" },
+      { updateBy: "Asih",  client: "PERO",     complainDate: _d(12),  solvingDate: _d(10), orderCode: "FLOW_P004", issueSite: "Lastmile", categoriComplain: "Late dispatch (SLA breach)", detailsComplain: "Delivered 3 days late",                     rootCause: "Courier capacity issue",   shortTermSolution: "Express courier reship",       longTermSolution: "Diversify last-mile partners",       status: "Close", notes: "Client accepted" },
+      { updateBy: "Farah", client: "PERO",     complainDate: _d(20),  solvingDate: _d(18), orderCode: "FLOW_P005", issueSite: "Inbound",  categoriComplain: "Damaged carton on arrival",  detailsComplain: "5 cartons crushed on inbound",                rootCause: "Courier handling",         shortTermSolution: "Photo + claim",                longTermSolution: "Add padding requirements to SOP",    status: "Close", notes: "" },
+      { updateBy: "Yoga",  client: "PERO",     complainDate: _d(25),  solvingDate: _d(25), orderCode: "FLOW_P006", issueSite: "Technology", categoriComplain: "System downtime",          detailsComplain: "WMS unavailable for 2 hours",                 rootCause: "Server OOM",               shortTermSolution: "Restart service",              longTermSolution: "Add memory alerts",                  status: "Close", notes: "Post-mortem done" },
+
+      // --- Kintakun (4 issues) ---
+      { updateBy: "Farah", client: "Kintakun", complainDate: YESTERDAY, orderCode: "FLOW_K001",            issueSite: "Inbound",     categoriComplain: "Damaged carton on arrival",    detailsComplain: "3 of 12 cartons crushed",                     rootCause: "Courier handling",         shortTermSolution: "Photo + claim filed",          longTermSolution: "Switch courier on this lane",         status: "Open",  notes: "" },
+      { updateBy: "Farah", client: "Kintakun", complainDate: _d(8),   solvingDate: _d(7), orderCode: "FLOW_K002", issueSite: "Outbound", categoriComplain: "Customer received wrong SKU", detailsComplain: "Color mismatch",                             rootCause: "Labeling error",           shortTermSolution: "Send correct item",            longTermSolution: "Barcode scan verification",          status: "Close", notes: "" },
+      { updateBy: "Asih",  client: "Kintakun", complainDate: _d(15),  solvingDate: _d(12), orderCode: "FLOW_K003, FLOW_K004, FLOW_K005", issueSite: "Inventory", categoriComplain: "Stock discrepancy", detailsComplain: "Physical count differs from WMS by 45 units", rootCause: "Unrecorded damage write-off", shortTermSolution: "Adjust WMS stock",       longTermSolution: "Monthly cycle count SOP",            status: "Close", notes: "Adjustment logged" },
+      { updateBy: "Fauzi", client: "Kintakun", complainDate: _d(22),  solvingDate: _d(20), orderCode: "FLOW_K006", issueSite: "Commercial", categoriComplain: "Pricing discrepancy",    detailsComplain: "Invoice amount doesn't match PO",             rootCause: "Rate card not updated",    shortTermSolution: "Issue credit note",            longTermSolution: "Auto-sync rate card with billing",   status: "Close", notes: "" },
+
+      // --- SummerID (3 issues) ---
+      { updateBy: "Asih",  client: "SummerID", complainDate: THREE_DAYS_AGO, solvingDate: YESTERDAY, orderCode: "FLOW_S001", issueSite: "Marketplace", categoriComplain: "Late dispatch (SLA breach)", detailsComplain: "Order shipped 2 days after SLA",       rootCause: "Stock-out at pick face",   shortTermSolution: "Express courier",              longTermSolution: "Lower reorder point for this SKU",   status: "Close", notes: "Resolved with client" },
+      { updateBy: "Yoga",  client: "SummerID", complainDate: _d(10),  orderCode: "FLOW_S002",             issueSite: "Buyer",       categoriComplain: "Wrong address from buyer",     detailsComplain: "Buyer entered incomplete address on Shopee",   rootCause: "Marketplace data issue",   shortTermSolution: "Contact buyer for correct addr", longTermSolution: "Address validation script",         status: "Open",  notes: "Waiting buyer response" },
+      { updateBy: "Fauzi", client: "SummerID", complainDate: _d(18),  solvingDate: _d(14), orderCode: "FLOW_S003", issueSite: "Outbound", categoriComplain: "Short shipment",              detailsComplain: "1 of 5 items missing",                        rootCause: "Picking error",            shortTermSolution: "Reship missing item",          longTermSolution: "Double-scan at pack station",        status: "Close", notes: "" },
+
+      // --- PT Gaon (2 issues) ---
+      { updateBy: "Farah", client: "PT Gaon",  complainDate: _d(3),   orderCode: "FLOW_G001, FLOW_G002", issueSite: "Client",      categoriComplain: "Client data incomplete",       detailsComplain: "Master item dimensions missing for 30 SKUs",  rootCause: "Onboarding gap",           shortTermSolution: "Request data from client",     longTermSolution: "Onboarding checklist enforcement",   status: "Open",  notes: "Farah following up" },
+      { updateBy: "Asih",  client: "PT Gaon",  complainDate: _d(14),  solvingDate: _d(11), orderCode: "FLOW_G003", issueSite: "Inbound", categoriComplain: "Damaged carton on arrival",   detailsComplain: "Water damage on 2 pallets",                   rootCause: "Leaking truck",            shortTermSolution: "Claim + re-wrap",              longTermSolution: "Inspect truck before loading",       status: "Close", notes: "" },
+
+      // --- DIRTY DATA (for data health card testing) ---
+      // Missing root cause
+      { updateBy: "Yoga",  client: "PERO",     complainDate: _d(7),   orderCode: "FLOW_D001",             issueSite: "Outbound",    categoriComplain: "Customer received wrong SKU",  detailsComplain: "Wrong item delivered",                        rootCause: "",                         shortTermSolution: "",                             longTermSolution: "",                                   status: "Open",  notes: "Need to investigate" },
+      // Closed but no solvingDate
+      { updateBy: "Fauzi", client: "Kintakun", complainDate: _d(30),  orderCode: "FLOW_D002",             issueSite: "Marketplace", categoriComplain: "Late dispatch (SLA breach)",   detailsComplain: "2 day delay",                                 rootCause: "Backlog in warehouse",     shortTermSolution: "Priority processing",          longTermSolution: "Capacity planning",                  status: "Close", notes: "Forgot to set solving date" },
+      // Missing both details and root cause
+      { updateBy: "Asih",  client: "SummerID", complainDate: _d(9),   orderCode: "",                      issueSite: "Outbound",    categoriComplain: "Short shipment",               detailsComplain: "",                                            rootCause: "",                         shortTermSolution: "",                             longTermSolution: "",                                   status: "Open",  notes: "" },
     ];
     for (const s of seeds) {
       const cd = new Date(s.complainDate);
+      const sd = s.solvingDate ? new Date(s.solvingDate) : null;
+      const resDays = (s.solvingDate && s.complainDate)
+        ? Math.max(0, Math.round((sd - cd) / 86_400_000))
+        : null;
       _col("daily_issues").set(_genId(), {
         ...s,
+        orderCodes: (s.orderCode || "").split(/[,;]+/).map(c => c.trim()).filter(Boolean),
+        orderCount: (s.orderCode || "").split(/[,;]+/).map(c => c.trim()).filter(Boolean).length,
         years: cd.getFullYear(),
         week: _isoWeek(cd),
+        resolutionDays: resDays,
         createdAt: new Date().toISOString(),
-        createdBy: me
+        createdBy: me,
+        updatedAt: new Date().toISOString(),
+        updatedBy: me
       });
     }
   }
