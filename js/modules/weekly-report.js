@@ -73,11 +73,11 @@ function renderShell(team, staff, s) {
     <div class="card">
       <div class="pmHeaderActions">
         <div class="left">
-          <h2 style="margin:0">📈 Weekly Task Report</h2>
+          <h2 style="margin:0">Weekly Task Report</h2>
           <p style="color:var(--muted);margin:6px 0 0">Compare multiple people side-by-side. Filter by custom date range. Export ready-to-share Excel.</p>
         </div>
         <div class="right">
-          <button class="secondary" id="wk_${team}_export">📤 Export Excel</button>
+          <button class="secondary" id="wk_${team}_export">Export Excel</button>
         </div>
       </div>
 

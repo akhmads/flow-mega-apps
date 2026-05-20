@@ -56,13 +56,13 @@ setWriteGuard((colName) => {
   // Admin: read-only on operational data, but can still write to /users
   // (assigning roles — an org-admin function).
   if (role === "admin" || role === "sales-admin" || role === "ss-admin") {
-    if (colName === USERS_COLLECTION) return null;        // ✅ allowed
+    if (colName === USERS_COLLECTION) return null;        // allowed
     return "Admin is read-only. Ask a Supervisor to make this change.";
   }
   // Supervisor: full edit power EVERYWHERE — including /users.
   // Supervisors handle onboarding, role assignment, password resets.
   if (role === "supervisor" || role === "sales" || role === "ss") {
-    return null;                                          // ✅ allowed
+    return null;                                          // allowed
   }
   // Limited user / anonymous: helpers allow it; per-record + Firestore
   // rules still apply.
@@ -159,14 +159,14 @@ export function getCurrentEmail() { return currentUser?.email || null; }
 // ============================================================
 // PERMISSION HELPERS — used everywhere
 //
-// 🔑 PERMISSION MODEL (v3.8):
+// PERMISSION MODEL (v3.8):
 //
 //   ┌─────────────┬────────┬───────────────────────┬────────┬───────┐
 //   │  Role       │  View  │  Create / Edit / Save │ Delete │ Users │
 //   ├─────────────┼────────┼───────────────────────┼────────┼───────┤
-//   │ admin       │ ALL    │ ❌ NO (read-only)      │   ❌   │  ✅   │
-//   │ supervisor  │ ALL    │ ✅ YES (full power)    │   ✅   │  ❌   │
-//   │ user        │ team   │ own records only       │   ❌   │  ❌   │
+//   │ admin       │ ALL    │ NO (read-only)      │   │  │
+//   │ supervisor  │ ALL    │ YES (full power)    │   │  │
+//   │ user        │ team   │ own records only       │   │  │
 //   └─────────────┴────────┴───────────────────────┴────────┴───────┘
 //
 //   Admin: sees everything across the org (audit/oversight) but cannot
@@ -312,7 +312,7 @@ export function canEditOthers() {
  *  - User: only their own records. */
 export function canEditRecord(record) {
   if (isSupervisor()) return true;
-  if (isAdmin()) return false;         // 🔑 admin is read-only
+  if (isAdmin()) return false;         // admin is read-only
   if (!record) return false;
   return record.createdBy === currentUser?.email;
 }

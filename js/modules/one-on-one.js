@@ -139,7 +139,7 @@ export function initOneOnOne() {
   if (!canAccess1on1()) {
     $("oneOnOneRoot").innerHTML = `
       <div class="card" style="text-align:center;padding:48px">
-        <h2>🔒 Access Denied</h2>
+        <h2>Access Denied</h2>
         <p>1-on-1 Summarizer is for Admins and Supervisors only.</p>
       </div>`;
     return;
@@ -171,11 +171,11 @@ function renderShell() {
     <div class="card">
       <div class="pmHeaderActions">
         <div class="left">
-          <h2 style="margin:0">💬 1-on-1 Summarizer</h2>
+          <h2 style="margin:0">1-on-1 Summarizer</h2>
           <p style="color:var(--muted);margin:6px 0 0">Structured 1-on-1 sessions with your team. Rate workload, ask role-specific questions, generate an AI summary for management review.</p>
         </div>
         <div class="right">
-          <button class="secondary" id="o1o_apiKeyBtn" title="Set your Anthropic API key for AI summaries">⚙️ API Key</button>
+          <button class="secondary" id="o1o_apiKeyBtn" title="Set your Anthropic API key for AI summaries">API Key</button>
         </div>
       </div>
       <div class="o1oSteps">
@@ -224,16 +224,16 @@ function renderShell() {
       <h2>Step 3 — Answer Questions</h2>
       <p class="small" style="color:var(--muted)">Fill in whichever questions are relevant. Empty answers are skipped.</p>
       <div class="o1oQSection">
-        <h3>💙 Personal & Wellbeing</h3>
+        <h3>Personal & Wellbeing</h3>
         <div id="o1o_personalQs"></div>
       </div>
       <div class="o1oQSection">
-        <h3>💼 Pekerjaan</h3>
+        <h3>Pekerjaan</h3>
         <div id="o1o_workQs"></div>
       </div>
       <div class="btns" style="margin-top:16px;justify-content:space-between">
         <button class="secondary" data-goto="2">← Back</button>
-        <button class="primary" data-goto="4">Generate Summary ✦</button>
+        <button class="primary" data-goto="4">Generate Summary </button>
       </div>
     </div>
 
@@ -245,9 +245,9 @@ function renderShell() {
       <div class="btns" style="margin-top:14px;justify-content:space-between">
         <button class="secondary" data-goto="3">← Edit Answers</button>
         <div>
-          <button class="secondary" id="o1o_copy">📋 Copy</button>
+          <button class="secondary" id="o1o_copy">Copy</button>
           <button class="secondary" id="o1o_regen">↺ Regenerate</button>
-          <button class="secondary" id="o1o_save">💾 Save Session</button>
+          <button class="secondary" id="o1o_save">Save Session</button>
           <button class="primary" id="o1o_new">+ New Session</button>
         </div>
       </div>
@@ -255,7 +255,7 @@ function renderShell() {
 
     <!-- Past sessions for selected member -->
     <div class="card o1oPane hidden" data-pane-pastsessions>
-      <h2>📜 Past Sessions with <span id="o1o_pastName">—</span></h2>
+      <h2>Past Sessions with <span id="o1o_pastName">—</span></h2>
       <div id="o1o_pastList"></div>
     </div>
   `;
@@ -612,7 +612,7 @@ function buildFallbackSummary(m, todayStr) {
   }).filter(Boolean).join("");
   const lowScores = RATINGS.filter(r => (state.ratings[r.key] || 0) > 0 && state.ratings[r.key] <= 2);
   const flagText = lowScores.length
-    ? `⚠️ FLAG: ${lowScores.map(r => r.label + " (" + state.ratings[r.key] + "/5)").join(", ")}`
+    ? `FLAG: ${lowScores.map(r => r.label + " (" + state.ratings[r.key] + "/5)").join(", ")}`
     : "Tidak ada flag kritis dari skor.";
 
   return `1-on-1 SESSION REPORT
@@ -633,7 +633,7 @@ PERSONAL & WELLBEING${personalQA || "\n(tidak ada jawaban diisi)"}
 WORK${workQA || "\n(tidak ada jawaban diisi)"}
 
 ──────────────────────
-Note: This is a template-only summary. To get an AI-generated executive summary with recommendations and management flags, click "⚙️ API Key" and add your Anthropic API key.`;
+Note: This is a template-only summary. To get an AI-generated executive summary with recommendations and management flags, click "API Key" and add your Anthropic API key.`;
 }
 
 // ---------------- ACTIONS ----------------

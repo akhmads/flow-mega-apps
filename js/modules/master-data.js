@@ -469,15 +469,15 @@ function renderShell() {
     <div class="card">
       <div class="pmHeaderActions">
         <div class="left">
-          <h2 style="margin:0">🗂️ Master Data ${readOnly ? '<span class="badge badge-on-hold" style="margin-left:8px">👁️ View-Only</span>' : ''}</h2>
+          <h2 style="margin:0">Master Data ${readOnly ? '<span class="badge badge-on-hold" style="margin-left:8px">View-Only</span>' : ''}</h2>
           <p style="color:var(--muted);margin:6px 0 0">Single source of truth for Departments, Clients, and Issue Categories.${readOnly ? ' You can browse but cannot edit — ask an Admin or Supervisor to make changes.' : ' Standardizing these stops typos and keeps reports clean.'}</p>
         </div>
       </div>
       <div class="tabs" id="mdTabs">
-        <button class="active" data-mdtab="departments">🏢 Departments</button>
-        <button data-mdtab="clients">🤝 Clients</button>
-        <button data-mdtab="issueCategories">🏷️ Issue Categories</button>
-        <button data-mdtab="oneOnOneQuestions">💬 1-on-1 Questions</button>
+        <button class="active" data-mdtab="departments">Departments</button>
+        <button data-mdtab="clients">Clients</button>
+        <button data-mdtab="issueCategories">Issue Categories</button>
+        <button data-mdtab="oneOnOneQuestions">1-on-1 Questions</button>
       </div>
     </div>
 
@@ -507,20 +507,20 @@ function renderDeptsPane() {
   const editable = canEditMasterData();
   $("mdContent").innerHTML = `
     <div class="card">
-      <h2>🏢 Departments</h2>
+      <h2>Departments</h2>
       <p class="small" style="color:var(--muted)">Used in user profiles, internal tickets, and filtering.</p>
       ${editable ? `
         <div class="mdAddRow">
           <input type="text" id="md_deptInput" placeholder="e.g. Procurement"/>
           <button class="primary" id="md_deptAdd">+ Add</button>
-          <button class="secondary" onclick="document.getElementById('md_deptBulk').classList.toggle('hidden')">📋 Bulk paste</button>
+          <button class="secondary" onclick="document.getElementById('md_deptBulk').classList.toggle('hidden')">Bulk paste</button>
         </div>
         <div id="md_deptBulk" class="mdBulk hidden">
           <textarea id="md_deptBulkInput" rows="4" placeholder="Paste one department per line…"></textarea>
           <button class="primary" id="md_deptBulkAdd">Add All</button>
           <button class="secondary" onclick="document.getElementById('md_deptBulk').classList.add('hidden')">Cancel</button>
         </div>
-      ` : `<p class="small" style="color:var(--muted);font-style:italic;margin-top:10px">🔒 View-only mode — contact your Admin or Supervisor to add or modify departments.</p>`}
+      ` : `<p class="small" style="color:var(--muted);font-style:italic;margin-top:10px">View-only mode — contact your Admin or Supervisor to add or modify departments.</p>`}
       <div class="tableWrap" style="margin-top:14px">
         <table id="md_deptTable">
           <thead><tr><th>Department</th><th>Status</th>${editable ? '<th style="text-align:right">Actions</th>' : ''}</tr></thead>
@@ -574,7 +574,7 @@ function renderDeptsTable() {
       ${editable ? `<td style="text-align:right">
         <button class="secondary iconBtn" data-rename="${d.id}">Rename</button>
         ${d.archived
-          ? `<button class="secondary iconBtn" data-unarchive="${d.id}">Restore</button>${canHardDelete() ? ` <button class="btnHardDelete" data-harddel="${d.id}">🗑️ Delete Forever</button>` : ""}`
+          ? `<button class="secondary iconBtn" data-unarchive="${d.id}">Restore</button>${canHardDelete() ? ` <button class="btnHardDelete" data-harddel="${d.id}">Delete Forever</button>` : ""}`
           : `<button class="danger iconBtn" data-archive="${d.id}">Archive</button>`}
       </td>` : ''}
     </tr>
@@ -587,20 +587,20 @@ function renderClientsPane() {
   const editable = canEditMasterData();
   $("mdContent").innerHTML = `
     <div class="card">
-      <h2>🤝 Clients</h2>
+      <h2>Clients</h2>
       <p class="small" style="color:var(--muted)">Set a default Sales PIC and SS PIC per client to auto-fill when logging issues.</p>
       ${editable ? `
         <div class="mdAddRow">
           <input type="text" id="md_cliInput" placeholder="e.g. PERO"/>
           <button class="primary" id="md_cliAdd">+ Add</button>
-          <button class="secondary" onclick="document.getElementById('md_cliBulk').classList.toggle('hidden')">📋 Bulk paste</button>
+          <button class="secondary" onclick="document.getElementById('md_cliBulk').classList.toggle('hidden')">Bulk paste</button>
         </div>
         <div id="md_cliBulk" class="mdBulk hidden">
           <textarea id="md_cliBulkInput" rows="4" placeholder="Paste one client per line…"></textarea>
           <button class="primary" id="md_cliBulkAdd">Add All</button>
           <button class="secondary" onclick="document.getElementById('md_cliBulk').classList.add('hidden')">Cancel</button>
         </div>
-      ` : `<p class="small" style="color:var(--muted);font-style:italic;margin-top:10px">🔒 View-only mode — contact your Admin or Supervisor to add or modify clients.</p>`}
+      ` : `<p class="small" style="color:var(--muted);font-style:italic;margin-top:10px">View-only mode — contact your Admin or Supervisor to add or modify clients.</p>`}
       <div class="tableWrap" style="margin-top:14px">
         <table id="md_cliTable">
           <thead><tr><th>Client</th><th>Default Sales PIC</th><th>Default SS PIC</th><th>Status</th>${editable ? '<th style="text-align:right">Actions</th>' : ''}</tr></thead>
@@ -668,7 +668,7 @@ function renderClientsTable() {
       ${editable ? `<td style="text-align:right">
         <button class="secondary iconBtn" data-rename="${c.id}">Rename</button>
         ${c.archived
-          ? `<button class="secondary iconBtn" data-unarchive="${c.id}">Restore</button>${canHardDelete() ? ` <button class="btnHardDelete" data-harddel="${c.id}">🗑️ Delete Forever</button>` : ""}`
+          ? `<button class="secondary iconBtn" data-unarchive="${c.id}">Restore</button>${canHardDelete() ? ` <button class="btnHardDelete" data-harddel="${c.id}">Delete Forever</button>` : ""}`
           : `<button class="danger iconBtn" data-archive="${c.id}">Archive</button>`}
       </td>` : ''}
     </tr>
@@ -705,12 +705,12 @@ function renderClientsTable() {
 function renderCatsPane() {
   $("mdContent").innerHTML = `
     <div class="card">
-      <h2>🏷️ Issue Categories</h2>
+      <h2>Issue Categories</h2>
       <p class="small" style="color:var(--muted)">Standardize how complaints are tagged for cleaner reports. Renaming cascades to all historical issues.</p>
       <div class="mdAddRow">
         <input type="text" id="md_catInput" placeholder="e.g. Wrong SKU shipped"/>
         <button class="primary" id="md_catAdd">+ Add</button>
-        <button class="secondary" onclick="document.getElementById('md_catBulk').classList.toggle('hidden')">📋 Bulk paste</button>
+        <button class="secondary" onclick="document.getElementById('md_catBulk').classList.toggle('hidden')">Bulk paste</button>
       </div>
       <div id="md_catBulk" class="mdBulk hidden">
         <textarea id="md_catBulkInput" rows="4" placeholder="Paste one category per line…"></textarea>
@@ -767,7 +767,7 @@ function renderCatsTable() {
       <td style="text-align:right">
         <button class="secondary iconBtn" data-rename="${c.id}">Rename</button>
         ${c.archived
-          ? `<button class="secondary iconBtn" data-unarchive="${c.id}">Restore</button>${canHardDelete() ? ` <button class="btnHardDelete" data-harddel="${c.id}">🗑️ Delete Forever</button>` : ""}`
+          ? `<button class="secondary iconBtn" data-unarchive="${c.id}">Restore</button>${canHardDelete() ? ` <button class="btnHardDelete" data-harddel="${c.id}">Delete Forever</button>` : ""}`
           : `<button class="danger iconBtn" data-archive="${c.id}">Archive</button>`}
       </td>
     </tr>
@@ -807,7 +807,7 @@ function wireRowActions(kind, tbody) {
       const item = cache[kind].find(x => x.id === id);
       const kindLabel = { departments: "department", clients: "client", issueCategories: "category" }[kind];
       const typed = prompt(
-        `⚠️ PERMANENT DELETE\n\nThis will remove the ${kindLabel} "${item.name}" from the database forever.\n\nHistorical records (issues, tickets, users) that referenced it will keep the name as a string but lose the link to the master record.\n\nType the ${kindLabel} name to confirm:`,
+        `PERMANENT DELETE\n\nThis will remove the ${kindLabel} "${item.name}" from the database forever.\n\nHistorical records (issues, tickets, users) that referenced it will keep the name as a string but lose the link to the master record.\n\nType the ${kindLabel} name to confirm:`,
         ""
       );
       if (typed === null) return;
@@ -830,7 +830,7 @@ function renderQuestionsPane() {
 
   $("mdContent").innerHTML = `
     <div class="card">
-      <h2>💬 1-on-1 Questions</h2>
+      <h2>1-on-1 Questions</h2>
       <p class="small" style="color:var(--muted)">
         Questions used in the 1-on-1 Summarizer. <b>Personal</b> questions are shared across all departments;
         <b>Work</b> questions are per-department.
@@ -841,8 +841,8 @@ function renderQuestionsPane() {
         <div>
           <label class="pmLabel">Type</label>
           <select id="md_q_type">
-            <option value="personal">💙 Personal (shared)</option>
-            <option value="work">💼 Work (per department)</option>
+            <option value="personal">Personal (shared)</option>
+            <option value="work">Work (per department)</option>
           </select>
         </div>
         <div id="md_q_deptWrap">
@@ -857,14 +857,14 @@ function renderQuestionsPane() {
         <div class="mdAddRow" style="margin-top:14px">
           <input type="text" id="md_q_input" placeholder="Type a new question…" style="flex:1"/>
           <button class="primary" id="md_q_add">+ Add Question</button>
-          <button class="secondary" onclick="document.getElementById('md_q_bulk').classList.toggle('hidden')">📋 Bulk paste</button>
+          <button class="secondary" onclick="document.getElementById('md_q_bulk').classList.toggle('hidden')">Bulk paste</button>
         </div>
         <div id="md_q_bulk" class="mdBulk hidden">
           <textarea id="md_q_bulkInput" rows="6" placeholder="Paste one question per line…"></textarea>
           <button class="primary" id="md_q_bulkAdd">Add All</button>
           <button class="secondary" onclick="document.getElementById('md_q_bulk').classList.add('hidden')">Cancel</button>
         </div>
-      ` : `<p class="small" style="color:var(--muted);font-style:italic;margin-top:10px">🔒 View-only mode — contact your Admin or Supervisor to manage 1-on-1 questions.</p>`}
+      ` : `<p class="small" style="color:var(--muted);font-style:italic;margin-top:10px">View-only mode — contact your Admin or Supervisor to manage 1-on-1 questions.</p>`}
 
       <div class="tableWrap" style="margin-top:14px">
         <table id="md_q_table">
@@ -955,7 +955,7 @@ function renderQuestionsTable() {
       ${editable ? `<td style="text-align:right">
         <button class="secondary iconBtn" data-q-edit="${q.id}">Edit</button>
         ${q.archived
-          ? `<button class="secondary iconBtn" data-q-unarchive="${q.id}">Restore</button>${canHardDelete() ? ` <button class="btnHardDelete" data-q-harddel="${q.id}">🗑️</button>` : ""}`
+          ? `<button class="secondary iconBtn" data-q-unarchive="${q.id}">Restore</button>${canHardDelete() ? ` <button class="btnHardDelete" data-q-harddel="${q.id}"></button>` : ""}`
           : `<button class="danger iconBtn" data-q-archive="${q.id}">Archive</button>`}
       </td>` : ''}
     </tr>
@@ -989,7 +989,7 @@ function renderQuestionsTable() {
     b.addEventListener("click", async () => {
       const id = b.dataset.qHarddel;
       const item = cache.oneOnOneQuestions.find(x => x.id === id);
-      if (!confirmAction(`⚠️ PERMANENTLY delete this question?\n\n"${item.text.slice(0, 80)}…"\n\nThis cannot be undone.`)) return;
+      if (!confirmAction(`PERMANENTLY delete this question?\n\n"${item.text.slice(0, 80)}…"\n\nThis cannot be undone.`)) return;
       try { await hardDeleteOneOnOneQuestion(id); toast("Permanently deleted", "success"); }
       catch (e) { toast(e.message, "error"); }
     }));

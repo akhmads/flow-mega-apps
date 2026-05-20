@@ -354,7 +354,7 @@ window.exportChart = function (key, format) {
 
 // ============================================================
 // TABLE (Detail tab)
-// New columns: [✓] checklist (quick-close) + Order Count
+// New columns: [] checklist (quick-close) + Order Count
 // ============================================================
 function renderTable() {
   const tbody = $("issueTable").querySelector("tbody");
@@ -608,29 +608,29 @@ function renderExecutiveCard() {
     </div>
     <div class="execGrid">
       <div class="execItem">
-        <span class="execLabel">🏢 Top Client</span>
+        <span class="execLabel">Top Client</span>
         <b>${esc(topClient ? topClient.key : "—")}</b>
         <span class="execSub">${topClient ? topClient.count + " issues" : ""}</span>
       </div>
       <div class="execItem">
-        <span class="execLabel">📍 Top Site</span>
+        <span class="execLabel">Top Site</span>
         <b>${esc(topSite ? topSite.key : "—")}</b>
         <span class="execSub">${topSite ? topSite.count + " issues" : ""}</span>
       </div>
       <div class="execItem">
-        <span class="execLabel">🏷️ Top Category</span>
+        <span class="execLabel">Top Category</span>
         <b>${esc(topCat ? topCat.key : "—")}</b>
         <span class="execSub">${topCat ? topCat.count + " issues" : ""}</span>
       </div>
       <div class="execItem">
-        <span class="execLabel">👤 Top PIC</span>
+        <span class="execLabel">Top PIC</span>
         <b>${esc(topPic ? topPic.key : "—")}</b>
         <span class="execSub">${topPic ? topPic.count + " issues" : ""}</span>
       </div>
     </div>
     ${stalest ? `
     <div class="execAlert">
-      ⚠️ <b>Oldest unresolved:</b> ${esc(stalest.client || "—")} — "${esc((stalest.categoriComplain || "").slice(0, 60))}" · open for <b>${stalestDays}</b> day(s) · PIC: ${esc(stalest.updateBy || "—")}
+      <b>Oldest unresolved:</b> ${esc(stalest.client || "—")} — "${esc((stalest.categoriComplain || "").slice(0, 60))}" · open for <b>${stalestDays}</b> day(s) · PIC: ${esc(stalest.updateBy || "—")}
     </div>` : ""}
   `;
 }
@@ -1581,7 +1581,7 @@ function _renderImportValidation() {
   const box = document.getElementById("iiValidation");
   const btn = document.getElementById("iiConfirmImport");
   if (missing.length) {
-    box.innerHTML = `❌ Cannot import yet — required field${missing.length > 1 ? "s" : ""} not mapped: <b>${missing.map(m => esc(m.label)).join(", ")}</b>. Pick the matching source column above, or click Cancel.`;
+    box.innerHTML = `Cannot import yet — required field${missing.length > 1 ? "s" : ""} not mapped: <b>${missing.map(m => esc(m.label)).join(", ")}</b>. Pick the matching source column above, or click Cancel.`;
     box.style.background = "#fee2e2"; box.style.color = "#7f1d1d";
     btn.disabled = true; btn.style.opacity = ".5";
   } else {
@@ -1592,7 +1592,7 @@ function _renderImportValidation() {
       if (parseDate(r[cdIdx])) willImport++;
       else willSkip++;
     }
-    box.innerHTML = `✅ Ready to import <b>${willImport}</b> rows.${willSkip ? ` <span style="color:#78350f">(${willSkip} will be skipped — missing or invalid Complain Date.)</span>` : ""}`;
+    box.innerHTML = `Ready to import <b>${willImport}</b> rows.${willSkip ? ` <span style="color:#78350f">(${willSkip} will be skipped — missing or invalid Complain Date.)</span>` : ""}`;
     box.style.background = "#dcfce7"; box.style.color = "#14532d";
     btn.disabled = false; btn.style.opacity = "1";
     btn.textContent = `Import ${willImport} rows`;

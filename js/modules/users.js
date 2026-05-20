@@ -35,7 +35,7 @@ export function initUsers() {
   if (!canManageUsers()) {
     $("usersRoot").innerHTML = `
       <div class="card" style="text-align:center;padding:48px">
-        <h2>🔒 Access Denied</h2>
+        <h2>Access Denied</h2>
         <p>Only Admins and Supervisors can manage user accounts.</p>
       </div>`;
     return;
@@ -48,17 +48,17 @@ export function initUsers() {
 function renderShell() {
   const productionNotice = isFirebaseConfigured ? `
     <div class="card">
-      <h2>📘 How it works (production)</h2>
+      <h2>How it works (production)</h2>
       <div class="output" style="font-size:13px;line-height:1.6">
-1️⃣  <b>Create the Firebase Auth account first.</b> Go to Firebase Console → Authentication → Users → Add user. Set email + temporary password. Share the password with the staff member.
+1⃣  <b>Create the Firebase Auth account first.</b> Go to Firebase Console → Authentication → Users → Add user. Set email + temporary password. Share the password with the staff member.
 <br><br>
-2️⃣  <b>Then come back here and assign their role.</b> Use the same email. The role takes effect on their next login.
+2⃣  <b>Then come back here and assign their role.</b> Use the same email. The role takes effect on their next login.
 <br><br>
-3️⃣  <b>To remove access:</b> delete their entry here AND disable their Auth account in Firebase Console.
+3⃣  <b>To remove access:</b> delete their entry here AND disable their Auth account in Firebase Console.
       </div>
     </div>` : `
     <div class="card" style="background:#fdf4ff;border-left:4px solid #7c3aed">
-      <h2 style="margin:0 0 6px">🧪 Preview Mode — self-contained sandbox</h2>
+      <h2 style="margin:0 0 6px">Preview Mode — self-contained sandbox</h2>
       <p class="small" style="margin:0">You can create accounts here with email + password, and they can log in immediately. Data is stored in your browser (localStorage), so it persists across reloads but only on this device. In production this same UI assigns roles in Firebase.</p>
     </div>`;
 
@@ -66,7 +66,7 @@ function renderShell() {
     <div class="card">
       <div class="pmHeaderActions">
         <div class="left">
-          <h2 style="margin:0">👤 User Management</h2>
+          <h2 style="margin:0">User Management</h2>
           <p style="color:var(--muted);margin:6px 0 0">Create accounts, assign roles, reset passwords. Admins + Supervisors.</p>
         </div>
         <div class="right">
@@ -111,9 +111,9 @@ function renderShell() {
           <div class="field"><label>Display Name *</label><input type="text" id="usr_name" placeholder="e.g. Yoga"/></div>
           <div class="field"><label>Role *</label>
             <select id="usr_role">
-              <option value="admin">👁️ Admin · sees everything, READ-ONLY</option>
-              <option value="supervisor" selected>✏️ Supervisor · full edit power</option>
-              <option value="user">👤 User · limited (own records only)</option>
+              <option value="admin">Admin</option>
+              <option value="supervisor" selected>Supervisor</option>
+              <option value="user">User</option>
             </select>
           </div>
           <div class="field"><label>Department *</label>
@@ -142,7 +142,7 @@ function renderShell() {
         <h2>Reset Password</h2>
         <p>Resetting password for <b id="usrPwdTargetEmail">—</b></p>
         ${isFirebaseConfigured
-          ? `<div class="output" style="background:#fef3c7;color:#78350f;font-size:13px;line-height:1.5">⚠️ In production, passwords live in Firebase Authentication. To reset, go to Firebase Console → Authentication → find the user → ⋮ → Reset password. This page sets a preview-only password.</div>`
+          ? `<div class="output" style="background:#fef3c7;color:#78350f;font-size:13px;line-height:1.5">In production, passwords live in Firebase Authentication. To reset, go to Firebase Console → Authentication → find the user → ⋮ → Reset password. This page sets a preview-only password.</div>`
           : ``}
         <div class="field" style="margin-top:14px">
           <label>New Password *</label>
@@ -232,7 +232,7 @@ function renderTable() {
       <td>${esc(friendlyDate(u.createdAt?.toDate?.() || u.createdAt))}</td>
       <td>
         <button class="secondary iconBtn" data-edit="${esc(u.email)}">Edit</button>
-        <button class="secondary iconBtn" data-pwd="${esc(u.email)}">🔑 Reset Password</button>
+        <button class="secondary iconBtn" data-pwd="${esc(u.email)}">Reset Password</button>
         ${u.email === getCurrentEmail() ? '' : `<button class="danger iconBtn" data-del="${esc(u.email)}">Delete</button>`}
       </td>
     </tr>

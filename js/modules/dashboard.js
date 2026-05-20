@@ -68,11 +68,11 @@ function renderGreeting() {
   const name = me?.name || (getCurrentEmail()?.split("@")[0] || "there");
   const hour = new Date().getHours();
   let salute = "Hello";
-  let icon = "👋";
-  if (hour < 11) { salute = "Selamat pagi"; icon = "☀️"; }
-  else if (hour < 15) { salute = "Selamat siang"; icon = "🌤️"; }
-  else if (hour < 18) { salute = "Selamat sore"; icon = "🌅"; }
-  else { salute = "Selamat malam"; icon = "🌙"; }
+  let icon = "";
+  if (hour < 11) { salute = "Selamat pagi"; icon = ""; }
+  else if (hour < 15) { salute = "Selamat siang"; icon = ""; }
+  else if (hour < 18) { salute = "Selamat sore"; icon = ""; }
+  else { salute = "Selamat malam"; icon = ""; }
 
   el.innerHTML = `
     <div class="greetTop">
@@ -88,8 +88,8 @@ function renderGreeting() {
 function getMotivation() {
   // A few rotating one-liners — Bryan likes ambition + clean execution
   const lines = [
-    "Let's make today count. ⚡",
-    "Move fast, fix things. 🚀",
+    "Let's make today count. ",
+    "Move fast, fix things. ",
     "Build the systems Flow needs to scale.",
     "Excellence is daily discipline.",
     "Speed is a competitive advantage.",
@@ -298,7 +298,7 @@ function renderMyActionItems() {
   if (!myTickets.length && !myTasks.length) {
     el.innerHTML = `
       <div class="actEmpty">
-        <span style="font-size:32px">🎉</span>
+        <span style="font-size:32px"></span>
         <div>
           <b>You're all clear!</b>
           <p class="small">No open tickets or tasks assigned to you right now.</p>
@@ -311,7 +311,7 @@ function renderMyActionItems() {
     ${myTickets.length ? `
       <div class="actSection">
         <div class="actSectionHeader">
-          <b>🎫 My Tickets</b>
+          <b>My Tickets</b>
           <span class="actCount">${myTickets.length}</span>
         </div>
         ${myTickets.map(renderTicketRow).join("")}
@@ -319,7 +319,7 @@ function renderMyActionItems() {
     ${myTasks.length ? `
       <div class="actSection">
         <div class="actSectionHeader">
-          <b>📋 My Open Tasks</b>
+          <b>My Open Tasks</b>
           <span class="actCount">${myTasks.length}</span>
         </div>
         ${myTasks.slice(0, 8).map(renderTaskRow).join("")}
@@ -362,10 +362,10 @@ function renderTicketRow(t) {
       </div>
       <div class="actActions">
         ${t.status === "Open"
-          ? `<button class="primary iconBtn" data-ackticket="${t.id}" title="Acknowledge — set to In Progress">✓ Ack</button>`
+          ? `<button class="primary iconBtn" data-ackticket="${t.id}" title="Acknowledge — set to In Progress">Ack</button>`
           : ""}
         ${(t.status === "In Progress" || t.status === "Waiting")
-          ? `<button class="primary iconBtn" data-resticket="${t.id}" title="Mark resolved">✓ Resolve</button>`
+          ? `<button class="primary iconBtn" data-resticket="${t.id}" title="Mark resolved">Resolve</button>`
           : ""}
         <button class="secondary iconBtn" data-opentkt="${t.id}" title="Open in Ticketing">↗</button>
       </div>

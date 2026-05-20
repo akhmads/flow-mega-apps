@@ -321,7 +321,7 @@ async function processMasterItemMetabase(){
   miSetText('miMasterTotal',rows.length);
   miSetText('miLastMaster',f.name);
   miSetText('miStatus','Master ready');
-  $('miStatusBox').textContent=`✅ Master item Metabase berhasil diimport: ${rows.length} rows, ${Object.keys(map).length} SKU key siap divalidasi.`;
+  $('miStatusBox').textContent=`Master item Metabase berhasil diimport: ${rows.length} rows, ${Object.keys(map).length} SKU key siap divalidasi.`;
 }
 function clearMasterItemMetabase(){
   masterItemRows=[]; masterItemMap={};
@@ -388,7 +388,7 @@ async function processScreeningMasterItem(){
   miSetText('miNeedUpdate',update);
   miSetText('miStatus','Done');
   miSetText('miLastScreen',f.name);
-  $('miStatusBox').textContent=`✅ Screening selesai. Sudah ada: ${sudah}, Belum ada: ${belum}, Need update item name: ${update}.`;
+  $('miStatusBox').textContent=`Screening selesai. Sudah ada: ${sudah}, Belum ada: ${belum}, Need update item name: ${update}.`;
   renderTable(screeningMasterRows,'screeningMasterPreview',300);
 }
 function exportScreeningMasterItem(){
@@ -515,7 +515,7 @@ async function processDimensiMaster(){
   dpSetText('dpMasterTotal',Object.keys(map).length);
   dpSetText('dpLastMaster',f.name);
   dpSetText('dpStatus','Master ready');
-  $('dpStatusBox').textContent=`✅ Master dimensi berhasil diimport: ${rows.length} rows, ${Object.keys(map).length} SKU key siap compare.`;
+  $('dpStatusBox').textContent=`Master dimensi berhasil diimport: ${rows.length} rows, ${Object.keys(map).length} SKU key siap compare.`;
 }
 function dpLoadPersistedMaster(){
   try{
@@ -592,7 +592,7 @@ async function processScreeningDimensiProduct(){
   dpSetText('dpMissing',miss);
   dpSetText('dpStatus','Done');
   dpSetText('dpLastInbound',f.name);
-  $('dpStatusBox').textContent=`✅ Screening dimensi selesai. Perlu updates: ${need}, Tidak perlu updates: ${no}, SKU tidak ada di Metabase: ${miss}.`;
+  $('dpStatusBox').textContent=`Screening dimensi selesai. Perlu updates: ${need}, Tidak perlu updates: ${no}, SKU tidak ada di Metabase: ${miss}.`;
   renderTable(results,'screeningDimensiPreview',300);
   dimensiResultAoa = buildDimensiProductAoa(results);
 }
@@ -1891,7 +1891,7 @@ async function drImportSource(type,files){
   $('drStatus').innerHTML=`Import ${type} selesai: <b>${all.length}</b> rows dari ${files.length} file.`;
 }
 function drUpdateInfo(){
-  const set=(id,type,label)=>{ const el=$(id); if(el) el.innerHTML = drSourceRows[type].length?`✅ ${drSourceRows[type].length} rows · ${drSourceFiles[type].map(n=>`<span class="drSourcePill">${pmEsc?n=pmEsc(n):n}</span>`).join('')}`:'Belum import.'; };
+  const set=(id,type,label)=>{ const el=$(id); if(el) el.innerHTML = drSourceRows[type].length?`${drSourceRows[type].length} rows · ${drSourceFiles[type].map(n=>`<span class="drSourcePill">${pmEsc?n=pmEsc(n):n}</span>`).join('')}`:'Belum import.'; };
   set('drMetabaseInfo','metabase'); set('drGineeInfo','ginee'); set('drDestyInfo','desty');
   if($('drMetaCount')) $('drMetaCount').textContent=drSourceRows.metabase.length;
   if($('drGineeCount')) $('drGineeCount').textContent=drSourceRows.ginee.length;
@@ -1954,7 +1954,7 @@ function drProcessReconcile(){
   const blankCreated=drReconcileRows.filter(r=>!r['Created date']).length;
   const itCount=drBuildItIssues().length;
   const opsCount=drBuildOpsSla().length;
-  $('drStatus').innerHTML=`✅ Reconcile selesai. Total unique marketplace order dari Ginee + Desty: <b>${drReconcileRows.length}</b> rows. Duplicate otomatis dihapus.<br><span class="small">Lookup kosong: Client ${blankClient}, Waybill ${blankWaybill}, Warehouse ${blankWarehouse}, Created date ${blankCreated}. Created WMS diambil dari Metabase kolom <b>local_order_date</b>.<br>Export tambahan: <b>${itCount}</b> rows IT Issue's dan <b>${opsCount}</b> rows OPS SLA. Rule OPS SLA: tanggal Created WMS paling baru tidak masuk; tanggal sebelum tanggal terbaru hanya masuk jika jam Created WMS di bawah 15:00. Rule OPS SLA: Tanggal Created WMS paling baru tidak masuk OPS SLA; tanggal sebelum tanggal terbaru hanya masuk jika jam Created WMS di bawah 15:00.</span>`;
+  $('drStatus').innerHTML=`Reconcile selesai. Total unique marketplace order dari Ginee + Desty: <b>${drReconcileRows.length}</b> rows. Duplicate otomatis dihapus.<br><span class="small">Lookup kosong: Client ${blankClient}, Waybill ${blankWaybill}, Warehouse ${blankWarehouse}, Created date ${blankCreated}. Created WMS diambil dari Metabase kolom <b>local_order_date</b>.<br>Export tambahan: <b>${itCount}</b> rows IT Issue's dan <b>${opsCount}</b> rows OPS SLA. Rule OPS SLA: tanggal Created WMS paling baru tidak masuk; tanggal sebelum tanggal terbaru hanya masuk jika jam Created WMS di bawah 15:00. Rule OPS SLA: Tanggal Created WMS paling baru tidak masuk OPS SLA; tanggal sebelum tanggal terbaru hanya masuk jika jam Created WMS di bawah 15:00.</span>`;
 }
 function drRowsToAoa(rows,headers=drHeaders,blankFirstCol=true){
   const aoa=[];
@@ -2298,7 +2298,7 @@ async function wrImportInbound(ev){
   if($('wrInboundW2WCount')) $('wrInboundW2WCount').textContent='0';
   if($('wrInboundPreview')) $('wrInboundPreview').innerHTML='<div class="output">Data sudah diimport. Sistem akan generate report otomatis.</div>';
   const safeName = (typeof pmEsc==='function') ? pmEsc(file.name) : String(file.name).replace(/[&<>\"']/g,'');
-  if($('wrInboundStatus')) $('wrInboundStatus').innerHTML=`✅ Import selesai dari sheet <b>${sheetName}</b>: <b>${wrInboundRows.length}</b> rows. File: <span class="drSourcePill">${safeName}</span>`;
+  if($('wrInboundStatus')) $('wrInboundStatus').innerHTML=`Import selesai dari sheet <b>${sheetName}</b>: <b>${wrInboundRows.length}</b> rows. File: <span class="drSourcePill">${safeName}</span>`;
   wrGenerateInboundReport();
 }
 function wrGenerateInboundReport(){
@@ -2335,7 +2335,7 @@ function wrGenerateInboundReport(){
   const totalQty=wrInboundByClientRows.reduce((a,r)=>a+wrNum(r['Qty']),0);
   const totalReceived=wrInboundByClientRows.reduce((a,r)=>a+wrNum(r['Qty Received']),0);
   const totalOpen=wrInboundByClientRows.reduce((a,r)=>a+wrNum(r['Qty Open']),0);
-  if($('wrInboundStatus')) $('wrInboundStatus').innerHTML=`✅ Inbound report berhasil digenerate lengkap. Latest week: <b>${latestWeek}</b>. Client: <b>${wrInboundByClientRows.length}</b>. Total Qty week terbaru: <b>${totalQty.toLocaleString('en-US')}</b>, Received: <b>${totalReceived.toLocaleString('en-US')}</b>, Open: <b>${totalOpen.toLocaleString('en-US')}</b>.`;
+  if($('wrInboundStatus')) $('wrInboundStatus').innerHTML=`Inbound report berhasil digenerate lengkap. Latest week: <b>${latestWeek}</b>. Client: <b>${wrInboundByClientRows.length}</b>. Total Qty week terbaru: <b>${totalQty.toLocaleString('en-US')}</b>, Received: <b>${totalReceived.toLocaleString('en-US')}</b>, Open: <b>${totalOpen.toLocaleString('en-US')}</b>.`;
 }
 function wrFormatNumber(v){return Number(v||0).toLocaleString('en-US')}
 function wrInboundSummary(){
@@ -2665,7 +2665,7 @@ async function wrImportOutbound(ev){
   wrOutboundSourceFile=file.name;
   wrOutboundRows=[]; wrOutboundByClientRows=[]; wrOutboundDetailRows=[]; wrOutboundW2WRows=[]; wrOutboundLatestWeek='';
   const safeName0=String(file.name).replace(/[&<>"']/g,'');
-  if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML=`⏳ Sedang membaca file <b>${safeName0}</b>. Tunggu sampai muncul <b>Import selesai</b>, report akan auto-generate.`;
+  if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML=`Sedang membaca file <b>${safeName0}</b>. Tunggu sampai muncul <b>Import selesai</b>, report akan auto-generate.`;
   if($('wrOutboundRowsCount')) $('wrOutboundRowsCount').textContent='Reading...';
   if($('wrOutboundLatestWeek')) $('wrOutboundLatestWeek').textContent='-';
   if($('wrOutboundClientCount')) $('wrOutboundClientCount').textContent='0';
@@ -2713,19 +2713,19 @@ async function wrImportOutbound(ev){
     wrFillOutboundDateColumns();
     if(!wrOutboundRows.length){
       if($('wrOutboundRowsCount')) $('wrOutboundRowsCount').textContent='0';
-      if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML=`❌ Sheet <b>${sheetName}</b> terbaca, tapi row data outbound masih 0. Header yang dicari: <b>order_id, local_order_date, code_client, status_so, quantity, quantity_fulfill</b>. Coba cek apakah file tersimpan sebagai XLSX asli.`;
+      if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML=`Sheet <b>${sheetName}</b> terbaca, tapi row data outbound masih 0. Header yang dicari: <b>order_id, local_order_date, code_client, status_so, quantity, quantity_fulfill</b>. Coba cek apakah file tersimpan sebagai XLSX asli.`;
       return;
     }
     if($('wrOutboundRowsCount')) $('wrOutboundRowsCount').textContent=wrOutboundRows.length.toLocaleString('en-US');
     const safeName=(typeof pmEsc==='function')?pmEsc(file.name):String(file.name).replace(/[&<>"']/g,'');
-    if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML=`✅ Import selesai dari sheet <b>${sheetName}</b>: <b>${wrOutboundRows.length.toLocaleString('en-US')}</b> rows. File: <span class="drSourcePill">${safeName}</span>. Week Num, Month, dan Date sudah otomatis diisi. Sedang generate report...`;
+    if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML=`Import selesai dari sheet <b>${sheetName}</b>: <b>${wrOutboundRows.length.toLocaleString('en-US')}</b> rows. File: <span class="drSourcePill">${safeName}</span>. Week Num, Month, dan Date sudah otomatis diisi. Sedang generate report...`;
     await new Promise(resolve=>setTimeout(resolve,20));
     wrGenerateOutboundReport();
   }catch(err){
     console.error(err);
     wrOutboundRows=[];
     if($('wrOutboundRowsCount')) $('wrOutboundRowsCount').textContent='0';
-    if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML=`❌ Import outbound gagal: ${String(err.message||err).replace(/[&<>"']/g,'')}. Coba save ulang file sebagai .xlsx lalu import lagi.`;
+    if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML=`Import outbound gagal: ${String(err.message||err).replace(/[&<>"']/g,'')}. Coba save ulang file sebagai .xlsx lalu import lagi.`;
   }finally{
     wrOutboundImporting=false;
   }
@@ -2806,7 +2806,7 @@ function wrGenerateOutboundReport(){
   const totalOrders=wrOutboundByClientRows.reduce((a,r)=>a+wrNum(r['Total Orders']),0);
   const totalQty=wrOutboundByClientRows.reduce((a,r)=>a+wrNum(r['Qty']),0);
   const totalFulfilled=wrOutboundByClientRows.reduce((a,r)=>a+wrNum(r['Qty Fulfilled']),0);
-  if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML=`✅ Outbound report berhasil digenerate lengkap. Latest week: <b>${latestWeek}</b>. Client: <b>${wrOutboundByClientRows.length}</b>. Orders: <b>${totalOrders.toLocaleString('en-US')}</b>, Qty: <b>${totalQty.toLocaleString('en-US')}</b>, Qty Fulfilled: <b>${totalFulfilled.toLocaleString('en-US')}</b>. Status terbaca: <b>${wrOutboundStatusColumns.join(', ')}</b>.`;
+  if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML=`Outbound report berhasil digenerate lengkap. Latest week: <b>${latestWeek}</b>. Client: <b>${wrOutboundByClientRows.length}</b>. Orders: <b>${totalOrders.toLocaleString('en-US')}</b>, Qty: <b>${totalQty.toLocaleString('en-US')}</b>, Qty Fulfilled: <b>${totalFulfilled.toLocaleString('en-US')}</b>. Status terbaca: <b>${wrOutboundStatusColumns.join(', ')}</b>.`;
 }
 function wrRenderOutboundPreview(){
   const topHtml=`<div class="wrPreviewLayout">
@@ -2918,7 +2918,7 @@ function wrExportOutboundReportXLSXFast(){
   if(!wrOutboundRows.length) return alert('Upload Data terlebih dahulu.');
   if(!wrOutboundByClientRows.length || !wrOutboundW2WRows.length) wrGenerateOutboundReport();
   if(!wrOutboundByClientRows.length) return;
-  if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML='⏳ Sedang menyiapkan export outbound mode cepat. Jangan tutup halaman.';
+  if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML='Sedang menyiapkan export outbound mode cepat. Jangan tutup halaman.';
   const wb=XLSX.utils.book_new();
   const dataRows=wrOutboundDataForExport();
   const dataKeys=wrOutboundDataKeysForExport();
@@ -2933,7 +2933,7 @@ function wrExportOutboundReportXLSXFast(){
   const w2wKeys=['Week','Orders','Qty','Qty Fulfilled'];
   XLSX.utils.book_append_sheet(wb,wrSheetFromRowsFast(wrOutboundW2WRows,w2wKeys),'Outbound volume W2W');
   XLSX.writeFile(wb,'Weekly_Report_Outbound_Volume_Generator.xlsx',{compression:true});
-  if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML='✅ Export outbound selesai. File sudah terdownload.';
+  if($('wrOutboundStatus')) $('wrOutboundStatus').innerHTML='Export outbound selesai. File sudah terdownload.';
 }
 function wrOutboundDetailAoa(){
   if(!wrOutboundDetailRows.length) return [[],[]];
@@ -3233,7 +3233,7 @@ function wrResetOutbound(){
     window.wrOutboundDetailRows = [];
     window.wrOutboundW2WRows = [];
     window.wrOutboundLatestWeek = '';
-    setStatus(`⏳ Sedang import <b>${file.name.replace(/[&<>"']/g,'')}</b>. Tunggu sampai selesai, jangan klik export dulu.`);
+    setStatus(`Sedang import <b>${file.name.replace(/[&<>"']/g,'')}</b>. Tunggu sampai selesai, jangan klik export dulu.`);
     setText('wrOutboundRowsCount','Reading...'); setText('wrOutboundLatestWeek','-'); setText('wrOutboundClientCount','0'); setText('wrOutboundW2WCount','0');
     await new Promise(r=>setTimeout(r,30));
     try{
@@ -3244,11 +3244,11 @@ function wrResetOutbound(){
       const rows = rawRows.map(normalizeRow).filter(r => r.order_id && r.code_client && r.status_so && r.Date);
       if(!rows.length) throw new Error('Tidak ada row valid. Wajib ada kolom order_id, local_order_date, code_client, status_so, client_code_item, quantity, quantity_fulfill.');
       window.wrOutboundRows = rows;
-      setStatus(`✅ Import selesai dari sheet <b>${sheetName}</b>. Terbaca <b>${rows.length.toLocaleString('en-US')}</b> rows. Report sudah auto-generate.`);
+      setStatus(`Import selesai dari sheet <b>${sheetName}</b>. Terbaca <b>${rows.length.toLocaleString('en-US')}</b> rows. Report sudah auto-generate.`);
       wrGenerateOutboundReport();
     }catch(err){
       console.error(err);
-      setStatus('❌ Import outbound gagal: ' + (err.message || err));
+      setStatus('Import outbound gagal: ' + (err.message || err));
       alert('Import outbound gagal: ' + (err.message || err));
     }finally{
       window.wrOutboundImporting = false;
@@ -3321,7 +3321,7 @@ function wrResetOutbound(){
     setText('wrOutboundLatestWeek', latestWeek ? 'W' + latestWeek : '-');
     setText('wrOutboundClientCount', window.wrOutboundByClientRows.length);
     setText('wrOutboundW2WCount', window.wrOutboundW2WRows.length);
-    setStatus(`✅ Generate outbound selesai. Latest week: <b>W${latestWeek}</b>. Status terbaca: <b>${statusCols.join(', ')}</b>.`);
+    setStatus(`Generate outbound selesai. Latest week: <b>W${latestWeek}</b>. Status terbaca: <b>${statusCols.join(', ')}</b>.`);
     if(el('wrOutboundClientPreview')) el('wrOutboundClientPreview').innerHTML = tableHtml(window.wrOutboundByClientRows);
     if(el('wrOutboundDetailPreview')) el('wrOutboundDetailPreview').innerHTML = tableHtml(window.wrOutboundDetailRows,80);
     if(el('wrOutboundTopPreview')){
@@ -3365,7 +3365,7 @@ function wrResetOutbound(){
     const rows = window.wrOutboundRows || [];
     if(!rows.length) return alert('Upload file outbound template compact terlebih dahulu.');
     if(!(window.wrOutboundByClientRows||[]).length || !(window.wrOutboundW2WRows||[]).length) wrGenerateOutboundReport();
-    setStatus('⏳ Sedang export outbound. Untuk file 300 ribu+ rows, tunggu sampai download muncul.');
+    setStatus('Sedang export outbound. Untuk file 300 ribu+ rows, tunggu sampai download muncul.');
     setTimeout(()=>{
       try{
         const wb = XLSX.utils.book_new();
@@ -3378,10 +3378,10 @@ function wrResetOutbound(){
         const w2wAoa = [[], ['', 'Week','Orders','Qty','Qty Fulfilled'], ...(window.wrOutboundW2WRows||[]).map(r=>['', r.Week, r.Orders, r.Qty, r['Qty Fulfilled']])];
         XLSX.utils.book_append_sheet(wb, sheetFromAoa(w2wAoa), 'Outbound volume W2W');
         XLSX.writeFile(wb, 'Weekly_Report_Outbound_Volume_Generator.xlsx', {compression:true});
-        setStatus('✅ Export outbound selesai. File sudah terdownload.');
+        setStatus('Export outbound selesai. File sudah terdownload.');
       }catch(err){
         console.error(err);
-        setStatus('❌ Export outbound gagal: ' + (err.message || err));
+        setStatus('Export outbound gagal: ' + (err.message || err));
         alert('Export outbound gagal: ' + (err.message || err));
       }
     },50);
@@ -3436,7 +3436,7 @@ function wrResetOutbound(){
       const part = rows.slice(i, i+chunkSize).map(r => headers.map(h => transform ? transform(r,h) : wrV14Safe(r[h])));
       ws.addRows(part);
       if(i===0 || i + chunkSize < total){
-        wrV14Status(`⏳ ${progressPrefix} ${Math.min(i+chunkSize,total).toLocaleString('en-US')} / ${total.toLocaleString('en-US')} rows... Jangan tutup halaman.`);
+        wrV14Status(`${progressPrefix} ${Math.min(i+chunkSize,total).toLocaleString('en-US')} / ${total.toLocaleString('en-US')} rows... Jangan tutup halaman.`);
         await wrV14Yield();
       }
     }
@@ -3508,7 +3508,7 @@ function wrResetOutbound(){
     const detail = wrV14DetailAoa();
     for(let i=0;i<detail.length;i+=500){
       detailWs.addRows(detail.slice(i,i+500));
-      if(i%2000===0){ wrV14Status(`⏳ Menulis sheet Outbound volume by Detail ${Math.min(i+500,detail.length)} / ${detail.length} rows...`); await wrV14Yield(); }
+      if(i%2000===0){ wrV14Status(`Menulis sheet Outbound volume by Detail ${Math.min(i+500,detail.length)} / ${detail.length} rows...`); await wrV14Yield(); }
     }
     detailWs.getRow(2).font={bold:true};
     detailWs.getRow(3).font={bold:true};
@@ -3522,11 +3522,11 @@ function wrResetOutbound(){
     wrV14StyleHeader(w2wWs);
     (window.wrOutboundW2WRows || []).forEach(r=>w2wWs.addRow([r.Week, r.Orders, r.Qty, r['Qty Fulfilled']]));
 
-    wrV14Status('⏳ Membuat file Excel final. Untuk data 300 ribu+ rows, proses ini bisa beberapa menit. Jangan tutup halaman.');
+    wrV14Status('Membuat file Excel final. Untuk data 300 ribu+ rows, proses ini bisa beberapa menit. Jangan tutup halaman.');
     await wrV14Yield();
     const buffer = await wb.xlsx.writeBuffer({useSharedStrings:false});
     wrV14DownloadBlob(new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'Weekly_Report_Outbound_Volume_Generator.xlsx');
-    wrV14Status('✅ Export outbound selesai. File sudah terdownload.');
+    wrV14Status('Export outbound selesai. File sudah terdownload.');
   }
 
   window.wrExportOutboundReport = async function(){
@@ -3535,7 +3535,7 @@ function wrResetOutbound(){
       await wrV14ExportWithExcelJS();
     }catch(err){
       console.error(err);
-      wrV14Status('❌ Export outbound gagal: ' + (err.message || err));
+      wrV14Status('Export outbound gagal: ' + (err.message || err));
       alert('Export outbound gagal: ' + (err.message || err));
     }
   };
@@ -3659,7 +3659,7 @@ function wrResetOutbound(){
     wb.calcProperties.fullCalcOnLoad=true;
 
     // Sheet 1: Outbound volume by Client
-    status('⏳ Membuat sheet Outbound volume by Client sesuai export example...');
+    status('Membuat sheet Outbound volume by Client sesuai export example...');
     const clientWs=wb.addWorksheet('Outbound volume by Client');
     styleReportSheet(clientWs);
     const clientHeaders=['Client Name', ...CORE_STATUSES, 'Total Orders', 'Qty', 'Qty Fulfilled', '', 'Basket Size', 'Qty vs Qty Fulfilled'];
@@ -3685,7 +3685,7 @@ function wrResetOutbound(){
 
     await yieldUI();
     // Sheet 2: Outbound volume by Detail
-    status('⏳ Membuat sheet Outbound volume by Detail sesuai export example...');
+    status('Membuat sheet Outbound volume by Detail sesuai export example...');
     const detailWs=wb.addWorksheet('Outbound volume by Detail');
     styleReportSheet(detailWs);
     const detail=detailAoaExample();
@@ -3707,7 +3707,7 @@ function wrResetOutbound(){
 
     await yieldUI();
     // Sheet 3: Outbound volume W2W
-    status('⏳ Membuat sheet Outbound volume W2W + chart...');
+    status('Membuat sheet Outbound volume W2W + chart...');
     const w2wWs=wb.addWorksheet('Outbound volume W2W');
     styleReportSheet(w2wWs);
     const w2wRows=window.wrOutboundW2WRows || [];
@@ -3733,16 +3733,16 @@ function wrResetOutbound(){
       setCell(w2wWs,2,7,'Chart preview gagal dibuat di browser ini. Data W2W tetap tersedia.');
     }
 
-    status('⏳ Menyiapkan file Excel final. Tunggu sampai download muncul...');
+    status('Menyiapkan file Excel final. Tunggu sampai download muncul...');
     await yieldUI();
     const buffer=await wb.xlsx.writeBuffer({useSharedStrings:false});
     downloadBlob(new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'Weekly_Report_Outbound_Example_Format.xlsx');
-    status('✅ Export outbound selesai. Format sudah mengikuti Export outbound example: by Client, by Detail, W2W + chart.');
+    status('Export outbound selesai. Format sudah mengikuti Export outbound example: by Client, by Detail, W2W + chart.');
   }
   window.wrExportOutboundReport = function(){
     exportExampleWorkbook().catch(err=>{
       console.error(err);
-      status('❌ Export outbound gagal: '+String(err.message||err));
+      status('Export outbound gagal: '+String(err.message||err));
       alert('Export outbound gagal: '+String(err.message||err));
     });
   };
@@ -3873,7 +3873,7 @@ function wrResetOutbound(){
     const wb=new ExcelJS.Workbook();
     wb.creator='FLOWGISTIK Sales Support Mega Apps'; wb.created=new Date(); wb.calcProperties.fullCalcOnLoad=true;
 
-    status('⏳ Membuat sheet Outbound volume by Client lengkap dengan summary...');
+    status('Membuat sheet Outbound volume by Client lengkap dengan summary...');
     const clientWs=wb.addWorksheet('Outbound volume by Client');
     styleReportSheet(clientWs);
     const statusCols=(window.wrOutboundStatusColumns && window.wrOutboundStatusColumns.length) ? window.wrOutboundStatusColumns : CORE_STATUSES;
@@ -3924,7 +3924,7 @@ function wrResetOutbound(){
     clientWs.getColumn(2).width=36; clientWs.getColumn(3).width=16; clientWs.getColumn(4).width=32;
 
     await yieldUI();
-    status('⏳ Membuat sheet Outbound volume by Detail...');
+    status('Membuat sheet Outbound volume by Detail...');
     const detailWs=wb.addWorksheet('Outbound volume by Detail');
     styleReportSheet(detailWs);
     const detail=detailAoaExample();
@@ -3938,7 +3938,7 @@ function wrResetOutbound(){
     detailWs.getColumn(2).width=34; for(let c=3;c<=detailMaxCol;c++) detailWs.getColumn(c).width=13;
 
     await yieldUI();
-    status('⏳ Membuat sheet Outbound volume W2W + chart...');
+    status('Membuat sheet Outbound volume W2W + chart...');
     const w2wWs=wb.addWorksheet('Outbound volume W2W');
     styleReportSheet(w2wWs);
     const w2wRows=window.wrOutboundW2WRows || [];
@@ -3954,14 +3954,14 @@ function wrResetOutbound(){
       w2wWs.addImage(imgId,{tl:{col:6.2,row:1.0}, ext:{width:900,height:315}});
     }catch(chartErr){ console.warn(chartErr); setCell(w2wWs,2,7,'Chart preview gagal dibuat. Data W2W tetap tersedia.'); }
 
-    status('⏳ Menyiapkan file Excel final. Tunggu sampai download muncul...');
+    status('Menyiapkan file Excel final. Tunggu sampai download muncul...');
     await yieldUI();
     const buffer=await wb.xlsx.writeBuffer({useSharedStrings:false});
     downloadBlob(new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'Weekly_Report_Outbound_Complete_Summary.xlsx');
-    status('✅ Export outbound selesai. % Canceled, Grand Total, dan Summary bawah sudah otomatis masuk.');
+    status('Export outbound selesai. % Canceled, Grand Total, dan Summary bawah sudah otomatis masuk.');
   }
   window.wrExportOutboundReport=function(){
-    exportWorkbook().catch(err=>{ console.error(err); status('❌ Export outbound gagal: '+String(err.message||err)); alert('Export outbound gagal: '+String(err.message||err)); });
+    exportWorkbook().catch(err=>{ console.error(err); status('Export outbound gagal: '+String(err.message||err)); alert('Export outbound gagal: '+String(err.message||err)); });
   };
 })();
 
@@ -4079,16 +4079,16 @@ function wrResetOutbound(){
     const file=ev.target.files && ev.target.files[0]; if(!file) return;
     try{
       window.iogSourceFile=file.name; window.iogSourceRows=[]; window.iogTikTokRows=[]; window.iogWmsRows=[]; updateStats(); renderPreview([]);
-      status(`⏳ Sedang membaca file <b>${htmlEsc(file.name)}</b>...`);
+      status(`Sedang membaca file <b>${htmlEsc(file.name)}</b>...`);
       const result=await readMarketplaceRows(file, settings.sourceType);
       window.iogDetectedSource=result.sourceType; window.iogSourceRows=result.rows; window.iogTikTokRows=result.rows;
       window.iogWmsRows=result.rows.map(r=>makeWmsRow(r, settings.shippingtype, settings.providername, result.sourceType));
       updateStats(); renderPreview(window.iogWmsRows);
       const miss=(window.iogWmsRows||[]).filter(r=>missingFields(r).length);
-      const warning=miss.length ? `<br>⚠️ Ada <b>${miss.length}</b> row yang masih kosong di field critical. Cek preview sebelum export.` : '';
+      const warning=miss.length ? `<br>Ada <b>${miss.length}</b> row yang masih kosong di field critical. Cek preview sebelum export.` : '';
       const sourceLabel=result.sourceType==='shopee'?'Shopee':'TikTok';
-      status(`✅ Import ${sourceLabel} selesai dari sheet <b>${htmlEsc(result.sheetName)}</b>. Rows WMS tergenerate: <b>${window.iogWmsRows.length}</b>.${warning}`);
-    }catch(err){ console.error(err); status('❌ Import marketplace gagal: '+htmlEsc(err.message||err)); alert('Import marketplace gagal: '+String(err.message||err)); }
+      status(`Import ${sourceLabel} selesai dari sheet <b>${htmlEsc(result.sheetName)}</b>. Rows WMS tergenerate: <b>${window.iogWmsRows.length}</b>.${warning}`);
+    }catch(err){ console.error(err); status('Import marketplace gagal: '+htmlEsc(err.message||err)); alert('Import marketplace gagal: '+String(err.message||err)); }
   };
   window.iogImportTikTok = window.iogImportRaw;
   window.iogGenerateFromCurrent = function(){
@@ -4096,7 +4096,7 @@ function wrResetOutbound(){
     const detected=window.iogDetectedSource || (settings.sourceType==='shopee'?'shopee':'tiktok');
     window.iogWmsRows=window.iogSourceRows.map(r=>makeWmsRow(r, settings.shippingtype, settings.providername, detected));
     updateStats(); renderPreview(window.iogWmsRows); const miss=(window.iogWmsRows||[]).filter(r=>missingFields(r).length);
-    status(`✅ Generate selesai. Rows WMS: <b>${window.iogWmsRows.length}</b>${miss.length?`<br>⚠️ Ada <b>${miss.length}</b> row missing critical field. Cek data sebelum export.`:''}`);
+    status(`Generate selesai. Rows WMS: <b>${window.iogWmsRows.length}</b>${miss.length?`<br>Ada <b>${miss.length}</b> row missing critical field. Cek data sebelum export.`:''}`);
   };
   window.iogExportWms = function(){
     const rows=window.iogWmsRows||[]; if(!rows.length) return alert('Belum ada hasil generate untuk export.');
@@ -4108,7 +4108,7 @@ function wrResetOutbound(){
     ws['!cols']=IOG_WMS_HEADERS.map(h=>({wch:h==='address1'?42:h==='orderid'?22:h==='providerawb'?18:h==='addressee'?24:h.length+4}));
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
     const sourceName=(window.iogDetectedSource||'Marketplace').replace(/^./,c=>c.toUpperCase()); const filename=`File_upload_WMS_from_${sourceName}.xlsx`;
-    XLSX.writeFile(wb,filename); status(`✅ Export berhasil: <b>${filename}</b> dengan ${rows.length} rows.`);
+    XLSX.writeFile(wb,filename); status(`Export berhasil: <b>${filename}</b> dengan ${rows.length} rows.`);
   };
   window.iogDownloadTemplate = function(){ const ws=XLSX.utils.aoa_to_sheet([IOG_WMS_HEADERS]); ws['!cols']=IOG_WMS_HEADERS.map(h=>({wch:h==='address1'?42:Math.max(12,h.length+3)})); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Sheet1'); XLSX.writeFile(wb,'Template_File_upload_WMS.xlsx'); };
   window.iogReset = function(){ window.iogSourceRows=[]; window.iogTikTokRows=[]; window.iogWmsRows=[]; window.iogSourceFile=''; window.iogDetectedSource=''; const f=el('iogRawFile') || el('iogTikTokFile'); if(f) f.value=''; updateStats(); renderPreview([]); status('Pilih shippingtype/providername, lalu upload raw data TikTok atau Shopee.'); };

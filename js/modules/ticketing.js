@@ -212,7 +212,7 @@ function renderTable() {
       <td>${esc(friendlyDate(toDateStr(t.createdAt)))}</td>
       <td>${esc(t.requester || "—")}</td>
       <td>${esc(t.dept || "—")}</td>
-      <td class="long"><b>${esc(t.subject || "")}</b><br><span class="small">${esc(truncate(t.description, 100))}</span>${t.comments?.length ? `<br><span class="small" style="color:#7c3aed">💬 ${t.comments.length} comment${t.comments.length>1?"s":""}</span>` : ""}</td>
+      <td class="long"><b>${esc(t.subject || "")}</b><br><span class="small">${esc(truncate(t.description, 100))}</span>${t.comments?.length ? `<br><span class="small" style="color:#7c3aed">${t.comments.length} comment${t.comments.length>1?"s":""}</span>` : ""}</td>
       <td><span class="${badgeClass(t.priority)}">${esc(t.priority || "—")}</span></td>
       <td><span class="${badgeClass(t.status)}">${esc(t.status || "—")}</span></td>
       <td>${esc(t.assignee || "—")}</td>

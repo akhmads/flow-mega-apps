@@ -1,14 +1,14 @@
 // ============================================================
 // FLOW Mega Apps — Main App Router
 //
-// 🎚️  PREVIEW_MODE toggle:
+// PREVIEW_MODE toggle:
 //   - true  = demo login (no Firebase). Type any DEMO account below.
 //   - false = real Firebase auth + roles (production)
 //
 // Toggle ONE LINE below. That's it.
 // ============================================================
 
-const PREVIEW_MODE = true;        // ⬅️  SET TO false BEFORE DEPLOYING
+const PREVIEW_MODE = true;        // SET TO false BEFORE DEPLOYING
 
 // 4 demo accounts — type these into the login form to test each role.
 // Password for ALL of them is just "demo"
@@ -221,7 +221,7 @@ function bindGlobalModalClose() {
 // LOGIN MODE: PREVIEW (demo accounts) or PRODUCTION (Firebase)
 // ============================================================
 if (PREVIEW_MODE) {
-  console.log("%c🧪 PREVIEW MODE — full local sandbox. Data persists in your browser.", "color:#7c3aed;font-weight:bold");
+  console.log("%cPREVIEW MODE — full local sandbox. Data persists in your browser.", "color:#7c3aed;font-weight:bold");
 
   // Wire up the demo buttons (auto-fill + auto-submit)
   document.querySelectorAll(".demoLoginBtn").forEach(btn => {

@@ -443,7 +443,7 @@ function renderShell() {
       <div class="card">
         <div class="pmHeaderActions">
           <div class="left">
-            <h2 style="margin:0">📂 All Projections</h2>
+            <h2 style="margin:0">All Projections</h2>
             <p style="color:var(--muted);margin:6px 0 0">Client onboarding projects. Each tracks 35 timeline tasks across Sales & Sales Support.</p>
           </div>
           <div class="right">
@@ -780,10 +780,10 @@ function renderDetail() {
       </div>
 
       <div class="tabs" style="margin-top:14px">
-        <button class="${detailTab==="timeline"?"active":""}" data-pmtab="timeline">📅 Timeline (${prog.total} tasks)</button>
-        <button class="${detailTab==="client"?"active":""}" data-pmtab="client">📋 Client Info</button>
-        <button class="${detailTab==="people"?"active":""}" data-pmtab="people">👥 People</button>
-        <button class="${detailTab==="requirements"?"active":""}" data-pmtab="requirements">⚙️ Requirements</button>
+        <button class="${detailTab==="timeline"?"active":""}" data-pmtab="timeline">Timeline (${prog.total} tasks)</button>
+        <button class="${detailTab==="client"?"active":""}" data-pmtab="client">Client Info</button>
+        <button class="${detailTab==="people"?"active":""}" data-pmtab="people">People</button>
+        <button class="${detailTab==="requirements"?"active":""}" data-pmtab="requirements">Requirements</button>
       </div>
     </div>
 
@@ -835,7 +835,7 @@ function renderTimeline(p) {
   let html = `
     <div class="card">
       <div class="pmHeaderActions">
-        <div class="left"><h2 style="margin:0">📅 Timeline Tasks</h2></div>
+        <div class="left"><h2 style="margin:0">Timeline Tasks</h2></div>
         <div class="right"><button class="primary" id="pmAddTaskBtn">+ Add Task</button></div>
       </div>
       <div class="tableWrap">
@@ -875,7 +875,7 @@ function renderClientInfo(p) {
   const fields = PM_TEMPLATE.clientFields;
   return `
     <div class="card">
-      <h2>📋 Client Information</h2>
+      <h2>Client Information</h2>
       <div class="form-grid">
         ${fields.map(k => `
           <div class="field">
@@ -892,14 +892,14 @@ function renderPeople(p) {
   return `
     <div class="card">
       <div class="pmHeaderActions">
-        <div class="left"><h2 style="margin:0">👥 Flow Team</h2></div>
+        <div class="left"><h2 style="margin:0">Flow Team</h2></div>
         <div class="right"><button class="secondary" id="pmAddFlowPerson">+ Add</button></div>
       </div>
       ${renderPeopleTable(p, "flowgistik")}
     </div>
     <div class="card">
       <div class="pmHeaderActions">
-        <div class="left"><h2 style="margin:0">👥 Client Contacts</h2></div>
+        <div class="left"><h2 style="margin:0">Client Contacts</h2></div>
         <div class="right"><button class="secondary" id="pmAddClientPerson">+ Add</button></div>
       </div>
       ${renderPeopleTable(p, "client")}
@@ -930,10 +930,10 @@ function renderPeopleTable(p, type) {
 
 function renderRequirements(p) {
   const groups = [
-    { key: "inbound", label: "📦 Inbound", fields: PM_TEMPLATE.inboundFields },
-    { key: "outbound", label: "🚚 Outbound", fields: PM_TEMPLATE.outboundFields },
-    { key: "inventory", label: "🗄️ Inventory", fields: PM_TEMPLATE.inventoryFields },
-    { key: "workingInstruction", label: "📎 Working Instruction", fields: PM_TEMPLATE.workingFields }
+    { key: "inbound", label: "Inbound", fields: PM_TEMPLATE.inboundFields },
+    { key: "outbound", label: "Outbound", fields: PM_TEMPLATE.outboundFields },
+    { key: "inventory", label: "Inventory", fields: PM_TEMPLATE.inventoryFields },
+    { key: "workingInstruction", label: "Working Instruction", fields: PM_TEMPLATE.workingFields }
   ];
 
   return groups.map(g => `

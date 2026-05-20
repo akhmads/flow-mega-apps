@@ -75,18 +75,18 @@ if (isFirebaseConfigured) {
     _db = fsReal.getFirestore(_app);
   }
 
-  console.log("[Firebase] Initialized: long-polling auto-detect ON, offline cache ON ✓");
+  console.log("[Firebase] Initialized: long-polling auto-detect ON, offline cache ON ");
   console.log("[Firebase] Project: " + firebaseConfig.projectId + (firebaseConfig.firestoreDatabaseId ? " (db: " + firebaseConfig.firestoreDatabaseId + ")" : ""));
 
   (async () => {
     try {
       await fsReal.getDocFromServer(fsReal.doc(_db, "_test", "_connection"));
-      console.log("[Firebase] Connection verified ✓");
+      console.log("[Firebase] Connection verified ");
     } catch (e) {
       if (e?.message?.includes("offline")) {
         console.warn("[Firebase] Offline mode — writes will queue and sync when connection returns.");
       } else if (e?.code === "permission-denied") {
-        console.log("[Firebase] Connected (permission rules active) ✓");
+        console.log("[Firebase] Connected (permission rules active) ");
       } else {
         console.warn("[Firebase] Initial connection test result:", e?.message || e);
       }
@@ -95,7 +95,7 @@ if (isFirebaseConfigured) {
 } else {
   // PREVIEW MODE — in-memory + localStorage mock.
   _db = { __isPreview: true };   // truthy sentinel so requireDb() passes
-  console.log("%c🧪 PREVIEW MODE — data persists in your browser (localStorage). No Firebase required.", "color:#7c3aed;font-weight:bold");
+  console.log("%cPREVIEW MODE — data persists in your browser (localStorage). No Firebase required.", "color:#7c3aed;font-weight:bold");
   // Seed the store with a handful of demo rows on first visit so the
   // app looks alive instead of empty. Safe to call repeatedly — only
   // seeds collections that are still empty.

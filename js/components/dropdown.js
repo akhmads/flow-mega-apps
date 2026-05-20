@@ -117,7 +117,7 @@ export function createDropdown({
 
   function itemRow(item) {
     const isSelected = item === currentValue;
-    return `<div class="ddItem ${isSelected ? "selected" : ""}" data-ddval="${escapeAttr(item)}">${escapeHtml(item)}${isSelected ? " ✓" : ""}</div>`;
+    return `<div class="ddItem ${isSelected ? "selected" : ""}" data-ddval="${escapeAttr(item)}">${escapeHtml(item)}${isSelected ? " " : ""}</div>`;
   }
 
   function setValue(val, fireOnChange = false) {

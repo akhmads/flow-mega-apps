@@ -1,7 +1,7 @@
 // ============================================================
 // FLOW Mega Apps — Debug Panel (v3.7)
 //
-// Floating 🐛 button at bottom-right (Admin + Supervisor only).
+// Floating button at bottom-right (Admin + Supervisor only).
 // Shows user info, env, master data counts, errors + lets you
 // auto-generate test data (tickets / tasks / issues) for fast
 // UI testing without typing.
@@ -38,7 +38,7 @@ export function mountDebugPanel() {
   const fab = document.createElement("button");
   fab.id = "debugFab";
   fab.title = "Debug Panel · " + (isAdmin() ? "Admin" : "Supervisor");
-  fab.innerHTML = "🐛";
+  fab.innerHTML = "";
   document.body.appendChild(fab);
 
   const panel = document.createElement("div");
@@ -46,13 +46,13 @@ export function mountDebugPanel() {
   panel.className = "hidden";
   panel.innerHTML = `
     <div class="dbgHeader">
-      <b>🐛 Debug Panel</b>
+      <b>Debug Panel</b>
       <button class="dbgClose">×</button>
     </div>
     <div class="dbgBody" id="dbgBody"></div>
     <div class="dbgFooter">
-      <button class="secondary" id="dbgCopy">📋 Copy Diagnostics</button>
-      <button class="secondary" id="dbgClearCache">🗑️ Clear Cache</button>
+      <button class="secondary" id="dbgCopy">Copy Diagnostics</button>
+      <button class="secondary" id="dbgClearCache">Clear Cache</button>
       <button class="secondary" id="dbgReload">↻ Reload</button>
     </div>
   `;
@@ -93,18 +93,18 @@ function renderDebugBody() {
   $("dbgBody").innerHTML = `
     <!-- TEST DATA GENERATOR -->
     <div class="dbgSection dbgGen">
-      <div class="dbgLabel">⚡ Test Data Generator</div>
+      <div class="dbgLabel">Test Data Generator</div>
       <p class="small" style="color:var(--muted);margin-bottom:8px">Auto-create plausible records for UI testing. <b style="color:#b91c1c">Writes to live database.</b></p>
       <div class="dbgGenGrid">
-        <button class="dbgGenBtn" data-gen="tickets" data-count="10">🎫 +10 Tickets</button>
-        <button class="dbgGenBtn" data-gen="tasksSales" data-count="20">📅 +20 Sales Tasks</button>
-        <button class="dbgGenBtn" data-gen="tasksSS" data-count="20">📅 +20 SS Tasks</button>
-        <button class="dbgGenBtn" data-gen="issues" data-count="15">🔴 +15 Daily Issues</button>
+        <button class="dbgGenBtn" data-gen="tickets" data-count="10">+10 Tickets</button>
+        <button class="dbgGenBtn" data-gen="tasksSales" data-count="20">+20 Sales Tasks</button>
+        <button class="dbgGenBtn" data-gen="tasksSS" data-count="20">+20 SS Tasks</button>
+        <button class="dbgGenBtn" data-gen="issues" data-count="15">+15 Daily Issues</button>
       </div>
     </div>
 
     <div class="dbgSection">
-      <div class="dbgLabel">👤 Current User</div>
+      <div class="dbgLabel">Current User</div>
       <table>
         <tr><td>Email</td><td>${esc(getCurrentEmail() || "—")}</td></tr>
         <tr><td>Name</td><td>${esc(me?.name || "—")}</td></tr>
@@ -114,7 +114,7 @@ function renderDebugBody() {
     </div>
 
     <div class="dbgSection">
-      <div class="dbgLabel">⚙️ Environment</div>
+      <div class="dbgLabel">Environment</div>
       <table>
         <tr><td>Mode</td><td>${previewMode ? '<b style="color:#f59e0b">PREVIEW (demo data)</b>' : '<b style="color:#22c55e">PRODUCTION</b>'}</td></tr>
         <tr><td>App URL</td><td>${esc(location.href)}</td></tr>
@@ -124,7 +124,7 @@ function renderDebugBody() {
     </div>
 
     <div class="dbgSection">
-      <div class="dbgLabel">🗂️ Master Data Counts</div>
+      <div class="dbgLabel">Master Data Counts</div>
       <table>
         <tr><td>Departments</td><td><b>${depts.length}</b> total · ${depts.filter(d => !d.archived).length} active</td></tr>
         <tr><td>Clients</td><td><b>${clients.length}</b> total · ${clients.filter(c => !c.archived).length} active</td></tr>
@@ -133,17 +133,17 @@ function renderDebugBody() {
     </div>
 
     <div class="dbgSection">
-      <div class="dbgLabel">💾 localStorage (flow.*)</div>
+      <div class="dbgLabel">localStorage (flow.*)</div>
       ${flowKeys.length
         ? `<table>${flowKeys.map(k => `<tr><td class="small">${esc(k.key)}</td><td class="small">${k.len} bytes</td></tr>`).join("")}</table>`
         : `<p class="small" style="color:var(--muted)">No FLOW keys stored</p>`}
     </div>
 
     <div class="dbgSection">
-      <div class="dbgLabel">⚠️ Recent Errors (last ${MAX_ERRORS})</div>
+      <div class="dbgLabel">Recent Errors (last ${MAX_ERRORS})</div>
       ${recentErrors.length
         ? recentErrors.map(e => `<div class="dbgErr"><b>${esc(e.at)}</b> · ${esc(e.msg.slice(0, 200))}</div>`).join("")
-        : `<p class="small" style="color:#22c55e;">✓ No errors captured</p>`}
+        : `<p class="small" style="color:#22c55e;">No errors captured</p>`}
     </div>
   `;
 

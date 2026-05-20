@@ -181,15 +181,18 @@ td.wrap, td.long{white-space:normal;max-width:340px}
 .badge-improvement{background:#dcfce7;color:#15803d}
 
 /* ================== TABS ================== */
-.tabs{display:flex;gap:4px;flex-wrap:wrap;margin:12px 0}
+.tabs{display:flex;gap:0;flex-wrap:wrap;margin:12px 0}
 .tabs button{
   border:1px solid var(--border);background:#fff;color:var(--text-secondary);
-  border-radius:var(--radius-sm);padding:7px 14px;font-weight:600;cursor:pointer;font-size:12px;
-  transition:.15s ease;font-family:inherit;
+  border-radius:0;padding:9px 20px;font-weight:600;cursor:pointer;font-size:13px;
+  transition:.15s ease;font-family:inherit;flex:1;text-align:center;
+  margin-left:-1px;
 }
-.tabs button:hover{border-color:var(--primary);color:var(--primary)}
+.tabs button:first-child{border-radius:var(--radius-sm) 0 0 var(--radius-sm);margin-left:0}
+.tabs button:last-child{border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.tabs button:hover{border-color:var(--primary);color:var(--primary);z-index:1}
 .tabs button.active{
-  background:var(--primary);color:#fff;border-color:var(--primary);
+  background:var(--primary);color:#fff;border-color:var(--primary);z-index:2;
 }
 
 .pmPill{
