@@ -170,9 +170,38 @@ function switchPage(menuId, clickedBtn) {
 }
 
 // ============================================================
+// REMEMBER ME
+// ============================================================
+const REMEMBER_KEY = "flow.rememberMe";
+
+function saveSession(email, role, name, department) {
+  try {
+    localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email, role, name, department }));
+  } catch (e) { /* ignore */ }
+}
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(REMEMBER_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    return (s && s.email) ? s : null;
+  } catch (e) { return null; }
+}
+
+function clearSession() {
+  try { localStorage.removeItem(REMEMBER_KEY); } catch (e) { /* ignore */ }
+}
+
+// ============================================================
 // SHARED BOOT (after auth/demo success)
 // ============================================================
 function bootApp(email, role, name, department) {
+  // Save session if remember me is checked
+  const rememberEl = $("rememberMe");
+  if (rememberEl && rememberEl.checked) {
+    saveSession(email, role, name, department);
+  }
   $("loginGate").classList.add("hidden");
   $("appShell").classList.remove("hidden");
   $("userBadgeEmail").textContent = email;
@@ -221,64 +250,72 @@ function bindGlobalModalClose() {
 // ============================================================
 // LOGIN MODE: PREVIEW (demo accounts) or PRODUCTION (Firebase)
 // ============================================================
+
 if (PREVIEW_MODE) {
   console.log("%cPREVIEW MODE — full local sandbox. Data persists in your browser.", "color:#7c3aed;font-weight:bold");
 
-  // Wire up the demo buttons (auto-fill + auto-submit)
-  document.querySelectorAll(".demoLoginBtn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      $("loginEmail").value = btn.dataset.email;
-      $("loginPassword").value = btn.dataset.pwd;
-      $("loginBtn").click();
+  // Auto-login from saved session (remember me)
+  const saved = loadSession();
+  if (saved) {
+    bootApp(saved.email, saved.role, saved.name, saved.department);
+  } else {
+    // Wire up the demo buttons (auto-fill + auto-submit)
+    document.querySelectorAll(".demoLoginBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        $("loginEmail").value = btn.dataset.email;
+        $("loginPassword").value = btn.dataset.pwd;
+        $("loginBtn").click();
+      });
     });
-  });
 
-  // Intercept the sign-in button. In preview mode we accept BOTH:
-  //   1) The hardcoded DEMO_ACCOUNTS above (always available)
-  //   2) Accounts created by a supervisor via User Management
-  //      (stored in the preview-store /users collection with a
-  //      `previewPassword` field).
-  async function previewLogin() {
-    const email = $("loginEmail").value.trim().toLowerCase();
-    const password = $("loginPassword").value;
-    const errEl = $("loginError");
+    // Intercept the sign-in button. In preview mode we accept BOTH:
+    //   1) The hardcoded DEMO_ACCOUNTS above (always available)
+    //   2) Accounts created by a supervisor via User Management
+    async function previewLogin() {
+      const email = $("loginEmail").value.trim().toLowerCase();
+      const password = $("loginPassword").value;
+      const errEl = $("loginError");
 
-    // 1. Hardcoded demo accounts
-    const account = DEMO_ACCOUNTS[email];
-    if (account && account.password === password) {
-      errEl.classList.add("hidden");
-      bootApp(email, account.role, account.name, account.department);
-      return;
-    }
-
-    // 2. Supervisor-created accounts in the preview store
-    try {
-      const { getDoc, doc, COL } = await import("./firebase.js");
-      const snap = await getDoc(doc(COL.USERS, email));
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data.previewPassword && data.previewPassword === password) {
-          errEl.classList.add("hidden");
-          bootApp(email, data.role || "user", data.name || email.split("@")[0], data.department || "");
-          return;
-        }
+      // 1. Hardcoded demo accounts
+      const account = DEMO_ACCOUNTS[email];
+      if (account && account.password === password) {
+        errEl.classList.add("hidden");
+        bootApp(email, account.role, account.name, account.department);
+        return;
       }
-    } catch (e) {
-      console.warn("Preview-store login lookup failed:", e);
+
+      // 2. Supervisor-created accounts in the preview store
+      try {
+        const { getDoc, doc, COL } = await import("./firebase.js");
+        const snap = await getDoc(doc(COL.USERS, email));
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.previewPassword && data.previewPassword === password) {
+            errEl.classList.add("hidden");
+            bootApp(email, data.role || "user", data.name || email.split("@")[0], data.department || "");
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Preview-store login lookup failed:", e);
+      }
+
+      errEl.textContent = "Wrong email or password. Click a demo button below, or ask a supervisor to create an account.";
+      errEl.classList.remove("hidden");
     }
+    $("loginBtn").addEventListener("click", previewLogin);
 
-    errEl.textContent = "Wrong email or password. Click a yellow demo button below, or ask a supervisor to create an account.";
-    errEl.classList.remove("hidden");
+    // Enter-key submits too
+    $("loginPassword").addEventListener("keydown", e => {
+      if (e.key === "Enter") $("loginBtn").click();
+    });
   }
-  $("loginBtn").addEventListener("click", previewLogin);
 
-  // Enter-key submits too
-  $("loginPassword").addEventListener("keydown", e => {
-    if (e.key === "Enter") $("loginBtn").click();
+  // Logout button clears session and reloads (always wired, even after auto-login)
+  $("logoutBtn").addEventListener("click", () => {
+    clearSession();
+    location.reload();
   });
-
-  // Logout button just reloads page in preview mode
-  $("logoutBtn").addEventListener("click", () => location.reload());
 
 } else {
   // PRODUCTION: real Firebase auth + hide demo helper
