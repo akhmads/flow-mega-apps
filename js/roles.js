@@ -82,7 +82,11 @@ const DEMO_STAFF = [
   { email: "farah@flowgistik.id",   name: "Farah",   role: "supervisor",  department: "Sales Support" },
   { email: "asih@flowgistik.id",    name: "Asih",    role: "supervisor",  department: "Sales Support" },
   { email: "fauzi@flowgistik.id",   name: "Fauzi",   role: "supervisor",  department: "Sales Support" },
-  { email: "steve@flowgistik.id",   name: "Steve",   role: "supervisor",  department: "Marketing" }
+  { email: "steve@flowgistik.id",   name: "Steve",   role: "supervisor",  department: "Marketing" },
+  { email: "andi@flowgistik.id",    name: "Andi",    role: "supervisor",  department: "Operations" },
+  { email: "rina@flowgistik.id",    name: "Rina",    role: "supervisor",  department: "Operations" },
+  { email: "budi@flowgistik.id",    name: "Budi",    role: "supervisor",  department: "General Affairs" },
+  { email: "sari@flowgistik.id",    name: "Sari",    role: "supervisor",  department: "General Affairs" }
 ];
 
 // ============================================================
@@ -258,6 +262,18 @@ export function isSSTeam() {
   return (currentProfile?.department || "").toLowerCase() === "sales support";
 }
 
+/** Is current user part of the Operations team? */
+export function isOpsTeam() {
+  if (isAdmin() || isSupervisor()) return true;
+  return (currentProfile?.department || "").toLowerCase() === "operations";
+}
+
+/** Is current user part of the General Affairs team? */
+export function isGATeam() {
+  if (isAdmin() || isSupervisor()) return true;
+  return (currentProfile?.department || "").toLowerCase() === "general affairs";
+}
+
 /** Can current user see a given module? */
 export function canViewModule(moduleId) {
   if (isAdmin()) return true;          // admin sees everything
@@ -266,6 +282,8 @@ export function canViewModule(moduleId) {
     dashboard: true,
     dailyTrackerSales: isSalesTeam(),
     dailyTrackerSS: isSSTeam(),
+    dailyTrackerOps: isOpsTeam(),
+    dailyTrackerGA: isGATeam(),
     dailyIssue: isSSTeam(),            // SS only (Sales can't see customer issues)
     ticketing: true,                   // shared
     revenueCalc: isSalesTeam(),         // Sales only — SS doesn't need revenue calc
@@ -338,6 +356,14 @@ export async function getStaffForTeam(team) {
     return all.filter(u =>
       (u.department || "").toLowerCase() === "sales support" ||
       u.role === "ss" || u.role === "ss-admin");
+  }
+  if (team === "operations") {
+    return all.filter(u =>
+      (u.department || "").toLowerCase() === "operations");
+  }
+  if (team === "ga") {
+    return all.filter(u =>
+      (u.department || "").toLowerCase() === "general affairs");
   }
   return all;
 }

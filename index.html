@@ -54,6 +54,18 @@
       <button type="button" class="demoLoginBtn" data-email="user.ss@demo" data-pwd="demo" style="display:block;width:100%;text-align:left;margin-top:4px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;cursor:pointer;font-size:12px;color:#78350f">
         <b>user.ss@demo</b> · password: <b>demo</b> → 👤 User + Sales Support dept (limited)
       </button>
+      <button type="button" class="demoLoginBtn" data-email="supervisor.ops@demo" data-pwd="demo" style="display:block;width:100%;text-align:left;margin-top:4px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;cursor:pointer;font-size:12px;color:#78350f">
+        <b>supervisor.ops@demo</b> · password: <b>demo</b> → ✏️ Supervisor (Operations) — full edit
+      </button>
+      <button type="button" class="demoLoginBtn" data-email="user.ops@demo" data-pwd="demo" style="display:block;width:100%;text-align:left;margin-top:4px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;cursor:pointer;font-size:12px;color:#78350f">
+        <b>user.ops@demo</b> · password: <b>demo</b> → 👤 User + Operations dept (limited)
+      </button>
+      <button type="button" class="demoLoginBtn" data-email="supervisor.ga@demo" data-pwd="demo" style="display:block;width:100%;text-align:left;margin-top:4px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;cursor:pointer;font-size:12px;color:#78350f">
+        <b>supervisor.ga@demo</b> · password: <b>demo</b> → ✏️ Supervisor (GA) — full edit
+      </button>
+      <button type="button" class="demoLoginBtn" data-email="user.ga@demo" data-pwd="demo" style="display:block;width:100%;text-align:left;margin-top:4px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;cursor:pointer;font-size:12px;color:#78350f">
+        <b>user.ga@demo</b> · password: <b>demo</b> → 👤 User + General Affairs dept (limited)
+      </button>
     </div>
   </div>
 </div>
@@ -73,6 +85,10 @@
       <div class="navGroup">Sales Support</div>
       <button data-menu="dailyTrackerSS">📅 Daily Tracker (SS)</button>
       <button data-menu="dailyIssue">🔴 Daily Issue Tracker</button>
+      <div class="navGroup">Operations</div>
+      <button data-menu="dailyTrackerOps">📅 Daily Tracker (Ops)</button>
+      <div class="navGroup">General Affairs</div>
+      <button data-menu="dailyTrackerGA">📅 Daily Tracker (GA)</button>
       <div class="navGroup">Department</div>
       <button data-menu="ticketing">🎫 Internal Tickets</button>
       <div class="navGroup">Tools (Legacy)</div>
@@ -475,6 +491,124 @@
       <!-- TAB: Weekly Report -->
       <div data-trkpane="ss-weekly" class="hidden">
         <div id="wkSSRoot"></div>
+      </div>
+    </section>
+
+    <!-- DAILY TRACKER (OPERATIONS) -->
+    <section id="dailyTrackerOps" class="menu hidden">
+      <div class="card">
+        <div class="pmHeaderActions">
+          <div class="left">
+            <h2>📅 Daily Tracker — Operations</h2>
+            <p style="color:var(--muted);margin:6px 0 0">Track daily tasks for the Operations team.</p>
+          </div>
+          <div class="right">
+            <button class="primary trkPrimaryBtn" data-team="operations" id="trkOpsAddBtn">+ New Task</button>
+            <button class="secondary" id="trkOpsExportBtn">Export Excel</button>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="active" data-trktab="ops-tasks">📋 Tasks</button>
+          <button data-trktab="ops-weekly">📈 Weekly Report</button>
+        </div>
+      </div>
+
+      <div data-trkpane="ops-tasks">
+        <div class="card">
+          <div class="filterGrid">
+            <div><label class="pmLabel">Person</label><select id="trkOpsPerson"><option value="">All</option></select></div>
+            <div><label class="pmLabel">Status</label><select id="trkOpsStatus"><option value="">All</option><option>Open</option><option>In Progress</option><option>Done</option><option>Pending</option><option>Hold</option></select></div>
+            <div><label class="pmLabel">Date Range</label><select id="trkOpsRange"><option value="today">Today</option><option value="week" selected>This Week</option><option value="month">This Month</option><option value="custom">Custom</option><option value="all">All Time</option></select></div>
+            <div><label class="pmLabel">From</label><input type="date" id="trkOpsFrom"/></div>
+            <div><label class="pmLabel">To</label><input type="date" id="trkOpsTo"/></div>
+          </div>
+          <div class="btns">
+            <button class="primary" id="trkOpsApply">Apply</button>
+            <button class="secondary" id="trkOpsReset">Reset</button>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><b id="trkOpsTotal">0</b><span>Total</span></div>
+          <div class="kpi"><b id="trkOpsDone">0</b><span>Done</span></div>
+          <div class="kpi"><b id="trkOpsOpen">0</b><span>Open / Progress</span></div>
+          <div class="kpi"><b id="trkOpsPct">0%</b><span>Completion</span></div>
+        </div>
+
+        <div class="card">
+          <h2>Tasks</h2>
+          <div class="tableWrap">
+            <table id="trkOpsTable">
+              <thead><tr>
+                <th>Date</th><th>Day</th><th>Person</th><th>Daily Task</th><th>Status</th><th>Notes</th><th>Actions</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div data-trkpane="ops-weekly" class="hidden">
+        <div id="wkOpsRoot"></div>
+      </div>
+    </section>
+
+    <!-- DAILY TRACKER (GENERAL AFFAIRS) -->
+    <section id="dailyTrackerGA" class="menu hidden">
+      <div class="card">
+        <div class="pmHeaderActions">
+          <div class="left">
+            <h2>📅 Daily Tracker — General Affairs</h2>
+            <p style="color:var(--muted);margin:6px 0 0">Track daily tasks and requests for the General Affairs team.</p>
+          </div>
+          <div class="right">
+            <button class="primary trkPrimaryBtn" data-team="ga" id="trkGAAddBtn">+ New Task</button>
+            <button class="secondary" id="trkGAExportBtn">Export Excel</button>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="active" data-trktab="ga-tasks">📋 Tasks</button>
+          <button data-trktab="ga-weekly">📈 Weekly Report</button>
+        </div>
+      </div>
+
+      <div data-trkpane="ga-tasks">
+        <div class="card">
+          <div class="filterGrid">
+            <div><label class="pmLabel">Person</label><select id="trkGAPerson"><option value="">All</option></select></div>
+            <div><label class="pmLabel">Status</label><select id="trkGAStatus"><option value="">All</option><option>Open</option><option>In Progress</option><option>Done</option><option>Pending</option><option>Hold</option></select></div>
+            <div><label class="pmLabel">Date Range</label><select id="trkGARange"><option value="today">Today</option><option value="week" selected>This Week</option><option value="month">This Month</option><option value="custom">Custom</option><option value="all">All Time</option></select></div>
+            <div><label class="pmLabel">From</label><input type="date" id="trkGAFrom"/></div>
+            <div><label class="pmLabel">To</label><input type="date" id="trkGATo"/></div>
+          </div>
+          <div class="btns">
+            <button class="primary" id="trkGAApply">Apply</button>
+            <button class="secondary" id="trkGAReset">Reset</button>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><b id="trkGATotal">0</b><span>Total</span></div>
+          <div class="kpi"><b id="trkGADone">0</b><span>Done</span></div>
+          <div class="kpi"><b id="trkGAOpen">0</b><span>Open / Progress</span></div>
+          <div class="kpi"><b id="trkGAPct">0%</b><span>Completion</span></div>
+        </div>
+
+        <div class="card">
+          <h2>Tasks</h2>
+          <div class="tableWrap">
+            <table id="trkGATable">
+              <thead><tr>
+                <th>Date</th><th>Day</th><th>Person</th><th>Daily Task</th><th>Status</th><th>Notes</th><th>Actions</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div data-trkpane="ga-weekly" class="hidden">
+        <div id="wkGARoot"></div>
       </div>
     </section>
 

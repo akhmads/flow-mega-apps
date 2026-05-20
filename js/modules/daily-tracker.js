@@ -16,6 +16,8 @@ import { getStaffForTeam, getCurrentProfile } from "../roles.js";
 
 const SALES_STATUSES = ["Open", "In Progress", "Done", "Pending", "Follow Up", "Hold"];
 const SS_STATUSES = ["Open", "Progress", "Done", "Hold"];
+const OPS_STATUSES = ["Open", "In Progress", "Done", "Pending", "Hold"];
+const GA_STATUSES = ["Open", "In Progress", "Done", "Pending", "Hold"];
 const SS_TAGS = ["Daily", "Projection", "Improvement"];
 
 const trackers = {
@@ -67,6 +69,54 @@ const trackers = {
     filtered: [],
     unsub: null,
     editingId: null
+  },
+  operations: {
+    col: COL.TASKS_OPS,
+    statuses: OPS_STATUSES,
+    hasTag: false,
+    hasURL: false,
+    tableId: "trkOpsTable",
+    personSel: "trkOpsPerson",
+    statusSel: "trkOpsStatus",
+    rangeSel: "trkOpsRange",
+    fromInput: "trkOpsFrom",
+    toInput: "trkOpsTo",
+    kpiTotal: "trkOpsTotal",
+    kpiDone: "trkOpsDone",
+    kpiOpen: "trkOpsOpen",
+    kpiPct: "trkOpsPct",
+    addBtn: "trkOpsAddBtn",
+    exportBtn: "trkOpsExportBtn",
+    applyBtn: "trkOpsApply",
+    resetBtn: "trkOpsReset",
+    all: [],
+    filtered: [],
+    unsub: null,
+    editingId: null
+  },
+  ga: {
+    col: COL.TASKS_GA,
+    statuses: GA_STATUSES,
+    hasTag: false,
+    hasURL: false,
+    tableId: "trkGATable",
+    personSel: "trkGAPerson",
+    statusSel: "trkGAStatus",
+    rangeSel: "trkGARange",
+    fromInput: "trkGAFrom",
+    toInput: "trkGATo",
+    kpiTotal: "trkGATotal",
+    kpiDone: "trkGADone",
+    kpiOpen: "trkGAOpen",
+    kpiPct: "trkGAPct",
+    addBtn: "trkGAAddBtn",
+    exportBtn: "trkGAExportBtn",
+    applyBtn: "trkGAApply",
+    resetBtn: "trkGAReset",
+    all: [],
+    filtered: [],
+    unsub: null,
+    editingId: null
   }
 };
 
@@ -77,6 +127,8 @@ let modalContext = null; // "sales" or "ss"
 // ============================================================
 export function initSalesTracker() { initTracker("sales"); }
 export function initSSTracker() { initTracker("ss"); }
+export function initOpsTracker() { initTracker("operations"); }
+export function initGATracker() { initTracker("ga"); }
 
 function initTracker(kind) {
   const t = trackers[kind];

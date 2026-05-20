@@ -361,6 +361,28 @@ export function seedDemoData(currentEmail) {
     for (const s of seeds) _col("daily_tasks_ss").set(_genId(), s);
   }
 
+  // A few Operations tasks
+  if (_col("daily_tasks_ops").size === 0) {
+    const seeds = [
+      { person: "Andi",  date: TODAY,     task: "Morning warehouse briefing",       status: "done",         notes: "Attendance 95%", createdAt: new Date().toISOString(), createdBy: me },
+      { person: "Andi",  date: TODAY,     task: "Check inbound dock schedule",      status: "in-progress",  notes: "",               createdAt: new Date().toISOString(), createdBy: me },
+      { person: "Rina",  date: TODAY,     task: "Inventory cycle count Zone A",     status: "open",         notes: "",               createdAt: new Date().toISOString(), createdBy: me },
+      { person: "Rina",  date: YESTERDAY, task: "Review outbound SLA exceptions",  status: "done",         notes: "3 late shipments flagged", createdAt: new Date().toISOString(), createdBy: me }
+    ];
+    for (const s of seeds) _col("daily_tasks_ops").set(_genId(), s);
+  }
+
+  // A few General Affairs tasks
+  if (_col("daily_tasks_ga").size === 0) {
+    const seeds = [
+      { person: "Budi",  date: TODAY,     task: "Process office supply request from Sales", status: "in-progress", notes: "Toner + A4 paper",      createdAt: new Date().toISOString(), createdBy: me },
+      { person: "Sari",  date: TODAY,     task: "Coordinate AC maintenance visit",          status: "open",        notes: "Vendor arrives 2pm",    createdAt: new Date().toISOString(), createdBy: me },
+      { person: "Budi",  date: YESTERDAY, task: "Vehicle permit renewal",                   status: "done",        notes: "Completed at Samsat",   createdAt: new Date().toISOString(), createdBy: me },
+      { person: "Sari",  date: YESTERDAY, task: "Update asset inventory spreadsheet",       status: "done",        notes: "",                      createdAt: new Date().toISOString(), createdBy: me }
+    ];
+    for (const s of seeds) _col("daily_tasks_ga").set(_genId(), s);
+  }
+
   // Master data — minimal so dropdowns aren't empty
   if (_col("clients").size === 0) {
     ["PERO", "Kintakun", "SummerID", "Gaon Indonesia"].forEach(name => {
