@@ -1,15 +1,17 @@
 // ============================================================
 // FLOW Mega Apps — Main App Router
 //
-// PREVIEW_MODE is auto-detected:
-//   - No Firebase config (no apiKey) → preview mode (demo accounts)
-//   - Firebase configured            → production (real auth)
-//   - Add ?demo to the URL to force demo mode even with Firebase
+// PREVIEW_MODE controls login behavior:
+//   - true  = demo accounts (no Firebase auth needed)
+//   - false = real Firebase auth (production)
+//
+// Defaults to true (demo mode). Set to false before deploying,
+// or add ?prod to the URL to force production mode.
+// Add ?demo to force demo mode even when set to false.
 // ============================================================
 
-import { isFirebaseConfigured } from "./firebase.js";
-
-const PREVIEW_MODE = !isFirebaseConfigured || new URLSearchParams(location.search).has("demo");
+const _params = new URLSearchParams(location.search);
+const PREVIEW_MODE = _params.has("prod") ? false : _params.has("demo") ? true : true;
 
 // 4 demo accounts — type these into the login form to test each role.
 // Password for ALL of them is just "demo"
