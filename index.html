@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FLOW Mega Apps</title>
+
+<!-- External libs (kept from preview__1_.html for backwards compat with legacy modules) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<!-- ExcelJS — used by Weekly Report Generator v21 (v14 chunked export) -->
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+
+<!-- Chart.js for Daily Issue dashboard -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<link rel="stylesheet" href="css/styles.css"/>
+<link rel="stylesheet" href="css/revamp.css"/>
+</head>
+<body>
+
+<!-- LOGIN GATE -->
+<div id="loginGate" class="loginGate">
+  <div class="loginBox">
+    <div class="loginBrand">
+      <div class="logoMark">F</div>
+      <div><b>FLOW Mega Apps</b><br><span>Internal tooling — Flowgistik Indonesia</span></div>
+    </div>
+    <div id="loginError" class="loginError hidden"></div>
+    <label class="pmLabel">Email</label>
+    <input type="email" id="loginEmail" placeholder="name@flowgistik.id" autocomplete="username"/>
+    <label class="pmLabel">Password</label>
+    <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"/>
+    <div class="btns" style="margin-top:14px">
+      <button class="primary" id="loginBtn">Sign In</button>
+    </div>
+    <p class="small" style="margin-top:14px">No account yet? Ask a supervisor to create one for you. Forgot your password? A supervisor can reset it from User Management.</p>
+
+    <!-- DEMO ACCOUNTS — visible in PREVIEW MODE only, hidden by app.js in production -->
+    <div id="demoHelper" style="margin-top:14px;padding:14px;background:#fef3c7;border-radius:10px;font-size:12px;color:#78350f;line-height:1.7;border:2px dashed #f59e0b">
+      <b>🎚️ DEMO MODE — click any account to auto-fill:</b><br>
+      <button type="button" class="demoLoginBtn" data-email="admin@demo" data-pwd="demo" style="display:block;width:100%;text-align:left;margin-top:6px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;cursor:pointer;font-size:12px;color:#78350f">
+        <b>admin@demo</b> · password: <b>demo</b> → 👁️ Admin · sees everything, READ-ONLY
+      </button>
+      <button type="button" class="demoLoginBtn" data-email="supervisor.sales@demo" data-pwd="demo" style="display:block;width:100%;text-align:left;margin-top:4px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;cursor:pointer;font-size:12px;color:#78350f">
+        <b>supervisor.sales@demo</b> · password: <b>demo</b> → ✏️ Supervisor (Sales) — full edit
+      </button>
+      <button type="button" class="demoLoginBtn" data-email="supervisor.ss@demo" data-pwd="demo" style="display:block;width:100%;text-align:left;margin-top:4px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;cursor:pointer;font-size:12px;color:#78350f">
+        <b>supervisor.ss@demo</b> · password: <b>demo</b> → ✏️ Supervisor (SS) — full edit
+      </button>
+      <button type="button" class="demoLoginBtn" data-email="user.sales@demo" data-pwd="demo" style="display:block;width:100%;text-align:left;margin-top:4px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;cursor:pointer;font-size:12px;color:#78350f">
+        <b>user.sales@demo</b> · password: <b>demo</b> → 👤 User + Sales dept (limited)
+      </button>
+      <button type="button" class="demoLoginBtn" data-email="user.ss@demo" data-pwd="demo" style="display:block;width:100%;text-align:left;margin-top:4px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;cursor:pointer;font-size:12px;color:#78350f">
+        <b>user.ss@demo</b> · password: <b>demo</b> → 👤 User + Sales Support dept (limited)
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app hidden" id="appShell">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logoMark">F</div>
+      <div><b>FLOW</b><br><span>Mega Apps</span></div>
+    </div>
+    <div class="nav">
+      <button class="active" data-menu="dashboard">📊 Dashboard</button>
+      <div class="navGroup">Sales</div>
+      <button data-menu="dailyTrackerSales">📅 Daily Tracker (Sales)</button>
+      <button data-menu="revenueCalc">💰 Revenue Calculator</button>
+      <div class="navGroup">Sales Support</div>
+      <button data-menu="dailyTrackerSS">📅 Daily Tracker (SS)</button>
+      <button data-menu="dailyIssue">🔴 Daily Issue Tracker</button>
+      <div class="navGroup">Department</div>
+      <button data-menu="ticketing">🎫 Internal Tickets</button>
+      <div class="navGroup">Tools (Legacy)</div>
+      <button data-menu="projectManagement">📂 Projection Management</button>
+      <button data-menu="mergerSystem">🔗 Merge System</button>
+      <button data-menu="orderProcessing">📦 Transaction</button>
+      <button data-menu="dailyReconcile">🔄 Daily Reconcile</button>
+      <button data-menu="weeklyReportGen">📈 Weekly Report Generator</button>
+      <button data-menu="forecastOrdersGen">📊 Forecast Orders Generator</button>
+      <div class="navGroup" data-show-for-supervisor>Management</div>
+      <button data-menu="oneOnOne" data-show-for-supervisor>💬 1-on-1 Summarizer</button>
+      <button data-menu="masterData" data-show-for-supervisor>🗂️ Master Data</button>
+      <button data-menu="users" data-show-for-supervisor>👤 User Management</button>
+    </div>
+    <div class="sidebarFooter">
+      <div class="userBadge"><span id="userBadgeEmail">—</span></div>
+      <div class="userRoleBadge"><span id="userRoleBadge" class="badge">—</span></div>
+      <button class="secondary" id="logoutBtn">Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div class="title">
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="pageSubtitle">Overview of today's operations</p>
+      </div>
+      <div class="topActions">
+        <span class="pmPill" id="todayPill"></span>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="menu">
+      <!-- Preview-mode banner — hidden in production by app.js -->
+      <div id="previewBanner" class="card hidden" style="background:linear-gradient(135deg,#fdf4ff,#ede9fe);border-left:4px solid #7c3aed">
+        <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+          <div style="flex:1;min-width:240px">
+            <h2 style="margin:0 0 4px;color:#5b21b6">🧪 Preview / Demo Mode</h2>
+            <p class="small" style="margin:0;line-height:1.6">
+              You're running the app without Firebase. <b>Every feature works</b> — create issues, tickets, users, etc. Data is saved to your browser's localStorage and survives page reloads. Click <b>+ buttons</b> on any page to add data; supervisors can also create new login accounts under <b>👤 User Management</b>. To wipe all demo data and start fresh, open browser DevTools console and run <code>localStorage.clear()</code> then refresh.
+            </p>
+          </div>
+          <button class="secondary" id="previewWipeBtn">🗑️ Wipe demo data</button>
+        </div>
+      </div>
+
+      <!-- v3.5 — Personalized greeting -->
+      <div class="card greetCard">
+        <div id="dashGreeting"></div>
+      </div>
+
+      <!-- v3.5 — My Action Items (assigned to current user) -->
+      <div class="card">
+        <div class="pmHeaderActions">
+          <div class="left">
+            <h2 style="margin:0">🎯 My Action Items</h2>
+            <p style="color:var(--muted);margin:6px 0 0">Tickets assigned to you + your open tasks. Acknowledge or resolve right from here.</p>
+          </div>
+        </div>
+        <div id="myActionItems" style="margin-top:14px"></div>
+      </div>
+
+      <div class="card">
+        <div class="pmHeaderActions">
+          <div class="left">
+            <h2 style="margin:0">📊 Overview</h2>
+            <p style="color:var(--muted);margin:6px 0 0">Live KPIs across all modules. Filter by date range.</p>
+          </div>
+        </div>
+        <div class="filterGrid" style="margin-top:14px">
+          <div><label class="pmLabel">Date Range</label>
+            <select id="dashRange">
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="thisWeek" selected>This Week</option>
+              <option value="thisMonth">This Month</option>
+              <option value="last30">Last 30 Days</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div><label class="pmLabel">From</label><input type="date" id="dashFrom"/></div>
+          <div><label class="pmLabel">To</label><input type="date" id="dashTo"/></div>
+        </div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><b id="kpiOpenIssues">0</b><span>Open Issues</span></div>
+        <div class="kpi"><b id="kpiCritical">0</b><span>Critical (High)</span></div>
+        <div class="kpi"><b id="kpiOpenTickets">0</b><span>Open Tickets</span></div>
+        <div class="kpi"><b id="kpiTasksToday">0</b><span>Tasks (range)</span></div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <h2>🔴 Latest Issues</h2>
+          <div id="dashIssuesList" class="output">Loading…</div>
+        </div>
+        <div class="card">
+          <h2>🎫 Latest Tickets</h2>
+          <div id="dashTicketsList" class="output">Loading…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DAILY ISSUE TRACKER (matches your SS Daily Issue sheet schema) -->
+    <section id="dailyIssue" class="menu hidden">
+      <div class="card">
+        <div class="pmHeaderActions">
+          <div class="left">
+            <span class="pmPill">⭐ Sales Support — Daily Issue</span>
+            <h2 style="margin:6px 0 0">Daily Issue Tracker</h2>
+            <p style="color:var(--muted);margin:6px 0 0">Root-cause analysis log. Track complaint, site, root cause, short/long term solution.</p>
+          </div>
+          <div class="right">
+            <button class="primary" id="issueAddBtn">+ New Issue</button>
+            <button class="secondary" id="issueExportBtn">Export Excel</button>
+            <button class="secondary" id="issuePicReportBtn">📄 Export PIC Report</button>
+            <button class="secondary" id="issueImportBtn">Import from Excel</button>
+            <input type="file" id="issueImportFile" accept=".xlsx,.xls,.csv" style="display:none"/>
+          </div>
+        </div>
+        <!-- TAB SWITCHER: Detail View vs Summary -->
+        <div class="tabs">
+          <button class="active" data-issuetab="detail">📋 Detail View</button>
+          <button data-issuetab="summary">📊 Summary</button>
+        </div>
+      </div>
+
+      <!-- ============== TAB: DETAIL ============== -->
+      <div data-issuepane="detail">
+
+        <!-- FILTERS -->
+        <div class="card">
+          <h2>🔍 Filters</h2>
+          <div class="filterGrid">
+            <div><label class="pmLabel">Client</label><select id="fltClient"><option value="">All Clients</option></select></div>
+            <div><label class="pmLabel">Update By (PIC)</label><select id="fltPic"><option value="">All PICs</option></select></div>
+            <div><label class="pmLabel">Issue Site</label><select id="fltIssueSite"><option value="">All</option><option>Outbound</option><option>Commercial</option><option>Lastmile</option><option>Technology</option><option>Inbound</option><option>Buyer</option><option>Client</option><option>Inventory</option><option>Marketplace</option></select></div>
+            <div><label class="pmLabel">Categori Complain</label><select id="fltCategori"><option value="">All</option></select></div>
+            <div><label class="pmLabel">Status</label><select id="fltStatus"><option value="">All</option><option>Open</option><option>Close</option></select></div>
+            <div><label class="pmLabel">Year</label><select id="fltYear"><option value="">All</option></select></div>
+            <div><label class="pmLabel">Range</label><select id="fltRange"><option value="today">Today</option><option value="week">This Week</option><option value="month" selected>This Month</option><option value="quarter">This Quarter</option><option value="custom">Custom</option><option value="all">All Time</option></select></div>
+            <div><label class="pmLabel">From</label><input type="date" id="fltFrom"/></div>
+            <div><label class="pmLabel">To</label><input type="date" id="fltTo"/></div>
+            <div style="grid-column:span 2"><label class="pmLabel">Search</label><input type="text" id="fltSearch" placeholder="Search complaint, order code, root cause, notes…"/></div>
+          </div>
+          <div class="btns">
+            <button class="primary" id="fltApplyBtn">Apply Filters</button>
+            <button class="secondary" id="fltResetBtn">Reset</button>
+          </div>
+        </div>
+
+        <!-- KPI ROW -->
+        <div class="kpis">
+          <div class="kpi"><b id="issueKpiTotal">0</b><span>Total Issues</span></div>
+          <div class="kpi"><b id="issueKpiOpen">0</b><span>Open</span></div>
+          <div class="kpi"><b id="issueKpiClose">0</b><span>Closed</span></div>
+          <div class="kpi"><b id="issueKpiAvgRes">—</b><span>Avg Resolution (days)</span></div>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <div class="chartHead">
+              <h2>By Issue Site</h2>
+              <div class="chartActions">
+                <button class="iconBtn secondary" onclick="exportChart('site','png')">📷 PNG</button>
+                <button class="iconBtn secondary" onclick="exportChart('site','excel')">📊 Excel</button>
+              </div>
+            </div>
+            <canvas id="chartIssueSite" height="200"></canvas>
+          </div>
+          <div class="card">
+            <div class="chartHead">
+              <h2>By PIC (Open vs Close)</h2>
+              <div class="chartActions">
+                <button class="iconBtn secondary" onclick="exportChart('pic','png')">📷 PNG</button>
+                <button class="iconBtn secondary" onclick="exportChart('pic','excel')">📊 Excel</button>
+              </div>
+            </div>
+            <canvas id="chartPic" height="200"></canvas>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <div class="chartHead">
+              <h2>Top Clients (by issue volume)</h2>
+              <div class="chartActions">
+                <button class="iconBtn secondary" onclick="exportChart('client','png')">📷 PNG</button>
+                <button class="iconBtn secondary" onclick="exportChart('client','excel')">📊 Excel</button>
+              </div>
+            </div>
+            <canvas id="chartClient" height="200"></canvas>
+          </div>
+          <div class="card">
+            <div class="chartHead">
+              <h2>Trend (issues per week)</h2>
+              <div class="chartActions">
+                <button class="iconBtn secondary" onclick="exportChart('trend','png')">📷 PNG</button>
+                <button class="iconBtn secondary" onclick="exportChart('trend','excel')">📊 Excel</button>
+              </div>
+            </div>
+            <canvas id="chartTrend" height="200"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="chartHead">
+            <h2>Top Categori Complain</h2>
+            <div class="chartActions">
+              <button class="iconBtn secondary" onclick="exportChart('categori','png')">📷 PNG</button>
+              <button class="iconBtn secondary" onclick="exportChart('categori','excel')">📊 Excel</button>
+            </div>
+          </div>
+          <canvas id="chartCategori" height="160"></canvas>
+        </div>
+
+        <!-- ISSUE TABLE — new columns: ✓ checklist + Order Count -->
+        <div class="card">
+          <h2>Issues</h2>
+          <div class="tableWrap">
+            <table id="issueTable">
+              <thead><tr>
+                <th style="width:36px" title="Tick to close (auto-sets solving date to today)">✓</th>
+                <th>Update By</th><th>Complain Date</th><th>Solving Date</th><th>Yr</th><th>Wk</th><th>Client</th>
+                <th>Order Code</th><th title="Number of orders impacted by this issue">Order Count</th>
+                <th>Site</th><th>Categori</th><th>Details</th><th>Root Cause</th><th>Short Term</th><th>Long Term</th>
+                <th>Status</th><th>Notes</th><th>Actions</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="small" id="issueTableCount">0 issues</p>
+        </div>
+
+      </div><!-- /detail pane -->
+
+      <!-- ============== TAB: SUMMARY ============== -->
+      <div data-issuepane="summary" class="hidden">
+        <div class="card">
+          <h2>📊 Executive Summary</h2>
+          <p class="small" style="color:var(--muted);margin-top:0">Aggregated view based on the same filters as Detail tab. Adjust filters in Detail view and switch back to refresh.</p>
+          <div id="issueSummaryExec"></div>
+        </div>
+
+        <div class="card">
+          <div class="pmHeaderActions">
+            <div class="left">
+              <h2>Aggregated Table</h2>
+            </div>
+            <div class="right">
+              <label class="pmLabel" style="margin:0">Group by</label>
+              <select id="summaryGroupBy" onchange="refreshIssueSummary()">
+                <option value="client">Client</option>
+                <option value="updateBy">PIC</option>
+                <option value="issueSite">Issue Site</option>
+                <option value="categoriComplain">Category</option>
+                <option value="status">Status</option>
+              </select>
+              <button class="secondary" onclick="exportIssueSummary()">📊 Export Summary</button>
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table id="summaryTable">
+              <thead><tr>
+                <th>Group</th>
+                <th>Total</th>
+                <th>Open</th>
+                <th>Closed</th>
+                <th>Orders Impacted</th>
+                <th>Unique Clients</th>
+                <th>Unique PICs</th>
+                <th>Avg Res (d)</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /summary pane -->
+
+    </section>
+
+    <!-- DAILY TRACKER (SALES) -->
+    <section id="dailyTrackerSales" class="menu hidden">
+      <div class="card">
+        <div class="pmHeaderActions">
+          <div class="left">
+            <h2>📅 Daily Tracker — Sales Team</h2>
+            <p style="color:var(--muted);margin:6px 0 0">Track daily tasks for Bryan, Dimas, Gratia, and other sales reps.</p>
+          </div>
+          <div class="right">
+            <button class="primary trkPrimaryBtn" data-team="sales" id="trkSalesAddBtn">+ New Task</button>
+            <button class="secondary" id="trkSalesExportBtn">Export Excel</button>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="active" data-trktab="sales-tasks">📋 Tasks</button>
+          <button data-trktab="sales-weekly">📈 Weekly Report</button>
+        </div>
+      </div>
+
+      <!-- TAB: Tasks (default) -->
+      <div data-trkpane="sales-tasks">
+        <div class="card">
+          <div class="filterGrid">
+            <div><label class="pmLabel">Person</label><select id="trkSalesPerson"><option value="">All</option></select></div>
+            <div><label class="pmLabel">Status</label><select id="trkSalesStatus"><option value="">All</option><option>Open</option><option>In Progress</option><option>Done</option><option>Pending</option><option>Follow Up</option><option>Hold</option></select></div>
+            <div><label class="pmLabel">Date Range</label><select id="trkSalesRange"><option value="today">Today</option><option value="week" selected>This Week</option><option value="month">This Month</option><option value="custom">Custom</option><option value="all">All Time</option></select></div>
+            <div><label class="pmLabel">From</label><input type="date" id="trkSalesFrom"/></div>
+            <div><label class="pmLabel">To</label><input type="date" id="trkSalesTo"/></div>
+          </div>
+          <div class="btns">
+            <button class="primary" id="trkSalesApply">Apply</button>
+            <button class="secondary" id="trkSalesReset">Reset</button>
+          </div>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><b id="trkSalesTotal">0</b><span>Total</span></div>
+          <div class="kpi"><b id="trkSalesDone">0</b><span>Done</span></div>
+          <div class="kpi"><b id="trkSalesOpen">0</b><span>Open / Progress</span></div>
+          <div class="kpi"><b id="trkSalesPct">0%</b><span>Completion</span></div>
+        </div>
+        <div class="card">
+          <h2>Tasks</h2>
+          <div class="tableWrap">
+            <table id="trkSalesTable">
+              <thead><tr>
+                <th>Date</th><th>Day</th><th>Person</th><th>Daily Task</th><th>Status</th><th>Notes</th><th>Actions</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Weekly Report -->
+      <div data-trkpane="sales-weekly" class="hidden">
+        <div id="wkSalesRoot"></div>
+      </div>
+    </section>
+
+    <!-- DAILY TRACKER (SALES SUPPORT) -->
+    <section id="dailyTrackerSS" class="menu hidden">
+      <div class="card">
+        <div class="pmHeaderActions">
+          <div class="left">
+            <h2>📅 Daily Tracker — Sales Support</h2>
+            <p style="color:var(--muted);margin:6px 0 0">Track tasks for Yoga, Farah, Asih, Fauzi, and other SS reps. Tagged Daily / Projection / Improvement.</p>
+          </div>
+          <div class="right">
+            <button class="primary" id="trkSSAddBtn">+ New Task</button>
+            <button class="secondary" id="trkSSExportBtn">Export Excel</button>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="active" data-trktab="ss-tasks">📋 Tasks</button>
+          <button data-trktab="ss-weekly">📈 Weekly Report</button>
+        </div>
+      </div>
+
+      <!-- TAB: Tasks -->
+      <div data-trkpane="ss-tasks">
+        <div class="card">
+          <div class="filterGrid">
+            <div><label class="pmLabel">Person</label><select id="trkSSPerson"><option value="">All</option></select></div>
+            <div><label class="pmLabel">Tag</label><select id="trkSSTag"><option value="">All</option><option>Daily</option><option>Projection</option><option>Improvement</option></select></div>
+            <div><label class="pmLabel">Status</label><select id="trkSSStatus"><option value="">All</option><option>Open</option><option>Progress</option><option>Done</option><option>Hold</option></select></div>
+            <div><label class="pmLabel">Date Range</label><select id="trkSSRange"><option value="today">Today</option><option value="week" selected>This Week</option><option value="month">This Month</option><option value="custom">Custom</option><option value="all">All Time</option></select></div>
+            <div><label class="pmLabel">From</label><input type="date" id="trkSSFrom"/></div>
+            <div><label class="pmLabel">To</label><input type="date" id="trkSSTo"/></div>
+          </div>
+          <div class="btns">
+            <button class="primary" id="trkSSApply">Apply</button>
+            <button class="secondary" id="trkSSReset">Reset</button>
+          </div>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><b id="trkSSTotal">0</b><span>Total</span></div>
+          <div class="kpi"><b id="trkSSDone">0</b><span>Done</span></div>
+          <div class="kpi"><b id="trkSSDaily">0</b><span>Daily Tasks</span></div>
+          <div class="kpi"><b id="trkSSProj">0</b><span>Projection Tasks</span></div>
+        </div>
+        <div class="card">
+          <h2>Tasks</h2>
+          <div class="tableWrap">
+            <table id="trkSSTable">
+              <thead><tr>
+                <th>Week</th><th>Open</th><th>Closed</th><th>Person</th><th>Task</th><th>Tag</th><th>Status</th><th>URL</th><th>Notes</th><th>Actions</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Weekly Report -->
+      <div data-trkpane="ss-weekly" class="hidden">
+        <div id="wkSSRoot"></div>
+      </div>
+    </section>
+
+    <!-- TICKETING (INTERNAL DEPARTMENT TICKETS) -->
+    <section id="ticketing" class="menu hidden">
+      <div class="card">
+        <div class="pmHeaderActions">
+          <div class="left">
+            <span class="pmPill">🏢 Department-wide</span>
+            <h2 style="margin:6px 0 0">🎫 Internal Tickets</h2>
+            <p style="color:var(--muted);margin:6px 0 0">Internal-use only. Cross-team tickets between Sales, SS, Ops, Tech, Finance, etc. Not for external client tickets.</p>
+          </div>
+          <div class="right">
+            <button class="primary" id="ticketAddBtn">+ New Ticket</button>
+            <button class="secondary" id="ticketExportBtn">Export Excel</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="filterGrid">
+          <div><label class="pmLabel">Status</label><select id="tktStatus"><option value="">All</option><option>Open</option><option>In Progress</option><option>Waiting</option><option>Resolved</option><option>Closed</option></select></div>
+          <div><label class="pmLabel">Priority</label><select id="tktPriority"><option value="">All</option><option>Low</option><option>Medium</option><option>High</option><option>Urgent</option></select></div>
+          <div><label class="pmLabel">Department</label><select id="tktDept"><option value="">All</option></select></div>
+          <div><label class="pmLabel">Assignee</label><select id="tktAssignee"><option value="">All</option></select></div>
+          <div><label class="pmLabel">Date Range</label><select id="tktRange"><option value="all">All Time</option><option value="today">Today</option><option value="yesterday">Yesterday</option><option value="thisWeek">This Week</option><option value="thisMonth">This Month</option><option value="last30">Last 30 Days</option><option value="custom">Custom</option></select></div>
+          <div><label class="pmLabel">From</label><input type="date" id="tktFrom"/></div>
+          <div><label class="pmLabel">To</label><input type="date" id="tktTo"/></div>
+          <div><label class="pmLabel">Search</label><input type="text" id="tktSearch" placeholder="Subject, requester…"/></div>
+        </div>
+        <div class="btns">
+          <button class="primary" id="tktApply">Apply</button>
+          <button class="secondary" id="tktReset">Reset</button>
+        </div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><b id="tktKpiTotal">0</b><span>Total</span></div>
+        <div class="kpi"><b id="tktKpiOpen">0</b><span>Open</span></div>
+        <div class="kpi"><b id="tktKpiUrgent">0</b><span>Urgent</span></div>
+        <div class="kpi"><b id="tktKpiResolved">0</b><span>Resolved</span></div>
+      </div>
+      <div class="card">
+        <h2>Tickets</h2>
+        <div class="tableWrap">
+          <table id="ticketTable">
+            <thead><tr>
+              <th>#</th><th>Created</th><th>Requester</th><th>Dept</th><th>Subject</th><th>Priority</th><th>Status</th><th>Assignee</th><th>Actions</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- REVENUE CALCULATOR -->
+    <section id="revenueCalc" class="menu hidden">
+      <div class="card">
+        <div class="pmHeaderActions">
+          <div class="left">
+            <h2>💰 Revenue Calculator</h2>
+            <p style="color:var(--muted);margin:6px 0 0">Calculate monthly revenue per client. Saves scenarios to Firestore.</p>
+          </div>
+          <div class="right">
+            <button class="secondary" id="revResetBtn">Reset</button>
+            <button class="secondary" id="revSaveBtn">Save Scenario</button>
+            <button class="primary" id="revExportBtn">Export Excel</button>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="active" data-revtab="calculator">Calculator</button>
+          <button data-revtab="breakdown">Breakdown</button>
+          <button data-revtab="scenarios">Scenarios</button>
+        </div>
+      </div>
+
+      <!-- Tab: Calculator -->
+      <div id="revTab-calculator" class="revTab">
+        <div class="card">
+          <h2>Client Info</h2>
+          <div class="form-grid">
+            <div class="field"><label>Client Name *</label><input type="text" id="rev_client_name" placeholder="e.g. PT Pero Indonesia"/></div>
+            <div class="field"><label>Sales PIC *</label><input type="text" id="rev_sales_name" placeholder="e.g. Bryan"/></div>
+            <div class="field"><label>Input Date</label><input type="date" id="rev_input_date"/></div>
+            <div class="field"><label>Proposal Status</label>
+              <select id="rev_proposal_status">
+                <option value="draft">Draft</option><option value="review">Review</option>
+                <option value="sent">Terkirim</option><option value="negotiation">Negosiasi</option>
+                <option value="won">Deal / Won</option><option value="lost">Lost</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Activity Base</h2>
+          <div class="form-grid">
+            <div class="field"><label>Working Days / Month</label><input type="number" id="rev_working_days" min="1" max="31"/></div>
+            <div class="field"><label>Vol Sales Orders / Month</label><input type="number" id="rev_vol_orders"/></div>
+            <div class="field"><label>Vol Pcs / Month</label><input type="number" id="rev_vol_pcs"/></div>
+            <div class="field"><label>AIPO (Avg Item per Order)</label><input type="number" id="rev_aipo" step="0.01"/></div>
+            <div class="field"><label>GMV (IDR / Month) — optional</label><input type="number" id="rev_gmv_input"/></div>
+            <div class="field"><label>APPI (IDR / pcs) — optional</label><input type="number" id="rev_appi_input"/></div>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><b id="rev_m_order_day">—</b><span>Orders / Day</span></div>
+          <div class="kpi"><b id="rev_m_pcs_day">—</b><span>Pcs / Day</span></div>
+          <div class="kpi"><b id="rev_m_aov">—</b><span>AOV (IDR)</span></div>
+          <div class="kpi"><b id="rev_m_gmv">—</b><span>GMV (IDR)</span></div>
+        </div>
+
+        <div class="card">
+          <div class="pmHeaderActions"><div class="left"><h2>Revenue Breakdown</h2></div>
+            <div class="right"><button class="secondary" id="rev_autofill_btn">Auto-fill Qty</button></div>
+          </div>
+          <div class="tableWrap"><table>
+            <thead><tr><th></th><th>Activity Charge</th><th>Rate (IDR)</th><th>UoM</th><th>Qty</th><th>Revenue (IDR)</th></tr></thead>
+            <tbody id="rev_body"></tbody>
+            <tfoot><tr><td colspan="5" style="text-align:right">Sub-total</td><td id="rev_sub_total_val">—</td></tr></tfoot>
+          </table></div>
+        </div>
+
+        <div class="card">
+          <div class="pmHeaderActions"><div class="left"><h2>VAS — Value Added Services</h2></div>
+            <div class="right"><button class="secondary" id="rev_vas_add_btn">+ Add Activity</button></div>
+          </div>
+          <div class="tableWrap"><table>
+            <thead><tr><th>VAS Activity</th><th>Rate (IDR)</th><th>UoM</th><th>Qty</th><th>Revenue (IDR)</th><th></th></tr></thead>
+            <tbody id="rev_vas_body"></tbody>
+            <tfoot><tr><td colspan="4" style="text-align:right">Total VAS</td><td id="rev_vas_total">—</td><td></td></tr></tfoot>
+          </table></div>
+          <p class="small" id="rev_vas_empty">No VAS activities yet.</p>
+        </div>
+
+        <div class="card">
+          <div class="pmHeaderActions">
+            <div class="left"><h2>B2B — Business to Business</h2></div>
+            <div class="right"><label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="rev_b2b_on"/> Enable B2B</label></div>
+          </div>
+          <div id="rev_b2b_content" class="hidden">
+            <div class="tableWrap"><table>
+              <thead><tr><th></th><th>B2B Activity</th><th>Rate (IDR)</th><th>UoM</th><th>Order / Qty</th><th>Total Box</th><th>Amount (IDR)</th></tr></thead>
+              <tbody id="rev_b2b_body"></tbody>
+              <tfoot><tr><td colspan="6" style="text-align:right">Total B2B</td><td id="rev_b2b_total">—</td></tr></tfoot>
+            </table></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="pmHeaderActions">
+            <div class="left"><h2>Minimum Billing</h2></div>
+            <div class="right"><label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="rev_min_billing_on"/> Enable</label></div>
+          </div>
+          <div class="form-grid">
+            <div class="field"><label>Minimum Billing (IDR / Month)</label><input type="number" id="rev_min_billing_value"/></div>
+            <div class="field"><label>Status</label><div id="rev_min_billing_status" class="output" style="min-height:36px">Not active</div></div>
+          </div>
+        </div>
+
+        <div class="totalBox">
+          <div>
+            <div class="t-label">Total Monthly Revenue (Final)</div>
+            <div class="t-sub" id="rev_total_sub">—</div>
+          </div>
+          <div class="t-value" id="rev_total_value">IDR 0</div>
+        </div>
+      </div>
+
+      <!-- Tab: Breakdown -->
+      <div id="revTab-breakdown" class="revTab hidden">
+        <div class="card">
+          <h2>Revenue Composition</h2>
+          <canvas id="revChartBreakdown" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- Tab: Scenarios -->
+      <div id="revTab-scenarios" class="revTab hidden">
+        <div class="card">
+          <h2>Saved Scenarios</h2>
+          <p class="small">Click a scenario to load it into the calculator.</p>
+          <div class="tableWrap"><table>
+            <thead><tr><th>Saved At</th><th>Client</th><th>Sales</th><th>Status</th><th>Total Revenue</th><th>Actions</th></tr></thead>
+            <tbody id="rev_scenarios_body"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEGACY: Projection Management -->
+    <section id="projectManagement" class="menu hidden">
+      <div class="card">
+        <div class="pmDetailTop">
+          <div>
+            <h2>Projection Management</h2>
+            <p>Lightweight project management for client onboarding: timeline, requirements, communication matrix.</p>
+          </div>
+          <span class="pmPill">Sales Support · Flow</span>
+        </div>
+      </div>
+      <div id="pmRoot" class="pmWrap"></div>
+    </section>
+
+    <!-- LEGACY: Merger System -->
+    <section id="mergerSystem" class="menu hidden">
+      <div id="mergerHost"></div>
+    </section>
+
+    <!-- LEGACY: Order Processing -->
+    <section id="orderProcessing" class="menu hidden">
+      <div id="orderHost"></div>
+    </section>
+
+    <!-- LEGACY: Daily Reconcile -->
+    <section id="dailyReconcile" class="menu hidden">
+      <div id="reconcileHost"></div>
+    </section>
+
+    <!-- LEGACY: Weekly Report Generator (Sales Support Mega Apps v21) -->
+    <section id="weeklyReportGen" class="menu hidden">
+      <div id="weeklyReportHost"></div>
+    </section>
+
+    <!-- LEGACY: Forecast Orders Generator (Sales Support Mega Apps v21, added v3.9.8) -->
+    <section id="forecastOrdersGen" class="menu hidden">
+      <div id="forecastOrdersHost"></div>
+    </section>
+
+    <!-- USERS (Admin only) -->
+    <section id="oneOnOne" class="menu hidden">
+      <div id="oneOnOneRoot"></div>
+    </section>
+
+    <section id="masterData" class="menu hidden">
+      <div id="masterDataRoot"></div>
+    </section>
+
+    <section id="users" class="menu hidden">
+      <div id="usersRoot"></div>
+    </section>
+  </main>
+</div>
+
+<!-- ISSUE MODAL — matches SS Daily Issue sheet schema -->
+<div id="issueModal" class="modal hidden">
+  <div class="modalBox" style="max-width:780px">
+    <div class="modalCloseBar"><button type="button" class="modalClose" aria-label="Close">×</button></div>
+    <h2 id="issueModalTitle">New Issue</h2>
+    <div class="form-grid">
+      <div class="field"><label>Update By (PIC) *</label><select id="im_updateBy"><option value="">— Select PIC —</option></select></div>
+      <div class="field">
+        <label>Client *</label>
+        <div id="im_client_dd" class="dd"></div>
+        <input type="hidden" id="im_client"/>
+      </div>
+      <div class="field"><label>Complain Date *</label><input type="date" id="im_complainDate"/></div>
+      <div class="field"><label>Solving Date <span class="small" style="color:var(--muted)">(auto-set on close)</span></label><input type="date" id="im_solvingDate"/></div>
+      <div class="field"><label>Status *</label><select id="im_status"><option>Open</option><option>Close</option></select></div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Order Code(s) — type and press Enter to add multiple <span id="im_orderCodeCount" class="small" style="color:var(--muted);margin-left:8px">0 order(s)</span></label>
+        <div id="im_orderCodesWrap" class="chipInputWrap">
+          <input type="text" id="im_orderCodeInput" placeholder="e.g. FLOW_240126UDXDAYMB · press Enter to add"/>
+        </div>
+        <p class="small" style="margin:6px 0 0;color:var(--muted)">Add one order code at a time. Multiple orders can share the same issue — the count appears in exports as "Order Count".</p>
+      </div>
+      <div class="field"><label>Issue Site *</label>
+        <select id="im_issueSite">
+          <option>Outbound</option><option>Commercial</option><option>Lastmile</option>
+          <option>Technology</option><option>Inbound</option><option>Buyer</option>
+          <option>Client</option><option>Inventory</option><option>Marketplace</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Categori Complain *</label>
+        <div id="im_categori_dd" class="dd"></div>
+        <input type="hidden" id="im_categori"/>
+      </div>
+    </div>
+    <label class="pmLabel">Details Complain</label>
+    <textarea id="im_details" rows="2" placeholder="Detailed description of the complaint…"></textarea>
+    <label class="pmLabel">Root Cause</label>
+    <textarea id="im_rootCause" rows="2" placeholder="Why did this happen?"></textarea>
+    <label class="pmLabel">Short Term Solution</label>
+    <textarea id="im_shortTerm" rows="2" placeholder="Immediate fix…"></textarea>
+    <label class="pmLabel">Long Term Solution</label>
+    <textarea id="im_longTerm" rows="2" placeholder="Permanent prevention…"></textarea>
+    <label class="pmLabel">Notes</label>
+    <textarea id="im_notes" rows="2" placeholder="Other notes…"></textarea>
+    <datalist id="clientsList"></datalist>
+    <datalist id="picsList"></datalist>
+    <datalist id="categoriList"></datalist>
+    <div class="btns" style="justify-content:flex-end;margin-top:14px">
+      <button class="secondary" id="issueModalCancel">Cancel</button>
+      <button class="primary" id="issueModalSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TASK MODAL (shared by Sales & SS daily tracker) -->
+<div id="taskModal" class="modal hidden">
+  <div class="modalBox">
+    <div class="modalCloseBar"><button type="button" class="modalClose" aria-label="Close">×</button></div>
+    <h2 id="taskModalTitle">New Task</h2>
+    <div class="form-grid">
+      <div class="field"><label>Person *</label><select id="tm_person"><option value="">— Select person —</option></select></div>
+      <div class="field"><label>Date *</label><input type="date" id="tm_date"/></div>
+      <div class="field"><label>Status *</label><select id="tm_status"></select></div>
+      <div class="field tm-tag-field"><label>Tag</label><select id="tm_tag"><option>Daily</option><option>Projection</option><option>Improvement</option></select></div>
+    </div>
+    <label class="pmLabel">Daily Task *</label>
+    <textarea id="tm_task" rows="2"></textarea>
+    <label class="pmLabel">Notes</label>
+    <textarea id="tm_notes" rows="2"></textarea>
+    <label class="pmLabel tm-url-field">URL (optional)</label>
+    <input type="url" id="tm_url" class="tm-url-field" placeholder="https://…"/>
+    <div class="btns" style="justify-content:flex-end;margin-top:14px">
+      <button class="secondary" id="taskModalCancel">Cancel</button>
+      <button class="primary" id="taskModalSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TICKET MODAL (Internal-only) -->
+<div id="ticketModal" class="modal hidden">
+  <div class="modalBox" style="max-width:780px">
+    <div class="modalCloseBar"><button type="button" class="modalClose" aria-label="Close">×</button></div>
+    <h2 id="ticketModalTitle">New Internal Ticket</h2>
+    <div class="form-grid">
+      <div class="field"><label>Priority *</label><select id="tkm_priority"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div>
+      <div class="field"><label>Status *</label><select id="tkm_status"><option>Open</option><option>In Progress</option><option>Waiting</option><option>Resolved</option><option>Closed</option></select></div>
+      <div class="field"><label>Requester *</label><input type="text" id="tkm_requester"/></div>
+      <div class="field">
+        <label id="tkm_dept_label">Department *</label>
+        <div id="tkm_dept_dd" class="dd"></div>
+        <input type="hidden" id="tkm_dept"/>
+      </div>
+      <div class="field"><label>Assignee</label><select id="tkm_assignee"><option value="">— Unassigned —</option></select></div>
+      <!-- hidden type field for backwards compatibility — always "internal" -->
+      <input type="hidden" id="tkm_type" value="internal"/>
+    </div>
+    <label class="pmLabel">Subject *</label>
+    <input type="text" id="tkm_subject" placeholder="Short summary…"/>
+    <label class="pmLabel">Description *</label>
+    <textarea id="tkm_description" rows="4"></textarea>
+
+    <!-- Comments thread (only visible when editing existing ticket) -->
+    <div id="tkm_commentsWrap" class="hidden" style="margin-top:18px">
+      <label class="pmLabel">💬 Comments / Activity</label>
+      <div id="tkm_commentsList" class="commentsList"></div>
+      <div class="commentBox">
+        <textarea id="tkm_commentInput" rows="2" placeholder="Add a comment… (visible to your team)"></textarea>
+        <button class="primary" id="tkm_commentAdd">Add Comment</button>
+      </div>
+    </div>
+
+    <div class="btns" style="justify-content:flex-end;margin-top:14px">
+      <button class="secondary" id="ticketModalCancel">Cancel</button>
+      <button class="primary" id="ticketModalSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+<!-- Legacy functions (global) — for merger/order/reconcile/projection inline handlers -->
+<script src="js/legacy/legacy-global.js"></script>
+
+<!-- App scripts (ES modules) -->
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
