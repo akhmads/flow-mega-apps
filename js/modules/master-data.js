@@ -391,6 +391,7 @@ export async function archiveMasterItem(kind, id) {
 }
 
 export async function unarchiveMasterItem(kind, id) {
+  if (!canEditMasterData()) throw new Error("You don't have permission to edit master data");
   const item = cache[kind].find(x => x.id === id);
   if (!item) throw new Error("Item not found");
   await updateDocument(getColName(kind), id, { archived: false });
@@ -418,7 +419,7 @@ export async function updateClientPics(id, defaultSalesPic, defaultSsPic) {
 }
 
 function getColName(kind) {
-  return { departments: COL.DEPARTMENTS, clients: COL.CLIENTS, issueCategories: COL.ISSUE_CATEGORIES }[kind];
+  return { departments: COL.DEPARTMENTS, clients: COL.CLIENTS, issueCategories: COL.ISSUE_CATEGORIES, oneOnOneQuestions: COL.ONE_ON_ONE_QUESTIONS }[kind];
 }
 
 // ============================================================
@@ -583,67 +584,74 @@ function renderDeptsTable() {
 
 // ---------------- CLIENTS PANE ----------------
 function renderClientsPane() {
+  const editable = canEditMasterData();
   $("mdContent").innerHTML = `
     <div class="card">
       <h2>🤝 Clients</h2>
       <p class="small" style="color:var(--muted)">Set a default Sales PIC and SS PIC per client to auto-fill when logging issues.</p>
-      <div class="mdAddRow">
-        <input type="text" id="md_cliInput" placeholder="e.g. PERO"/>
-        <button class="primary" id="md_cliAdd">+ Add</button>
-        <button class="secondary" onclick="document.getElementById('md_cliBulk').classList.toggle('hidden')">📋 Bulk paste</button>
-      </div>
-      <div id="md_cliBulk" class="mdBulk hidden">
-        <textarea id="md_cliBulkInput" rows="4" placeholder="Paste one client per line…"></textarea>
-        <button class="primary" id="md_cliBulkAdd">Add All</button>
-        <button class="secondary" onclick="document.getElementById('md_cliBulk').classList.add('hidden')">Cancel</button>
-      </div>
+      ${editable ? `
+        <div class="mdAddRow">
+          <input type="text" id="md_cliInput" placeholder="e.g. PERO"/>
+          <button class="primary" id="md_cliAdd">+ Add</button>
+          <button class="secondary" onclick="document.getElementById('md_cliBulk').classList.toggle('hidden')">📋 Bulk paste</button>
+        </div>
+        <div id="md_cliBulk" class="mdBulk hidden">
+          <textarea id="md_cliBulkInput" rows="4" placeholder="Paste one client per line…"></textarea>
+          <button class="primary" id="md_cliBulkAdd">Add All</button>
+          <button class="secondary" onclick="document.getElementById('md_cliBulk').classList.add('hidden')">Cancel</button>
+        </div>
+      ` : `<p class="small" style="color:var(--muted);font-style:italic;margin-top:10px">🔒 View-only mode — contact your Admin or Supervisor to add or modify clients.</p>`}
       <div class="tableWrap" style="margin-top:14px">
         <table id="md_cliTable">
-          <thead><tr><th>Client</th><th>Default Sales PIC</th><th>Default SS PIC</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead>
+          <thead><tr><th>Client</th><th>Default Sales PIC</th><th>Default SS PIC</th><th>Status</th>${editable ? '<th style="text-align:right">Actions</th>' : ''}</tr></thead>
           <tbody></tbody>
         </table>
       </div>
     </div>
   `;
-  $("md_cliAdd").onclick = async () => {
-    const name = $("md_cliInput").value.trim();
-    if (!name) return toast("Enter a name", "error");
-    // Fuzzy check for near-duplicates
-    const activeNames = cache.clients.filter(c => !c.archived).map(c => c.name);
-    const near = findNearestMatch(name, activeNames);
-    if (near && near.name.toLowerCase() !== name.toLowerCase()) {
-      if (!confirm(`Warning: similar client "${near.name}" already exists.\n\nCreate "${name}" anyway?`)) return;
-    }
-    try {
-      await addMasterItem("clients", name);
-      $("md_cliInput").value = "";
-      toast("Client added", "success");
-    } catch (e) { toast(e.message, "error"); }
-  };
-  $("md_cliBulkAdd").onclick = async () => {
-    const lines = $("md_cliBulkInput").value.split(/\n/).map(s => s.trim()).filter(Boolean);
-    if (!lines.length) return toast("Paste at least one name", "error");
-    let ok = 0, dup = 0;
-    for (const name of lines) {
-      try { await addMasterItem("clients", name); ok++; }
-      catch (e) { if (e.message?.includes("exists")) dup++; }
-    }
-    $("md_cliBulkInput").value = "";
-    $("md_cliBulk").classList.add("hidden");
-    toast(`Added ${ok}${dup ? ` · ${dup} duplicates skipped` : ""}`, "success");
-  };
+  if (editable) {
+    $("md_cliAdd").onclick = async () => {
+      const name = $("md_cliInput").value.trim();
+      if (!name) return toast("Enter a name", "error");
+      // Fuzzy check for near-duplicates
+      const activeNames = cache.clients.filter(c => !c.archived).map(c => c.name);
+      const near = findNearestMatch(name, activeNames);
+      if (near && near.name.toLowerCase() !== name.toLowerCase()) {
+        if (!confirm(`Warning: similar client "${near.name}" already exists.\n\nCreate "${name}" anyway?`)) return;
+      }
+      try {
+        await addMasterItem("clients", name);
+        $("md_cliInput").value = "";
+        toast("Client added", "success");
+      } catch (e) { toast(e.message, "error"); }
+    };
+    $("md_cliBulkAdd").onclick = async () => {
+      const lines = $("md_cliBulkInput").value.split(/\n/).map(s => s.trim()).filter(Boolean);
+      if (!lines.length) return toast("Paste at least one name", "error");
+      let ok = 0, dup = 0;
+      for (const name of lines) {
+        try { await addMasterItem("clients", name); ok++; }
+        catch (e) { if (e.message?.includes("exists")) dup++; }
+      }
+      $("md_cliBulkInput").value = "";
+      $("md_cliBulk").classList.add("hidden");
+      toast(`Added ${ok}${dup ? ` · ${dup} duplicates skipped` : ""}`, "success");
+    };
+  }
   renderClientsTable();
 }
 
 function renderClientsTable() {
   const tbody = $("md_cliTable")?.querySelector("tbody");
   if (!tbody) return;
+  const editable = canEditMasterData();
   const items = [...cache.clients].sort((a, b) => {
     if (a.archived !== b.archived) return a.archived ? 1 : -1;
     return a.name.localeCompare(b.name);
   });
+  const colCount = editable ? 5 : 4;
   if (!items.length) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">No clients yet. Add some or bulk-paste.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;color:var(--muted);padding:24px">No clients yet.${editable ? ' Add some or bulk-paste.' : ''}</td></tr>`;
     return;
   }
   const salesOpts = `<option value="">— None —</option>` +
@@ -654,41 +662,43 @@ function renderClientsTable() {
   tbody.innerHTML = items.map(c => `
     <tr class="${c.archived ? "rowArchived" : ""}">
       <td><b>${esc(c.name)}</b></td>
-      <td><select data-clientpic-sales="${c.id}" ${c.archived ? "disabled" : ""}>${salesOpts.replace(`value="${esc(c.defaultSalesPic || "")}"`, `value="${esc(c.defaultSalesPic || "")}" selected`)}</select></td>
-      <td><select data-clientpic-ss="${c.id}" ${c.archived ? "disabled" : ""}>${ssOpts.replace(`value="${esc(c.defaultSsPic || "")}"`, `value="${esc(c.defaultSsPic || "")}" selected`)}</select></td>
+      <td><select data-clientpic-sales="${c.id}" ${c.archived || !editable ? "disabled" : ""}>${salesOpts.replace(`value="${esc(c.defaultSalesPic || "")}"`, `value="${esc(c.defaultSalesPic || "")}" selected`)}</select></td>
+      <td><select data-clientpic-ss="${c.id}" ${c.archived || !editable ? "disabled" : ""}>${ssOpts.replace(`value="${esc(c.defaultSsPic || "")}"`, `value="${esc(c.defaultSsPic || "")}" selected`)}</select></td>
       <td>${c.archived ? '<span class="badge badge-on-hold">Archived</span>' : '<span class="badge badge-active">Active</span>'}</td>
-      <td style="text-align:right">
+      ${editable ? `<td style="text-align:right">
         <button class="secondary iconBtn" data-rename="${c.id}">Rename</button>
         ${c.archived
           ? `<button class="secondary iconBtn" data-unarchive="${c.id}">Restore</button>${canHardDelete() ? ` <button class="btnHardDelete" data-harddel="${c.id}">🗑️ Delete Forever</button>` : ""}`
           : `<button class="danger iconBtn" data-archive="${c.id}">Archive</button>`}
-      </td>
+      </td>` : ''}
     </tr>
   `).join("");
 
-  // PIC selectors auto-save on change
-  tbody.querySelectorAll("[data-clientpic-sales]").forEach(sel => {
-    sel.addEventListener("change", async () => {
-      const id = sel.dataset.clientpicSales;
-      const client = cache.clients.find(c => c.id === id);
-      try {
-        await updateClientPics(id, sel.value, client?.defaultSsPic || "");
-        toast(`PIC updated for ${client?.name}`, "success");
-      } catch (e) { toast(e.message, "error"); }
+  if (editable) {
+    // PIC selectors auto-save on change
+    tbody.querySelectorAll("[data-clientpic-sales]").forEach(sel => {
+      sel.addEventListener("change", async () => {
+        const id = sel.dataset.clientpicSales;
+        const client = cache.clients.find(c => c.id === id);
+        try {
+          await updateClientPics(id, sel.value, client?.defaultSsPic || "");
+          toast(`PIC updated for ${client?.name}`, "success");
+        } catch (e) { toast(e.message, "error"); }
+      });
     });
-  });
-  tbody.querySelectorAll("[data-clientpic-ss]").forEach(sel => {
-    sel.addEventListener("change", async () => {
-      const id = sel.dataset.clientpicSs;
-      const client = cache.clients.find(c => c.id === id);
-      try {
-        await updateClientPics(id, client?.defaultSalesPic || "", sel.value);
-        toast(`PIC updated for ${client?.name}`, "success");
-      } catch (e) { toast(e.message, "error"); }
+    tbody.querySelectorAll("[data-clientpic-ss]").forEach(sel => {
+      sel.addEventListener("change", async () => {
+        const id = sel.dataset.clientpicSs;
+        const client = cache.clients.find(c => c.id === id);
+        try {
+          await updateClientPics(id, client?.defaultSalesPic || "", sel.value);
+          toast(`PIC updated for ${client?.name}`, "success");
+        } catch (e) { toast(e.message, "error"); }
+      });
     });
-  });
 
-  wireRowActions("clients", tbody);
+    wireRowActions("clients", tbody);
+  }
 }
 
 // ---------------- ISSUE CATEGORIES PANE ----------------

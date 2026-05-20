@@ -111,7 +111,7 @@ const PERSONAL_QUESTIONS = new Proxy([], {
     if (prop === "forEach") return arr.forEach.bind(arr);
     if (prop === "map") return arr.map.bind(arr);
     if (prop === "filter") return arr.filter.bind(arr);
-    if (!isNaN(prop)) return arr[prop];
+    if (typeof prop === "string" && !isNaN(prop)) return arr[prop];
     return arr[prop];
   }
 });
