@@ -97,6 +97,7 @@ function bindEvents() {
   $("issueAddBtn").addEventListener("click", () => openModal());
   $("issueExportBtn").addEventListener("click", exportExcel);
   $("issuePicReportBtn").addEventListener("click", exportPicReport);
+  $("issueMbrBtn").addEventListener("click", exportMBR);
   $("issueImportBtn").addEventListener("click", () => $("issueImportFile").click());
   $("issueImportFile").addEventListener("change", importExcel);
 
@@ -204,6 +205,7 @@ function applyFilters() {
 
   renderTable();
   renderKPIs();
+  renderDataHealth();
   renderCharts();
   if (currentTab === "summary") renderSummary();
 }
@@ -413,6 +415,14 @@ async function quickToggleClose(id, isClosed) {
   const update = { status: newStatus };
   if (isClosed && !issue.solvingDate) {
     update.solvingDate = today();
+  }
+  // Recompute resolutionDays on status change
+  if (isClosed && issue.complainDate) {
+    const solving = update.solvingDate || issue.solvingDate;
+    if (solving) update.resolutionDays = Math.max(0, daysBetween(issue.complainDate, solving));
+  }
+  if (!isClosed) {
+    update.resolutionDays = null;
   }
   try {
     await updateDocument(COL.ISSUES, id, update);
@@ -888,6 +898,24 @@ async function saveIssue() {
   if (!data.complainDate) return toast("Complain Date is required", "error");
   if (!data.categoriComplain) return toast("Categori Complain is required", "error");
 
+  // Date sanity checks — catch typos and accidental future dates
+  if (cDate && cDate > new Date()) {
+    return toast("Complain Date cannot be in the future", "error");
+  }
+  if (data.solvingDate && cDate) {
+    const sDate = new Date(data.solvingDate);
+    if (sDate < cDate) {
+      return toast("Solving Date cannot be before Complain Date", "error");
+    }
+  }
+
+  // Compute resolution days for SLA tracking (only when both dates exist)
+  if (data.complainDate && data.solvingDate) {
+    data.resolutionDays = Math.max(0, daysBetween(data.complainDate, data.solvingDate));
+  } else {
+    data.resolutionDays = null;
+  }
+
   try {
     if (editingId) {
       await updateDocument(COL.ISSUES, editingId, data);
@@ -990,27 +1018,308 @@ function exportPicReport() {
 function exportExcel() {
   if (!filteredIssues.length) return toast("No issues to export", "error");
   const rows = [[
-    "Update By", "Complain Date", "Solving Date", "Years", "Week",
+    "Update By", "Complain Date", "Solving Date", "Resolution Days",
+    "Years", "Week",
     "Client", "Order Code", "Order Count", "Issue Site", "Categori Complain",
     "Details Complain", "Root Cause", "Short Term Solution",
-    "Long Term Solution", "Status", "Notes"
+    "Long Term Solution", "Status", "Notes",
+    "Created By", "Created At", "Updated By", "Updated At"
   ]];
   filteredIssues.forEach(i => {
     const codes = toOrderCodesArray(i);
-    const codeCell = codes.length > 3
-      ? `${codes[0]} + ${codes.length - 1} more`
-      : codes.join(", ");
+    // Full order codes — no truncation so MBR data is complete
+    const codeCell = codes.join("; ");
+    const resDays = (i.resolutionDays != null)
+      ? i.resolutionDays
+      : (i.status === "Close" && i.complainDate && i.solvingDate)
+        ? Math.max(0, daysBetween(i.complainDate, i.solvingDate))
+        : "";
     rows.push([
       i.updateBy || "", toDateStr(i.complainDate), toDateStr(i.solvingDate),
+      resDays,
       i.years || "", i.week || "",
       i.client || "", codeCell, codes.length, i.issueSite || "", i.categoriComplain || "",
       i.detailsComplain || "", i.rootCause || "", i.shortTermSolution || "",
-      i.longTermSolution || "", i.status || "", i.notes || ""
+      i.longTermSolution || "", i.status || "", i.notes || "",
+      i.createdBy || "", toDateStr(i.createdAt) || "",
+      i.updatedBy || "", toDateStr(i.updatedAt) || ""
     ]);
   });
   const filename = `Flow_Daily_Issues_${today()}.xlsx`;
   downloadXLSX(rows, filename, "Daily Issues");
   toast("Exported " + filename, "success");
+}
+
+// ============================================================
+// DATA HEALTH — surface dirty data before it hits MBR reports
+// ============================================================
+function renderDataHealth() {
+  const el = $("issueDataHealth");
+  if (!el) return;
+  const issues = filteredIssues;
+  if (!issues.length) { el.classList.add("hidden"); return; }
+
+  const masterClients = getMasterData("clients");
+  const warnings = [];
+
+  const noRootCause = issues.filter(i => !i.rootCause?.trim()).length;
+  if (noRootCause) warnings.push(`<b>${noRootCause}</b> issue(s) missing Root Cause`);
+
+  const closedNoSolving = issues.filter(i => i.status === "Close" && !i.solvingDate).length;
+  if (closedNoSolving) warnings.push(`<b>${closedNoSolving}</b> closed issue(s) missing Solving Date`);
+
+  const futureDate = issues.filter(i => i.complainDate && new Date(i.complainDate) > new Date()).length;
+  if (futureDate) warnings.push(`<b>${futureDate}</b> issue(s) with Complain Date in the future`);
+
+  const solvingBeforeComplain = issues.filter(i =>
+    i.complainDate && i.solvingDate && new Date(i.solvingDate) < new Date(i.complainDate)).length;
+  if (solvingBeforeComplain) warnings.push(`<b>${solvingBeforeComplain}</b> issue(s) where Solving Date is before Complain Date`);
+
+  if (masterClients.length) {
+    const unknownClients = [...new Set(issues.map(i => i.client).filter(Boolean))]
+      .filter(c => !masterClients.includes(c));
+    if (unknownClients.length) warnings.push(`<b>${unknownClients.length}</b> client(s) not in Master Data: ${unknownClients.slice(0, 5).map(c => esc(c)).join(", ")}${unknownClients.length > 5 ? "..." : ""}`);
+  }
+
+  const noDetails = issues.filter(i => !i.detailsComplain?.trim() && !i.rootCause?.trim()).length;
+  if (noDetails) warnings.push(`<b>${noDetails}</b> issue(s) missing both Details and Root Cause`);
+
+  if (!warnings.length) { el.classList.add("hidden"); return; }
+
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <h2 style="margin:0 0 8px;font-size:15px">&#9888;&#65039; Data Health Check <span class="small" style="color:var(--muted);font-weight:normal">(${warnings.length} warning${warnings.length > 1 ? "s" : ""} in filtered data)</span></h2>
+    <ul style="margin:0;padding-left:20px;line-height:1.7">${warnings.map(w => `<li>${w}</li>`).join("")}</ul>
+    <p class="small" style="margin:8px 0 0;color:var(--muted)">Clean these up before generating MBR reports. Click any issue in the table below to edit.</p>
+  `;
+}
+
+// ============================================================
+// MBR EXPORT — Client-scoped Monthly Business Review
+//
+// Generates a multi-sheet Excel workbook:
+//   Sheet 1: "Executive Summary" — per-client KPIs for the period
+//   Sheet 2: "Issue Detail"      — full row-level data for the period
+//   Sheet 3: "By Site"           — breakdown by Issue Site
+//   Sheet 4: "By Category"       — breakdown by Category
+//   Sheet 5: "Top Root Causes"   — most common root causes
+//   Sheet 6: "SLA"               — resolution time distribution
+//   Sheet 7: "Weekly Trend"      — issues per week
+// ============================================================
+function exportMBR() {
+  if (!filteredIssues.length) return toast("No issues match current filters — set your date range first", "error");
+  if (typeof XLSX === "undefined") return toast("XLSX library not loaded", "error");
+
+  const wb = XLSX.utils.book_new();
+
+  // --- Group by client ---
+  const byClient = {};
+  filteredIssues.forEach(i => {
+    const c = i.client || "Unknown";
+    if (!byClient[c]) byClient[c] = [];
+    byClient[c].push(i);
+  });
+  const clientNames = Object.keys(byClient).sort();
+
+  // ---- Sheet 1: Executive Summary ----
+  const execRows = [
+    ["FLOW Monthly Business Review — Issue Summary"],
+    [`Period: ${$("fltFrom").value || "All"} to ${$("fltTo").value || "All"} | Range: ${$("fltRange").value} | Generated: ${today()}`],
+    [],
+    ["Client", "Total Issues", "Open", "Closed", "Close Rate %",
+     "Orders Impacted", "Avg Resolution (days)", "SLA <= 3d %",
+     "Top Issue Site", "Top Category", "Top Root Cause"]
+  ];
+
+  clientNames.forEach(client => {
+    const items = byClient[client];
+    const open = items.filter(i => i.status === "Open").length;
+    const closed = items.filter(i => i.status === "Close").length;
+    const closeRate = items.length ? Math.round(closed / items.length * 100) : 0;
+    const orders = items.reduce((s, i) => s + toOrderCodesArray(i).length, 0);
+    const resDays = items
+      .filter(i => i.status === "Close" && i.complainDate && i.solvingDate)
+      .map(i => i.resolutionDays != null ? i.resolutionDays : Math.max(0, daysBetween(i.complainDate, i.solvingDate)));
+    const avgRes = resDays.length ? Math.round(resDays.reduce((a, b) => a + b, 0) / resDays.length) : "";
+    const sla3d = resDays.length ? Math.round(resDays.filter(d => d <= 3).length / resDays.length * 100) : "";
+
+    const topSite = topN(items, "issueSite", 1)[0];
+    const topCat = topN(items, "categoriComplain", 1)[0];
+    const topRC = topN(items.filter(i => i.rootCause?.trim()), "rootCause", 1)[0];
+
+    execRows.push([
+      client, items.length, open, closed, closeRate + "%",
+      orders, avgRes, sla3d ? sla3d + "%" : "",
+      topSite ? topSite.key : "", topCat ? topCat.key : "",
+      topRC ? topRC.key : ""
+    ]);
+  });
+
+  // Totals row
+  const totalOpen = filteredIssues.filter(i => i.status === "Open").length;
+  const totalClosed = filteredIssues.filter(i => i.status === "Close").length;
+  const totalOrders = filteredIssues.reduce((s, i) => s + toOrderCodesArray(i).length, 0);
+  const allResDays = filteredIssues
+    .filter(i => i.status === "Close" && i.complainDate && i.solvingDate)
+    .map(i => i.resolutionDays != null ? i.resolutionDays : Math.max(0, daysBetween(i.complainDate, i.solvingDate)));
+  const totalAvgRes = allResDays.length ? Math.round(allResDays.reduce((a, b) => a + b, 0) / allResDays.length) : "";
+  const totalSla3d = allResDays.length ? Math.round(allResDays.filter(d => d <= 3).length / allResDays.length * 100) : "";
+  execRows.push([]);
+  execRows.push([
+    "TOTAL", filteredIssues.length, totalOpen, totalClosed,
+    filteredIssues.length ? Math.round(totalClosed / filteredIssues.length * 100) + "%" : "",
+    totalOrders, totalAvgRes, totalSla3d ? totalSla3d + "%" : "", "", "", ""
+  ]);
+
+  const wsExec = XLSX.utils.aoa_to_sheet(execRows);
+  wsExec["!cols"] = [
+    { wch: 25 }, { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 12 },
+    { wch: 16 }, { wch: 18 }, { wch: 12 },
+    { wch: 18 }, { wch: 25 }, { wch: 30 }
+  ];
+  XLSX.utils.book_append_sheet(wb, wsExec, "Executive Summary");
+
+  // ---- Sheet 2: Issue Detail ----
+  const detailRows = [[
+    "Client", "Update By", "Complain Date", "Solving Date", "Resolution Days",
+    "Year", "Week", "Order Codes", "Order Count",
+    "Issue Site", "Category", "Details", "Root Cause",
+    "Short Term Solution", "Long Term Solution", "Status", "Notes"
+  ]];
+  filteredIssues.forEach(i => {
+    const codes = toOrderCodesArray(i);
+    const resDays = (i.resolutionDays != null)
+      ? i.resolutionDays
+      : (i.status === "Close" && i.complainDate && i.solvingDate)
+        ? Math.max(0, daysBetween(i.complainDate, i.solvingDate))
+        : "";
+    detailRows.push([
+      i.client || "", i.updateBy || "",
+      toDateStr(i.complainDate), toDateStr(i.solvingDate), resDays,
+      i.years || "", i.week || "",
+      codes.join("; "), codes.length,
+      i.issueSite || "", i.categoriComplain || "",
+      i.detailsComplain || "", i.rootCause || "",
+      i.shortTermSolution || "", i.longTermSolution || "",
+      i.status || "", i.notes || ""
+    ]);
+  });
+  const wsDetail = XLSX.utils.aoa_to_sheet(detailRows);
+  wsDetail["!cols"] = [
+    { wch: 20 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 14 },
+    { wch: 6 }, { wch: 6 }, { wch: 30 }, { wch: 10 },
+    { wch: 14 }, { wch: 25 }, { wch: 40 }, { wch: 40 },
+    { wch: 40 }, { wch: 40 }, { wch: 8 }, { wch: 30 }
+  ];
+  XLSX.utils.book_append_sheet(wb, wsDetail, "Issue Detail");
+
+  // ---- Sheet 3: By Site ----
+  const siteRows = [["Issue Site", "Total", "Open", "Closed", "Close Rate %", "Orders Impacted", "Avg Resolution (days)"]];
+  const bySite = {};
+  filteredIssues.forEach(i => {
+    const s = i.issueSite || "Unknown";
+    if (!bySite[s]) bySite[s] = { total: 0, open: 0, close: 0, orders: 0, days: [] };
+    bySite[s].total++;
+    if (i.status === "Open") bySite[s].open++;
+    if (i.status === "Close") bySite[s].close++;
+    bySite[s].orders += toOrderCodesArray(i).length;
+    if (i.status === "Close" && i.complainDate && i.solvingDate) {
+      bySite[s].days.push(i.resolutionDays != null ? i.resolutionDays : Math.max(0, daysBetween(i.complainDate, i.solvingDate)));
+    }
+  });
+  Object.entries(bySite).sort((a, b) => b[1].total - a[1].total).forEach(([site, v]) => {
+    const avg = v.days.length ? Math.round(v.days.reduce((a, b) => a + b, 0) / v.days.length) : "";
+    siteRows.push([site, v.total, v.open, v.close, v.total ? Math.round(v.close / v.total * 100) + "%" : "", v.orders, avg]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(siteRows), "By Site");
+
+  // ---- Sheet 4: By Category ----
+  const catRows = [["Category", "Total", "Open", "Closed", "Close Rate %", "Orders Impacted", "Avg Resolution (days)"]];
+  const byCat = {};
+  filteredIssues.forEach(i => {
+    const c = i.categoriComplain || "Unknown";
+    if (!byCat[c]) byCat[c] = { total: 0, open: 0, close: 0, orders: 0, days: [] };
+    byCat[c].total++;
+    if (i.status === "Open") byCat[c].open++;
+    if (i.status === "Close") byCat[c].close++;
+    byCat[c].orders += toOrderCodesArray(i).length;
+    if (i.status === "Close" && i.complainDate && i.solvingDate) {
+      byCat[c].days.push(i.resolutionDays != null ? i.resolutionDays : Math.max(0, daysBetween(i.complainDate, i.solvingDate)));
+    }
+  });
+  Object.entries(byCat).sort((a, b) => b[1].total - a[1].total).forEach(([cat, v]) => {
+    const avg = v.days.length ? Math.round(v.days.reduce((a, b) => a + b, 0) / v.days.length) : "";
+    catRows.push([cat, v.total, v.open, v.close, v.total ? Math.round(v.close / v.total * 100) + "%" : "", v.orders, avg]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(catRows), "By Category");
+
+  // ---- Sheet 5: Top Root Causes ----
+  const rcMap = {};
+  filteredIssues.filter(i => i.rootCause?.trim()).forEach(i => {
+    const rc = i.rootCause.trim();
+    if (!rcMap[rc]) rcMap[rc] = { count: 0, clients: new Set(), sites: new Set() };
+    rcMap[rc].count++;
+    if (i.client) rcMap[rc].clients.add(i.client);
+    if (i.issueSite) rcMap[rc].sites.add(i.issueSite);
+  });
+  const rcRows = [["Root Cause", "Occurrences", "Affected Clients", "Issue Sites"]];
+  Object.entries(rcMap).sort((a, b) => b[1].count - a[1].count).slice(0, 30).forEach(([rc, v]) => {
+    rcRows.push([rc, v.count, [...v.clients].join(", "), [...v.sites].join(", ")]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rcRows), "Top Root Causes");
+
+  // ---- Sheet 6: SLA ----
+  const slaBuckets = { "Same day (0d)": 0, "1 day": 0, "2-3 days": 0, "4-7 days": 0, "8-14 days": 0, "15-30 days": 0, ">30 days": 0 };
+  allResDays.forEach(d => {
+    if (d === 0) slaBuckets["Same day (0d)"]++;
+    else if (d === 1) slaBuckets["1 day"]++;
+    else if (d <= 3) slaBuckets["2-3 days"]++;
+    else if (d <= 7) slaBuckets["4-7 days"]++;
+    else if (d <= 14) slaBuckets["8-14 days"]++;
+    else if (d <= 30) slaBuckets["15-30 days"]++;
+    else slaBuckets[">30 days"]++;
+  });
+  const slaRows = [["Resolution Time Bucket", "Count", "% of Closed"]];
+  Object.entries(slaBuckets).forEach(([bucket, count]) => {
+    slaRows.push([bucket, count, allResDays.length ? Math.round(count / allResDays.length * 100) + "%" : ""]);
+  });
+  slaRows.push([]);
+  slaRows.push(["Summary"]);
+  slaRows.push(["Total closed issues", allResDays.length]);
+  slaRows.push(["Average resolution (days)", totalAvgRes]);
+  slaRows.push(["Median resolution (days)", allResDays.length ? median(allResDays) : ""]);
+  slaRows.push(["SLA <= 3 days", totalSla3d ? totalSla3d + "%" : ""]);
+  slaRows.push(["SLA <= 7 days", allResDays.length ? Math.round(allResDays.filter(d => d <= 7).length / allResDays.length * 100) + "%" : ""]);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(slaRows), "SLA");
+
+  // ---- Sheet 7: Weekly Trend ----
+  const byWeek = {};
+  filteredIssues.forEach(i => {
+    if (!i.years || !i.week) return;
+    const key = `${i.years}-W${String(i.week).padStart(2, "0")}`;
+    if (!byWeek[key]) byWeek[key] = { total: 0, open: 0, close: 0, orders: 0 };
+    byWeek[key].total++;
+    if (i.status === "Open") byWeek[key].open++;
+    if (i.status === "Close") byWeek[key].close++;
+    byWeek[key].orders += toOrderCodesArray(i).length;
+  });
+  const trendRows = [["Week", "Total Issues", "Open", "Closed", "Orders Impacted"]];
+  Object.keys(byWeek).sort().forEach(wk => {
+    const v = byWeek[wk];
+    trendRows.push([wk, v.total, v.open, v.close, v.orders]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(trendRows), "Weekly Trend");
+
+  const filename = `Flow_MBR_${today()}.xlsx`;
+  XLSX.writeFile(wb, filename);
+  toast(`MBR exported: ${filename} (${clientNames.length} clients, 7 sheets)`, "success");
+}
+
+function median(arr) {
+  if (!arr.length) return 0;
+  const sorted = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
 }
 
 // ============================================================
@@ -1319,12 +1628,19 @@ async function _runImport() {
     const orderCodeRaw = String(get("orderCode") || "").trim();
     const orderCodes = orderCodeRaw.split(/[,;\n\t]+/).map(s => s.trim()).filter(Boolean);
     const cDate = new Date(complainDate);
+    // Always recalculate years/week from complainDate — trusting file
+    // values caused wrong trend charts when they didn't match.
+    const solvingDate = parseDate(get("solvingDate")) || null;
+    const resolutionDays = (complainDate && solvingDate)
+      ? Math.max(0, Math.round((new Date(solvingDate) - cDate) / 86400000))
+      : null;
     const doc = {
       updateBy: String(get("updateBy") || "").trim(),
       complainDate,
-      solvingDate: parseDate(get("solvingDate")) || null,
-      years: get("years") ? Number(get("years")) : cDate.getFullYear(),
-      week: get("week") ? Number(get("week")) : getISOWeek(cDate),
+      solvingDate,
+      years: cDate.getFullYear(),
+      week: getISOWeek(cDate),
+      resolutionDays,
       client: String(get("client") || "").trim(),
       orderCodes,
       orderCode: orderCodes.join(", "),

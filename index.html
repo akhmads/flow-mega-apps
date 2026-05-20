@@ -190,6 +190,7 @@
             <button class="primary" id="issueAddBtn">+ New Issue</button>
             <button class="secondary" id="issueExportBtn">Export Excel</button>
             <button class="secondary" id="issuePicReportBtn">📄 Export PIC Report</button>
+            <button class="secondary" id="issueMbrBtn">📊 Export MBR</button>
             <button class="secondary" id="issueImportBtn">Import from Excel</button>
             <input type="file" id="issueImportFile" accept=".xlsx,.xls,.csv" style="display:none"/>
           </div>
@@ -232,6 +233,9 @@
           <div class="kpi"><b id="issueKpiClose">0</b><span>Closed</span></div>
           <div class="kpi"><b id="issueKpiAvgRes">—</b><span>Avg Resolution (days)</span></div>
         </div>
+
+        <!-- DATA HEALTH — warns about dirty data that will corrupt MBR reports -->
+        <div id="issueDataHealth" class="card hidden" style="border-left:4px solid #f59e0b;background:rgba(245,158,11,.06)"></div>
 
         <div class="grid">
           <div class="card">
