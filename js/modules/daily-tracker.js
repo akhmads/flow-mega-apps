@@ -59,8 +59,8 @@ const trackers = {
     toInput: "trkSSTo",
     kpiTotal: "trkSSTotal",
     kpiDone: "trkSSDone",
-    kpiDaily: "trkSSDaily",
-    kpiProj: "trkSSProj",
+    kpiOpen: "trkSSOpen",
+    kpiPct: "trkSSPct",
     addBtn: "trkSSAddBtn",
     exportBtn: "trkSSExportBtn",
     applyBtn: "trkSSApply",
@@ -211,24 +211,15 @@ function resetFilters(kind) {
 function renderKPIs(kind) {
   const t = trackers[kind];
   const total = t.filtered.length;
-  const done = t.filtered.filter(r => r.status === "Done").length;
-
-  if (t.hasTag) {
-    // SS — tag-based KPIs (Daily / Projection)
-    const daily = t.filtered.filter(r => r.tag === "Daily").length;
-    const proj = t.filtered.filter(r => r.tag === "Projection").length;
-    $(t.kpiTotal).textContent = total;
-    $(t.kpiDone).textContent = done;
-    $(t.kpiDaily).textContent = daily;
-    $(t.kpiProj).textContent = proj;
-  } else {
-    // Sales, Operations, GA — standard KPIs
-    const openProg = t.filtered.filter(r => r.status === "Open" || r.status === "In Progress").length;
-    $(t.kpiTotal).textContent = total;
-    $(t.kpiDone).textContent = done;
-    $(t.kpiOpen).textContent = openProg;
-    $(t.kpiPct).textContent = total ? Math.round(done / total * 100) + "%" : "0%";
-  }
+  const done = t.filtered.filter(r => r.status === "Done" || r.status === "done").length;
+  const openProg = t.filtered.filter(r => {
+    const s = (r.status || "").toLowerCase();
+    return s === "open" || s === "in progress" || s === "progress";
+  }).length;
+  $(t.kpiTotal).textContent = total;
+  $(t.kpiDone).textContent = done;
+  $(t.kpiOpen).textContent = openProg;
+  $(t.kpiPct).textContent = total ? Math.round(done / total * 100) + "%" : "0%";
 }
 
 // ============================================================
@@ -239,60 +230,34 @@ function renderTable(kind) {
   const tbody = $(t.tableId).querySelector("tbody");
 
   if (!t.filtered.length) {
-    const cols = t.hasTag ? 10 : 7;
+    const cols = t.hasTag ? 8 : 7;
     tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;color:var(--muted);padding:32px">No tasks match the current filters.</td></tr>`;
     return;
   }
 
-  if (t.hasTag) {
-    // SS — has Week, Open/Close dates, Tag, URL columns
-    tbody.innerHTML = t.filtered.map(r => {
-      const wk = r.week || (r.date ? "W" + getISOWeek(new Date(r.date)) : "");
-      const url = r.url ? `<a href="${esc(r.url)}" target="_blank">link</a>` : "—";
-      const isDone = r.status === "Done";
-      return `
-        <tr>
-          <td>${esc(wk)}</td>
-          <td>${esc(friendlyDate(r.date))}</td>
-          <td>${esc(friendlyDate(r.closedDate))}</td>
-          <td><b>${esc(r.person || "")}</b></td>
-          <td class="long">${esc(r.task || "")}</td>
-          <td><span class="${badgeClass(r.tag)}">${esc(r.tag || "")}</span></td>
-          <td><span class="${badgeClass(r.status)}">${esc(r.status || "")}</span></td>
-          <td>${url}</td>
-          <td class="long">${esc(r.notes || "")}</td>
-          <td>
-            ${isDone
-              ? `<button class="secondary iconBtn" data-reopen="${r.id}" title="Re-open this task">↻ Re-open</button>`
-              : `<button class="primary iconBtn" data-done="${r.id}" title="Mark as Done + set closed date to today">✓ Done</button>`}
-            <button class="secondary iconBtn" data-edit="${r.id}">Edit</button>
-            <button class="danger iconBtn" data-del="${r.id}">Del</button>
-          </td>
-        </tr>
-      `;
-    }).join("");
-  } else {
-    // Sales, Operations, GA — simple 7-column table
-    tbody.innerHTML = t.filtered.map(r => {
-      const isDone = r.status === "Done";
-      return `
-      <tr>
-        <td>${esc(friendlyDate(r.date))}</td>
-        <td>${esc(r.day || dayName(r.date))}</td>
-        <td><b>${esc(r.person || "")}</b></td>
-        <td class="long">${esc(r.task || "")}</td>
-        <td><span class="${badgeClass(r.status)}">${esc(r.status || "")}</span></td>
-        <td class="long">${esc(r.notes || "")}</td>
-        <td>
-          ${isDone
-            ? `<button class="secondary iconBtn" data-reopen="${r.id}" title="Re-open this task">↻ Re-open</button>`
-            : `<button class="primary iconBtn" data-done="${r.id}" title="Mark as Done + set closed date to today">✓ Done</button>`}
-          <button class="secondary iconBtn" data-edit="${r.id}">Edit</button>
-          <button class="danger iconBtn" data-del="${r.id}">Del</button>
-        </td>
-      </tr>`;
-    }).join("");
-  }
+  tbody.innerHTML = t.filtered.map(r => {
+    const isDone = r.status === "Done" || r.status === "done";
+    const tagCell = t.hasTag
+      ? `<td><span class="${badgeClass(r.tag)}">${esc(r.tag || "")}</span></td>`
+      : "";
+    return `
+    <tr>
+      <td>${esc(friendlyDate(r.date))}</td>
+      <td>${esc(r.day || dayName(r.date))}</td>
+      <td><b>${esc(r.person || "")}</b></td>
+      <td class="long">${esc(r.task || "")}${r.url ? ` <a href="${esc(r.url)}" target="_blank" style="color:var(--secondary);font-size:11px">[link]</a>` : ""}</td>
+      ${tagCell}
+      <td><span class="${badgeClass(r.status)}">${esc(r.status || "")}</span></td>
+      <td class="long">${esc(r.notes || "")}</td>
+      <td>
+        ${isDone
+          ? `<button class="secondary iconBtn" data-reopen="${r.id}" title="Re-open this task">Re-open</button>`
+          : `<button class="primary iconBtn" data-done="${r.id}" title="Mark as Done">Done</button>`}
+        <button class="secondary iconBtn" data-edit="${r.id}">Edit</button>
+        <button class="danger iconBtn" data-del="${r.id}">Del</button>
+      </td>
+    </tr>`;
+  }).join("");
 
   tbody.querySelectorAll("[data-edit]").forEach(b =>
     b.addEventListener("click", () => openModal(kind, b.dataset.edit)));
@@ -441,21 +406,18 @@ function exportExcel(kind) {
   if (!t.filtered.length) return toast("Nothing to export", "error");
 
   let rows;
-  if (t.hasTag) {
-    // SS — includes Week, Tag, URL columns
-    rows = [["Week", "Open Date", "Closed Date", "Person", "Task", "Tag", "Status", "URL", "Notes"]];
-    t.filtered.forEach(r => rows.push([
-      r.week || "", toDateStr(r.date), toDateStr(r.closedDate),
-      r.person || "", r.task || "", r.tag || "", r.status || "",
-      r.url || "", r.notes || ""
-    ]));
-  } else {
-    // Sales, Operations, GA — simple columns
-    rows = [["Date", "Day", "Person", "Task", "Status", "Notes"]];
-    t.filtered.forEach(r => rows.push([
-      toDateStr(r.date), r.day || "", r.person || "", r.task || "", r.status || "", r.notes || ""
-    ]));
-  }
+  const header = ["Date", "Day", "Person", "Task"];
+  if (t.hasTag) header.push("Tag");
+  header.push("Status", "Notes");
+  if (t.hasURL) header.push("URL");
+  rows = [header];
+  t.filtered.forEach(r => {
+    const row = [toDateStr(r.date), r.day || dayName(r.date), r.person || "", r.task || ""];
+    if (t.hasTag) row.push(r.tag || "");
+    row.push(r.status || "", r.notes || "");
+    if (t.hasURL) row.push(r.url || "");
+    rows.push(row);
+  });
   const fileLabels = { sales: "Sales", ss: "SS", operations: "Ops", ga: "GA" };
   const filename = `Flow_Daily_Tracker_${fileLabels[kind] || kind}_${today()}.xlsx`;
   downloadXLSX(rows, filename, "Daily Tasks");
