@@ -491,7 +491,15 @@ export function seedDemoData(currentEmail) {
       { email: "yoga@flowgistik.id",    name: "Yoga",    role: "supervisor", department: "Sales Support" },
       { email: "farah@flowgistik.id",   name: "Farah",   role: "supervisor", department: "Sales Support" },
       { email: "asih@flowgistik.id",    name: "Asih",    role: "supervisor", department: "Sales Support" },
-      { email: "fauzi@flowgistik.id",   name: "Fauzi",   role: "supervisor", department: "Sales Support" }
+      { email: "fauzi@flowgistik.id",   name: "Fauzi",   role: "supervisor", department: "Sales Support" },
+      { email: "andi@flowgistik.id",    name: "Andi",    role: "supervisor", department: "Operations" },
+      { email: "rina@flowgistik.id",    name: "Rina",    role: "supervisor", department: "Operations" },
+      { email: "budi@flowgistik.id",    name: "Budi",    role: "supervisor", department: "General Affairs" },
+      { email: "sari@flowgistik.id",    name: "Sari",    role: "supervisor", department: "General Affairs" },
+      { email: "supervisor.ops@demo",   name: "Demo Ops Supervisor",  role: "supervisor", department: "Operations" },
+      { email: "supervisor.ga@demo",    name: "Demo GA Supervisor",   role: "supervisor", department: "General Affairs" },
+      { email: "user.ops@demo",         name: "Demo Ops User",        role: "user",       department: "Operations" },
+      { email: "user.ga@demo",          name: "Demo GA User",         role: "user",       department: "General Affairs" }
     ];
     for (const u of demoUsers) {
       _col("users").set(u.email, { ...u, createdAt: new Date().toISOString(), createdBy: "system" });
