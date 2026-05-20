@@ -6,7 +6,8 @@
       "Bash(cp \"/tmp/flow-brand/01. Logo & Brand Patterns/Flow Logo \\(SVG_Vector\\)/Flowgistik_ Full Logo + Text - Purple & White.svg\" \"C:\\\\Users\\\\Flow\\\\Downloads\\\\flow-mega-apps-v3_9_8-flow-fe96c\\\\assets\\\\logo-full.svg\")",
       "Bash(cp \"/tmp/flow-brand/01. Logo & Brand Patterns/Flow Logo \\(SVG_Vector\\)/Flowgistik_ Logo Icon - Purple & White.svg\" \"C:\\\\Users\\\\Flow\\\\Downloads\\\\flow-mega-apps-v3_9_8-flow-fe96c\\\\assets\\\\logo-icon.svg\")",
       "Bash(cp \"/tmp/flow-brand/01. Logo & Brand Patterns/Flow Logo \\(SVG_Vector\\)/Flowgistik_ Full Logo + Text - All White.svg\" \"C:\\\\Users\\\\Flow\\\\Downloads\\\\flow-mega-apps-v3_9_8-flow-fe96c\\\\assets\\\\logo-full-white.svg\")",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(node -e ' *)"
     ]
   }
 }

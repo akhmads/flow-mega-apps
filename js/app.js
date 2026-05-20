@@ -1,14 +1,15 @@
 // ============================================================
 // FLOW Mega Apps — Main App Router
 //
-// PREVIEW_MODE toggle:
-//   - true  = demo login (no Firebase). Type any DEMO account below.
-//   - false = real Firebase auth + roles (production)
-//
-// Toggle ONE LINE below. That's it.
+// PREVIEW_MODE is auto-detected:
+//   - No Firebase config (no apiKey) → preview mode (demo accounts)
+//   - Firebase configured            → production (real auth)
+//   - Add ?demo to the URL to force demo mode even with Firebase
 // ============================================================
 
-const PREVIEW_MODE = true;        // SET TO false BEFORE DEPLOYING
+import { isFirebaseConfigured } from "./firebase.js";
+
+const PREVIEW_MODE = !isFirebaseConfigured || new URLSearchParams(location.search).has("demo");
 
 // 4 demo accounts — type these into the login form to test each role.
 // Password for ALL of them is just "demo"
@@ -174,7 +175,7 @@ function switchPage(menuId, clickedBtn) {
 function bootApp(email, role, name, department) {
   $("loginGate").classList.add("hidden");
   $("appShell").classList.remove("hidden");
-  $("userBadgeEmail").textContent = email + (PREVIEW_MODE ? " (DEMO)" : "");
+  $("userBadgeEmail").textContent = email;
   setPreviewUser({ email, role, name, department });
   window.PREVIEW_MODE_INTERNAL = PREVIEW_MODE;
   applyRoleVisibility();
