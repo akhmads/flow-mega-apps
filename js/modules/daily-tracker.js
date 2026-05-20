@@ -120,7 +120,7 @@ const trackers = {
   }
 };
 
-let modalContext = null; // "sales" or "ss"
+let modalContext = null; // "sales", "ss", "operations", or "ga"
 
 // ============================================================
 // INIT
@@ -213,19 +213,21 @@ function renderKPIs(kind) {
   const total = t.filtered.length;
   const done = t.filtered.filter(r => r.status === "Done").length;
 
-  if (kind === "sales") {
-    const openProg = t.filtered.filter(r => r.status === "Open" || r.status === "In Progress").length;
-    $(t.kpiTotal).textContent = total;
-    $(t.kpiDone).textContent = done;
-    $(t.kpiOpen).textContent = openProg;
-    $(t.kpiPct).textContent = total ? Math.round(done / total * 100) + "%" : "0%";
-  } else {
+  if (t.hasTag) {
+    // SS — tag-based KPIs (Daily / Projection)
     const daily = t.filtered.filter(r => r.tag === "Daily").length;
     const proj = t.filtered.filter(r => r.tag === "Projection").length;
     $(t.kpiTotal).textContent = total;
     $(t.kpiDone).textContent = done;
     $(t.kpiDaily).textContent = daily;
     $(t.kpiProj).textContent = proj;
+  } else {
+    // Sales, Operations, GA — standard KPIs
+    const openProg = t.filtered.filter(r => r.status === "Open" || r.status === "In Progress").length;
+    $(t.kpiTotal).textContent = total;
+    $(t.kpiDone).textContent = done;
+    $(t.kpiOpen).textContent = openProg;
+    $(t.kpiPct).textContent = total ? Math.round(done / total * 100) + "%" : "0%";
   }
 }
 
@@ -237,32 +239,13 @@ function renderTable(kind) {
   const tbody = $(t.tableId).querySelector("tbody");
 
   if (!t.filtered.length) {
-    const cols = kind === "ss" ? 10 : 7;
+    const cols = t.hasTag ? 10 : 7;
     tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;color:var(--muted);padding:32px">No tasks match the current filters.</td></tr>`;
     return;
   }
 
-  if (kind === "sales") {
-    tbody.innerHTML = t.filtered.map(r => {
-      const isDone = r.status === "Done";
-      return `
-      <tr>
-        <td>${esc(friendlyDate(r.date))}</td>
-        <td>${esc(r.day || dayName(r.date))}</td>
-        <td><b>${esc(r.person || "")}</b></td>
-        <td class="long">${esc(r.task || "")}</td>
-        <td><span class="${badgeClass(r.status)}">${esc(r.status || "")}</span></td>
-        <td class="long">${esc(r.notes || "")}</td>
-        <td>
-          ${isDone
-            ? `<button class="secondary iconBtn" data-reopen="${r.id}" title="Re-open this task">↻ Re-open</button>`
-            : `<button class="primary iconBtn" data-done="${r.id}" title="Mark as Done + set closed date to today">✓ Done</button>`}
-          <button class="secondary iconBtn" data-edit="${r.id}">Edit</button>
-          <button class="danger iconBtn" data-del="${r.id}">Del</button>
-        </td>
-      </tr>`;
-    }).join("");
-  } else {
+  if (t.hasTag) {
+    // SS — has Week, Open/Close dates, Tag, URL columns
     tbody.innerHTML = t.filtered.map(r => {
       const wk = r.week || (r.date ? "W" + getISOWeek(new Date(r.date)) : "");
       const url = r.url ? `<a href="${esc(r.url)}" target="_blank">link</a>` : "—";
@@ -287,6 +270,27 @@ function renderTable(kind) {
           </td>
         </tr>
       `;
+    }).join("");
+  } else {
+    // Sales, Operations, GA — simple 7-column table
+    tbody.innerHTML = t.filtered.map(r => {
+      const isDone = r.status === "Done";
+      return `
+      <tr>
+        <td>${esc(friendlyDate(r.date))}</td>
+        <td>${esc(r.day || dayName(r.date))}</td>
+        <td><b>${esc(r.person || "")}</b></td>
+        <td class="long">${esc(r.task || "")}</td>
+        <td><span class="${badgeClass(r.status)}">${esc(r.status || "")}</span></td>
+        <td class="long">${esc(r.notes || "")}</td>
+        <td>
+          ${isDone
+            ? `<button class="secondary iconBtn" data-reopen="${r.id}" title="Re-open this task">↻ Re-open</button>`
+            : `<button class="primary iconBtn" data-done="${r.id}" title="Mark as Done + set closed date to today">✓ Done</button>`}
+          <button class="secondary iconBtn" data-edit="${r.id}">Edit</button>
+          <button class="danger iconBtn" data-del="${r.id}">Del</button>
+        </td>
+      </tr>`;
     }).join("");
   }
 
@@ -337,7 +341,8 @@ async function openModal(kind, id = null) {
   document.querySelectorAll(".tm-tag-field").forEach(el => el.classList.toggle("hidden", !t.hasTag));
   document.querySelectorAll(".tm-url-field").forEach(el => el.classList.toggle("hidden", !t.hasURL));
 
-  $("taskModalTitle").textContent = (id ? "Edit" : "New") + " Task — " + (kind === "sales" ? "Sales" : "Sales Support");
+    const kindLabels = { sales: "Sales", ss: "Sales Support", operations: "Operations", ga: "General Affairs" };
+  $("taskModalTitle").textContent = (id ? "Edit" : "New") + " Task — " + (kindLabels[kind] || kind);
 
   // Populate Person dropdown — filtered to current team
   let staff = [];
@@ -436,20 +441,23 @@ function exportExcel(kind) {
   if (!t.filtered.length) return toast("Nothing to export", "error");
 
   let rows;
-  if (kind === "sales") {
-    rows = [["Date", "Day", "Person", "Task", "Status", "Notes"]];
-    t.filtered.forEach(r => rows.push([
-      toDateStr(r.date), r.day || "", r.person || "", r.task || "", r.status || "", r.notes || ""
-    ]));
-  } else {
+  if (t.hasTag) {
+    // SS — includes Week, Tag, URL columns
     rows = [["Week", "Open Date", "Closed Date", "Person", "Task", "Tag", "Status", "URL", "Notes"]];
     t.filtered.forEach(r => rows.push([
       r.week || "", toDateStr(r.date), toDateStr(r.closedDate),
       r.person || "", r.task || "", r.tag || "", r.status || "",
       r.url || "", r.notes || ""
     ]));
+  } else {
+    // Sales, Operations, GA — simple columns
+    rows = [["Date", "Day", "Person", "Task", "Status", "Notes"]];
+    t.filtered.forEach(r => rows.push([
+      toDateStr(r.date), r.day || "", r.person || "", r.task || "", r.status || "", r.notes || ""
+    ]));
   }
-  const filename = `Flow_Daily_Tracker_${kind === "sales" ? "Sales" : "SS"}_${today()}.xlsx`;
+  const fileLabels = { sales: "Sales", ss: "SS", operations: "Ops", ga: "GA" };
+  const filename = `Flow_Daily_Tracker_${fileLabels[kind] || kind}_${today()}.xlsx`;
   downloadXLSX(rows, filename, "Daily Tasks");
   toast("Exported " + filename, "success");
 }

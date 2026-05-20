@@ -132,11 +132,10 @@ service cloud.firestore {
     // fields on create/update so issues can't be saved without the
     // minimum fields needed for reporting.
     function issueHasRequired() {
-      let d = request.resource.data;
-      return d.client is string && d.client.size() > 0
-          && d.complainDate is string && d.complainDate.size() > 0
-          && d.categoriComplain is string && d.categoriComplain.size() > 0
-          && d.updateBy is string && d.updateBy.size() > 0;
+      return request.resource.data.client is string && request.resource.data.client.size() > 0
+          && request.resource.data.complainDate is string && request.resource.data.complainDate.size() > 0
+          && request.resource.data.categoriComplain is string && request.resource.data.categoriComplain.size() > 0
+          && request.resource.data.updateBy is string && request.resource.data.updateBy.size() > 0;
     }
 
     match /daily_issues/{docId} {
