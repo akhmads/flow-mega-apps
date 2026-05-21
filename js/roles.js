@@ -284,15 +284,15 @@ export function canViewModule(moduleId) {
     dailyTrackerSS: isSSTeam(),
     dailyTrackerOps: isOpsTeam(),
     dailyTrackerGA: isGATeam(),
-    dailyIssue: isSSTeam(),            // SS only (Sales can't see customer issues)
-    ticketing: true,                   // shared
-    revenueCalc: isSalesTeam(),         // Sales only — SS doesn't need revenue calc
-    projectManagement: true,           // shared
-    mergerSystem: true,                // shared legacy tool
-    orderProcessing: true,             // shared legacy tool
-    dailyReconcile: true,              // shared legacy tool
-    weeklyReportGen: true,             // shared legacy tool — v21
-    forecastOrdersGen: true,           // shared legacy tool — v21 (added v3.9.8)
+    dailyIssue: isSSTeam(),            // SS only
+    ticketing: true,                   // shared across all departments
+    revenueCalc: isSalesTeam(),        // Sales only
+    projectManagement: isSalesTeam() || isSSTeam(),  // Sales + SS
+    mergerSystem: isSSTeam(),          // SS tool
+    orderProcessing: isSSTeam(),       // SS tool
+    dailyReconcile: isSSTeam(),        // SS tool
+    weeklyReportGen: isSSTeam(),       // SS tool
+    forecastOrdersGen: isSSTeam(),     // SS tool
     oneOnOne: false,                   // supervisor+admin only
     masterData: canViewMasterData(),   // everyone (view)
     users: false                       // admin only

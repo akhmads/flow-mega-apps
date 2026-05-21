@@ -11,7 +11,7 @@
 // ============================================================
 
 const _params = new URLSearchParams(location.search);
-const PREVIEW_MODE = _params.has("prod") ? false : _params.has("demo") ? true : true;
+const PREVIEW_MODE = _params.has("prod") ? false : true;
 
 // 4 demo accounts — type these into the login form to test each role.
 // Password for ALL of them is just "demo"
