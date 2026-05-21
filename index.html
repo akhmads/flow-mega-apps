@@ -524,6 +524,7 @@
         <div class="tabs">
           <button class="active" data-ibtab="log">Inbound Log</button>
           <button data-ibtab="vehicles">Vehicle Status</button>
+          <button data-ibtab="summary">Summary</button>
         </div>
       </div>
 
@@ -579,6 +580,40 @@
                 <th>Date</th><th>No.</th><th>DN / PO</th><th>Qty</th>
                 <th>Client</th><th>Type</th><th>Driver</th><th>Transporter</th>
                 <th>Arrival</th><th>Vehicle ID</th><th>Status</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Summary -->
+      <div data-ibpane="summary" class="hidden">
+        <div class="card">
+          <h2>Executive Summary</h2>
+          <div id="ibSummaryExec"></div>
+        </div>
+        <div class="card">
+          <div class="pmHeaderActions">
+            <div class="left"><h2>Breakdown</h2></div>
+            <div class="right">
+              <label class="pmLabel" style="margin:0">Group by</label>
+              <select id="ibSummaryGroupBy">
+                <option value="client">Client</option>
+                <option value="vendor">Vendor</option>
+                <option value="unitType">Vehicle Type</option>
+                <option value="operator">Operator</option>
+                <option value="category">Category</option>
+                <option value="leadTimeStatus">On-Time Status</option>
+              </select>
+              <button class="secondary" id="ibSummaryExportBtn">Export Summary</button>
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table id="ibSummaryTable">
+              <thead><tr>
+                <th>Group</th><th>Total</th><th>Completed</th><th>Partial</th>
+                <th>Total PCS</th><th>Discrepancy</th><th>Avg Unload (min)</th><th>On-Time %</th>
               </tr></thead>
               <tbody></tbody>
             </table>

@@ -65,8 +65,13 @@ function bindEvents() {
       document.querySelectorAll("[data-ibpane]").forEach(p => p.classList.add("hidden"));
       document.querySelector(`[data-ibpane="${currentTab}"]`)?.classList.remove("hidden");
       if (currentTab === "vehicles") renderVehicleTable();
+      if (currentTab === "summary") renderSummary();
     });
   });
+
+  // Summary controls
+  $("ibSummaryGroupBy")?.addEventListener("change", renderSummaryTable);
+  $("ibSummaryExportBtn")?.addEventListener("click", exportSummary);
 }
 
 // ============================================================
@@ -106,6 +111,7 @@ function applyFilters() {
   renderKPIs();
   renderLogTable();
   renderVehicleTable();
+  if (currentTab === "summary") renderSummary();
 }
 
 function resetFilters() {
@@ -426,6 +432,175 @@ async function removeEntry(id) {
   } catch (e) {
     toast("Delete failed: " + e.message, "error");
   }
+}
+
+// ============================================================
+// SUMMARY
+// ============================================================
+function renderSummary() {
+  renderSummaryExec();
+  renderSummaryTable();
+}
+
+function renderSummaryExec() {
+  const el = $("ibSummaryExec");
+  if (!el) return;
+  const entries = filteredEntries;
+  const total = entries.length;
+  if (!total) {
+    el.innerHTML = `<p style="color:var(--muted)">No entries match the current filters.</p>`;
+    return;
+  }
+
+  const completed = entries.filter(e => e.inboundType === "Inbound Completed").length;
+  const partial = entries.filter(e => e.inboundType === "Inbound Partial").length;
+  const ontime = entries.filter(e => e.leadTimeStatus === "ontime").length;
+  const ontimeRate = total ? Math.round(ontime / total * 100) : 0;
+
+  const totalPcs = entries.reduce((s, e) => s + (e.pcsActual || 0), 0);
+  const totalSku = entries.reduce((s, e) => s + (e.skuActual || 0), 0);
+  const totalCartons = entries.reduce((s, e) => s + (e.totalCarton || 0), 0);
+  const totalDamaged = entries.reduce((s, e) => s + (e.damaged || 0), 0);
+
+  const discrepancies = entries.filter(e => e.shortExcess || e.docVsActual).length;
+  const discRate = total ? Math.round(discrepancies / total * 100) : 0;
+
+  const durations = entries.map(e => e.unloadDurationMin).filter(d => d != null && d > 0);
+  const avgUnload = durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : null;
+  const maxUnload = durations.length ? Math.max(...durations) : null;
+
+  const leadTimes = entries.map(e => e.leadTimeHrs).filter(d => d != null && d > 0);
+  const avgLeadTime = leadTimes.length ? (leadTimes.reduce((a, b) => a + b, 0) / leadTimes.length).toFixed(1) : null;
+
+  const uniqueClients = [...new Set(entries.map(e => e.client).filter(Boolean))].length;
+  const uniqueVendors = [...new Set(entries.map(e => e.vendor).filter(Boolean))].length;
+
+  // Top client by volume
+  const clientVolume = {};
+  entries.forEach(e => { if (e.client) clientVolume[e.client] = (clientVolume[e.client] || 0) + 1; });
+  const topClient = Object.entries(clientVolume).sort((a, b) => b[1] - a[1])[0];
+
+  el.innerHTML = `
+    <div class="execHero">
+      <div>
+        <div class="execLabel">Total Inbound</div>
+        <div class="execVal">${total}</div>
+        <div class="execSub">${completed} completed, ${partial} partial</div>
+      </div>
+      <div>
+        <div class="execLabel">On-Time Rate</div>
+        <div class="execVal" style="color:${ontimeRate >= 80 ? 'var(--ok)' : ontimeRate >= 60 ? 'var(--warn)' : 'var(--bad)'}">${ontimeRate}%</div>
+        <div class="execSub">${ontime} of ${total} on time</div>
+      </div>
+      <div>
+        <div class="execLabel">Avg Unload Time</div>
+        <div class="execVal">${avgUnload != null ? avgUnload + 'm' : '--'}</div>
+        <div class="execSub">${maxUnload != null ? 'Max: ' + maxUnload + 'm' : ''}</div>
+      </div>
+      <div>
+        <div class="execLabel">Avg Lead Time</div>
+        <div class="execVal">${avgLeadTime != null ? avgLeadTime + 'h' : '--'}</div>
+        <div class="execSub">Arrival to GRN</div>
+      </div>
+    </div>
+    <div class="execGrid">
+      <div class="execItem">
+        <span class="execLabel">Total PCS Received</span>
+        <b>${totalPcs.toLocaleString()}</b>
+        <span class="execSub">${totalSku} SKUs across ${totalCartons} cartons</span>
+      </div>
+      <div class="execItem">
+        <span class="execLabel">Discrepancies</span>
+        <b style="color:${discrepancies ? 'var(--bad)' : 'var(--ok)'}">${discrepancies} (${discRate}%)</b>
+        <span class="execSub">${totalDamaged} damaged items</span>
+      </div>
+      <div class="execItem">
+        <span class="execLabel">Top Client</span>
+        <b>${topClient ? esc(topClient[0]) : '--'}</b>
+        <span class="execSub">${topClient ? topClient[1] + ' inbounds' : ''}</span>
+      </div>
+      <div class="execItem">
+        <span class="execLabel">Coverage</span>
+        <b>${uniqueClients} clients</b>
+        <span class="execSub">${uniqueVendors} vendors</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderSummaryTable() {
+  const groupBy = $("ibSummaryGroupBy")?.value || "client";
+  const tbody = $("ibSummaryTable")?.querySelector("tbody");
+  if (!tbody) return;
+
+  const grouped = {};
+  filteredEntries.forEach(e => {
+    const key = e[groupBy] || "Unknown";
+    if (!grouped[key]) grouped[key] = { total: 0, completed: 0, partial: 0, pcs: 0, discrepancy: 0, durations: [], ontime: 0 };
+    const g = grouped[key];
+    g.total++;
+    if (e.inboundType === "Inbound Completed") g.completed++;
+    if (e.inboundType === "Inbound Partial") g.partial++;
+    g.pcs += (e.pcsActual || 0);
+    if (e.shortExcess || e.docVsActual) g.discrepancy++;
+    if (e.unloadDurationMin > 0) g.durations.push(e.unloadDurationMin);
+    if (e.leadTimeStatus === "ontime") g.ontime++;
+  });
+
+  const rows = Object.entries(grouped)
+    .map(([key, v]) => ({
+      key, ...v,
+      avgUnload: v.durations.length ? Math.round(v.durations.reduce((a, b) => a + b, 0) / v.durations.length) : null,
+      ontimeRate: v.total ? Math.round(v.ontime / v.total * 100) : 0
+    }))
+    .sort((a, b) => b.total - a.total);
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No data.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td><b>${esc(r.key)}</b></td>
+      <td style="text-align:center">${r.total}</td>
+      <td style="text-align:center">${r.completed}</td>
+      <td style="text-align:center">${r.partial}</td>
+      <td style="text-align:center">${r.pcs.toLocaleString()}</td>
+      <td style="text-align:center;color:${r.discrepancy ? 'var(--bad)' : 'var(--ok)'}">${r.discrepancy}</td>
+      <td style="text-align:center">${r.avgUnload != null ? r.avgUnload + 'm' : '--'}</td>
+      <td style="text-align:center;color:${r.ontimeRate >= 80 ? 'var(--ok)' : r.ontimeRate >= 60 ? 'var(--warn)' : 'var(--bad)'}">${r.ontimeRate}%</td>
+    </tr>
+  `).join("");
+}
+
+function exportSummary() {
+  const groupBy = $("ibSummaryGroupBy")?.value || "client";
+  const grouped = {};
+  filteredEntries.forEach(e => {
+    const key = e[groupBy] || "Unknown";
+    if (!grouped[key]) grouped[key] = { total: 0, completed: 0, partial: 0, pcs: 0, discrepancy: 0, durations: [], ontime: 0 };
+    const g = grouped[key];
+    g.total++;
+    if (e.inboundType === "Inbound Completed") g.completed++;
+    if (e.inboundType === "Inbound Partial") g.partial++;
+    g.pcs += (e.pcsActual || 0);
+    if (e.shortExcess || e.docVsActual) g.discrepancy++;
+    if (e.unloadDurationMin > 0) g.durations.push(e.unloadDurationMin);
+    if (e.leadTimeStatus === "ontime") g.ontime++;
+  });
+  const out = [
+    ["Inbound Monitoring Summary — Group by: " + groupBy],
+    [],
+    [groupBy, "Total", "Completed", "Partial", "Total PCS", "Discrepancy", "Avg Unload (min)", "On-Time %"]
+  ];
+  Object.entries(grouped).sort((a, b) => b[1].total - a[1].total).forEach(([key, v]) => {
+    const avg = v.durations.length ? Math.round(v.durations.reduce((a, b) => a + b, 0) / v.durations.length) : "";
+    const rate = v.total ? Math.round(v.ontime / v.total * 100) : "";
+    out.push([key, v.total, v.completed, v.partial, v.pcs, v.discrepancy, avg, rate ? rate + "%" : ""]);
+  });
+  downloadXLSX(out, `Flow_Inbound_Summary_${today()}.xlsx`, "Summary");
+  toast("Summary exported", "success");
 }
 
 // ============================================================
