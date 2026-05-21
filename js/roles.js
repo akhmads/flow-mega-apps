@@ -288,11 +288,11 @@ export function canViewModule(moduleId) {
     ticketing: true,                   // shared across all departments
     revenueCalc: isSalesTeam(),        // Sales only
     projectManagement: isSalesTeam() || isSSTeam(),  // Sales + SS
-    mergerSystem: isSSTeam(),          // SS tool
-    orderProcessing: isSSTeam(),       // SS tool
-    dailyReconcile: isSSTeam(),        // SS tool
-    weeklyReportGen: isSSTeam(),       // SS tool
-    forecastOrdersGen: isSSTeam(),     // SS tool
+    mergerSystem: true,                // shared tool
+    orderProcessing: true,             // shared tool
+    dailyReconcile: true,              // shared tool
+    weeklyReportGen: true,             // shared tool
+    forecastOrdersGen: true,           // shared tool
     oneOnOne: false,                   // supervisor+admin only
     masterData: canViewMasterData(),   // everyone (view)
     users: false                       // admin only
