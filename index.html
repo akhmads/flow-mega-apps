@@ -90,7 +90,7 @@
       <button data-menu="dailyTrackerSS">Daily Tracker</button>
       <button data-menu="dailyIssue">Daily Issue Tracker</button>
       <div class="navGroup">Operations</div>
-      <button data-menu="dailyTrackerOps">Daily Tracker</button>
+      <button data-menu="inboundMonitoring">Inbound Monitoring</button>
       <div class="navGroup">General Affairs</div>
       <button data-menu="dailyTrackerGA">Daily Tracker</button>
       <div class="navGroup">Department</div>
@@ -506,62 +506,84 @@
       </div>
     </section>
 
-    <!-- DAILY TRACKER (OPERATIONS) -->
-    <section id="dailyTrackerOps" class="menu hidden">
+    <!-- INBOUND MONITORING (OPERATIONS) -->
+    <section id="inboundMonitoring" class="menu hidden">
       <div class="card">
         <div class="pmHeaderActions">
           <div class="left">
-            <h2>Daily Tracker — Operations</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Track daily tasks for the Operations team.</p>
+            <h2>Inbound Monitoring</h2>
+            <p style="color:var(--muted);margin:6px 0 0">Track vehicle arrivals, unloading, GRN processing, and inbound discrepancies.</p>
           </div>
           <div class="right">
-            <button class="primary trkPrimaryBtn" data-team="operations" id="trkOpsAddBtn">+ New Task</button>
-            <button class="secondary" id="trkOpsExportBtn">Export Excel</button>
+            <button class="primary" id="ibAddBtn">+ New Entry</button>
+            <button class="secondary" id="ibExportBtn">Export Excel</button>
+            <button class="secondary" id="ibImportBtn">Import Excel</button>
+            <input type="file" id="ibImportFile" accept=".xlsx,.xls" style="display:none"/>
           </div>
         </div>
         <div class="tabs">
-          <button class="active" data-trktab="ops-tasks">Tasks</button>
-          <button data-trktab="ops-weekly">Weekly Report</button>
+          <button class="active" data-ibtab="log">Inbound Log</button>
+          <button data-ibtab="vehicles">Vehicle Status</button>
         </div>
       </div>
 
-      <div data-trkpane="ops-tasks">
+      <!-- TAB: Inbound Log -->
+      <div data-ibpane="log">
         <div class="card">
           <div class="filterGrid">
-            <div><label class="pmLabel">Person</label><select id="trkOpsPerson"><option value="">All</option></select></div>
-            <div><label class="pmLabel">Status</label><select id="trkOpsStatus"><option value="">All</option><option>Open</option><option>In Progress</option><option>Done</option><option>Pending</option><option>Hold</option></select></div>
-            <div><label class="pmLabel">Date Range</label><select id="trkOpsRange"><option value="today">Today</option><option value="week" selected>This Week</option><option value="month">This Month</option><option value="custom">Custom</option><option value="all">All Time</option></select></div>
-            <div><label class="pmLabel">From</label><input type="date" id="trkOpsFrom"/></div>
-            <div><label class="pmLabel">To</label><input type="date" id="trkOpsTo"/></div>
+            <div><label class="pmLabel">Client</label><select id="ibFltClient"><option value="">All Clients</option></select></div>
+            <div><label class="pmLabel">Status</label><select id="ibFltStatus"><option value="">All</option><option>Inbound Completed</option><option>Inbound Partial</option><option>Pending</option></select></div>
+            <div><label class="pmLabel">Inbound Type</label><select id="ibFltType"><option value="">All</option><option>Inbound Completed</option><option>Inbound Partial</option></select></div>
+            <div><label class="pmLabel">Date Range</label><select id="ibFltRange"><option value="today">Today</option><option value="week" selected>This Week</option><option value="month">This Month</option><option value="custom">Custom</option><option value="all">All Time</option></select></div>
+            <div><label class="pmLabel">From</label><input type="date" id="ibFltFrom"/></div>
+            <div><label class="pmLabel">To</label><input type="date" id="ibFltTo"/></div>
           </div>
           <div class="btns">
-            <button class="primary" id="trkOpsApply">Apply</button>
-            <button class="secondary" id="trkOpsReset">Reset</button>
+            <button class="primary" id="ibApplyBtn">Apply</button>
+            <button class="secondary" id="ibResetBtn">Reset</button>
           </div>
         </div>
 
         <div class="kpis">
-          <div class="kpi"><b id="trkOpsTotal">0</b><span>Total</span></div>
-          <div class="kpi"><b id="trkOpsDone">0</b><span>Done</span></div>
-          <div class="kpi"><b id="trkOpsOpen">0</b><span>Open / Progress</span></div>
-          <div class="kpi"><b id="trkOpsPct">0%</b><span>Completion</span></div>
+          <div class="kpi"><b id="ibKpiTotal">0</b><span>Total Inbound</span></div>
+          <div class="kpi"><b id="ibKpiDone">0</b><span>Completed</span></div>
+          <div class="kpi"><b id="ibKpiOntime">0%</b><span>On-Time Rate</span></div>
+          <div class="kpi"><b id="ibKpiAvgUnload">--</b><span>Avg Unload (min)</span></div>
         </div>
 
         <div class="card">
-          <h2>Tasks</h2>
+          <h2>Inbound Log</h2>
           <div class="tableWrap">
-            <table id="trkOpsTable">
+            <table id="ibLogTable">
               <thead><tr>
-                <th>Date</th><th>Day</th><th>Person</th><th>Daily Task</th><th>Status</th><th>Notes</th><th>Actions</th>
+                <th>Date</th><th>PO / DN</th><th>Client</th><th>Vendor</th>
+                <th>Arrival</th><th>Unload Start</th><th>Unload End</th><th>Duration</th>
+                <th>GRN Time</th><th>Lead Time</th><th>Status</th>
+                <th>SKU</th><th>PCS</th><th>Discrepancy</th>
+                <th>Operator</th><th>Actions</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="small" id="ibLogCount">0 entries</p>
+        </div>
+      </div>
+
+      <!-- TAB: Vehicle Status -->
+      <div data-ibpane="vehicles" class="hidden">
+        <div class="card">
+          <h2>Vehicle Arrival Status</h2>
+          <div class="tableWrap">
+            <table id="ibVehicleTable">
+              <thead><tr>
+                <th>Date</th><th>No.</th><th>DN / PO</th><th>Qty</th>
+                <th>Client</th><th>Type</th><th>Driver</th><th>Transporter</th>
+                <th>Arrival</th><th>Vehicle ID</th><th>Status</th>
               </tr></thead>
               <tbody></tbody>
             </table>
           </div>
         </div>
-      </div>
-
-      <div data-trkpane="ops-weekly" class="hidden">
-        <div id="wkOpsRoot"></div>
       </div>
     </section>
 

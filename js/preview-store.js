@@ -361,15 +361,18 @@ export function seedDemoData(currentEmail) {
     for (const s of seeds) _col("daily_tasks_ss").set(_genId(), s);
   }
 
-  // A few Operations tasks
-  if (_col("daily_tasks_ops").size === 0) {
+  // Inbound monitoring seed data
+  if (_col("inbound_monitoring").size === 0) {
     const seeds = [
-      { person: "Andi",  date: TODAY,     task: "Morning warehouse briefing",       status: "done",         notes: "Attendance 95%", createdAt: new Date().toISOString(), createdBy: me },
-      { person: "Andi",  date: TODAY,     task: "Check inbound dock schedule",      status: "in-progress",  notes: "",               createdAt: new Date().toISOString(), createdBy: me },
-      { person: "Rina",  date: TODAY,     task: "Inventory cycle count Zone A",     status: "open",         notes: "",               createdAt: new Date().toISOString(), createdBy: me },
-      { person: "Rina",  date: YESTERDAY, task: "Review outbound SLA exceptions",  status: "done",         notes: "3 late shipments flagged", createdAt: new Date().toISOString(), createdBy: me }
+      { reportDate: TODAY, poNumber: "IB/LCKY/DAVINA-001", client: "PERO", vendor: "PERO", transporter: "PT. PERO UNIVERSAL", vehicleId: "B 9103 MS", unitType: "CDE", driverName: "REYANDI", manpower: 2, arrivalTime: "09:05", unloadBegin: "09:10", unloadFinish: "09:20", unloadDuration: "10m", unloadDurationMin: 10, grnTime: "11:09", leadTimeHrs: 2.07, leadTimeStatus: "ontime", inboundType: "Inbound Completed", inboundStatus: "Inbound Completed", vehicleStatus: "DONE", skuPo: 1, skuActual: 1, pcsPo: 320, pcsActual: 312, totalCarton: 10, damaged: 0, shortExcess: 8, docVsActual: 0, operator: "Siti Marisa", category: "Perlengkapan Rumah Tangga" },
+      { reportDate: TODAY, poNumber: "RV4282-260119-0001", client: "Kintakun", vendor: "YX", transporter: "Delivery", vehicleId: "B 9497 CZ", unitType: "CDD", driverName: "RIDWAN", manpower: 2, arrivalTime: "09:50", unloadBegin: "09:55", unloadFinish: "10:00", unloadDuration: "5m", unloadDurationMin: 5, grnTime: "10:30", leadTimeHrs: 0.67, leadTimeStatus: "ontime", inboundType: "Inbound Completed", inboundStatus: "Inbound Completed", vehicleStatus: "DONE", skuPo: 3, skuActual: 3, pcsPo: 18, pcsActual: 18, totalCarton: 5, damaged: 0, shortExcess: 0, docVsActual: 0, operator: "Rahmat Hidayat", category: "APPAREL" },
+      { reportDate: TODAY, poNumber: "PO-Lenotes01052026", client: "LENOTES", vendor: "LENOTES", transporter: "PT. LENOTES", vehicleId: "B 9473 HO", unitType: "CDE", driverName: "HERMAN", manpower: 4, arrivalTime: "10:10", unloadBegin: "10:15", unloadFinish: "16:40", unloadDuration: "6h 25m", unloadDurationMin: 385, grnTime: "17:00", leadTimeHrs: 6.83, leadTimeStatus: "late", inboundType: "Inbound Completed", inboundStatus: "Inbound Completed", vehicleStatus: "DONE", skuPo: 12, skuActual: 12, pcsPo: 480, pcsActual: 478, totalCarton: 40, damaged: 2, shortExcess: 2, docVsActual: 0, operator: "Fajar Fedian", category: "Stationery" },
+      { reportDate: YESTERDAY, poNumber: "IB/ETHX/170/FLW", client: "PERO", vendor: "PERO", transporter: "PT. PERO UNIVERSAL", vehicleId: "B 9080 BCF", unitType: "CDE", driverName: "WARYA", manpower: 3, arrivalTime: "11:19", unloadBegin: "11:25", unloadFinish: "12:30", unloadDuration: "1h 05m", unloadDurationMin: 65, grnTime: "13:00", leadTimeHrs: 1.68, leadTimeStatus: "ontime", inboundType: "Inbound Completed", inboundStatus: "Inbound Completed", vehicleStatus: "DONE", skuPo: 5, skuActual: 5, pcsPo: 52, pcsActual: 52, totalCarton: 8, damaged: 0, shortExcess: 0, docVsActual: 0, operator: "Dekra", category: "APPAREL" },
+      { reportDate: YESTERDAY, poNumber: "PO-SummerID-052026", client: "SummerID", vendor: "SummerID", transporter: "3PL Express", vehicleId: "B 1234 XY", unitType: "Van", driverName: "AGUS", manpower: 1, arrivalTime: "14:00", unloadBegin: "14:10", unloadFinish: "14:45", unloadDuration: "35m", unloadDurationMin: 35, grnTime: "15:30", leadTimeHrs: 1.5, leadTimeStatus: "ontime", inboundType: "Inbound Partial", inboundStatus: "Inbound Partial", vehicleStatus: "ON PROCESS", skuPo: 8, skuActual: 6, pcsPo: 200, pcsActual: 150, totalCarton: 15, damaged: 1, shortExcess: 50, docVsActual: 2, operator: "Rico", category: "Health Supplies", remarks: "2 SKU belum dikirim, menyusul" },
     ];
-    for (const s of seeds) _col("daily_tasks_ops").set(_genId(), s);
+    for (const s of seeds) {
+      _col("inbound_monitoring").set(_genId(), { ...s, createdAt: new Date().toISOString(), createdBy: me });
+    }
   }
 
   // A few General Affairs tasks

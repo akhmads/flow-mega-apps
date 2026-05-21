@@ -235,6 +235,7 @@ export const COL = {
   TASKS_SALES: "daily_tasks_sales",
   TASKS_SS: "daily_tasks_ss",
   TASKS_OPS: "daily_tasks_ops",
+  INBOUND: "inbound_monitoring",
   TASKS_GA: "daily_tasks_ga",
   TICKETS: "tickets",
   REVENUE_SCENARIOS: "revenue_scenarios",
