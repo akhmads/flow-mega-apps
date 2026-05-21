@@ -38,6 +38,7 @@ import { initDashboard } from "./modules/dashboard.js";
 import { initIssues, consumeIssuesNavAction } from "./modules/daily-issue.js";
 import { initSalesTracker, initSSTracker, initGATracker } from "./modules/daily-tracker.js";
 import { initInboundMonitoring } from "./modules/inbound-monitoring.js";
+import { initMPForecasting } from "./modules/mp-forecasting.js";
 import { initWeeklyReport } from "./modules/weekly-report.js";
 import { initTickets, consumeTicketsNavAction } from "./modules/ticketing.js";
 import { initRevenueCalc } from "./modules/revenue-calc.js";
@@ -57,6 +58,7 @@ const PAGES = {
   dailyTrackerSales: { title: "Daily Tracker — Sales", sub: "Daily tasks for Sales team", init: initSalesTracker },
   dailyTrackerSS: { title: "Daily Tracker — Sales Support", sub: "Daily / Projection / Improvement tasks", init: initSSTracker },
   inboundMonitoring: { title: "Inbound Monitoring", sub: "Vehicle arrivals, unloading, GRN processing", init: initInboundMonitoring },
+  mpForecasting: { title: "MP Forecasting", sub: "Manpower forecast planning and roster management", init: initMPForecasting },
   dailyTrackerGA: { title: "Daily Tracker — General Affairs", sub: "Daily tasks and requests for GA team", init: initGATracker },
   ticketing: { title: "Internal Tickets", sub: "Department-wide ticket system", init: initTickets, onShow: consumeTicketsNavAction },
   revenueCalc: { title: "Revenue Calculator", sub: "Calculate monthly revenue per client", init: initRevenueCalc },

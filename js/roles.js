@@ -283,6 +283,7 @@ export function canViewModule(moduleId) {
     dailyTrackerSales: isSalesTeam(),
     dailyTrackerSS: isSSTeam(),
     inboundMonitoring: isOpsTeam(),
+    mpForecasting: isOpsTeam(),
     dailyTrackerGA: isGATeam(),
     dailyIssue: isSSTeam(),            // SS only
     ticketing: true,                   // shared across all departments

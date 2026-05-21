@@ -91,6 +91,7 @@
       <button data-menu="dailyIssue">Daily Issue Tracker</button>
       <div class="navGroup">Operations</div>
       <button data-menu="inboundMonitoring">Inbound Monitoring</button>
+      <button data-menu="mpForecasting">MP Forecasting</button>
       <div class="navGroup">General Affairs</div>
       <button data-menu="dailyTrackerGA">Daily Tracker</button>
       <div class="navGroup">Department</div>
@@ -618,6 +619,142 @@
               <tbody></tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MP FORECASTING (OPERATIONS) -->
+    <section id="mpForecasting" class="menu hidden">
+      <div class="card">
+        <div class="pmHeaderActions">
+          <div class="left">
+            <h2>MP Forecasting</h2>
+            <p style="color:var(--muted);margin:6px 0 0">Manpower forecast planning, roster scheduling, and attendance gap analysis.</p>
+          </div>
+          <div class="right">
+            <button class="secondary" id="mpImportBtn">Import Excel</button>
+            <button class="secondary" id="mpExportBtn">Export Excel</button>
+            <input type="file" id="mpImportFile" accept=".xlsx,.xls" style="display:none"/>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="active" data-mptab="forecast">Forecast Planning</button>
+          <button data-mptab="roster">Roster</button>
+          <button data-mptab="pool">MP Pool</button>
+        </div>
+      </div>
+
+      <!-- TAB: Forecast Planning -->
+      <div data-mppane="forecast">
+        <div class="card">
+          <div class="filterGrid">
+            <div><label class="pmLabel">Date</label><input type="date" id="mpFcDate"/></div>
+            <div><label class="pmLabel">Division</label>
+              <select id="mpFcDiv"><option value="">All</option><option>OUTBOUND</option><option>INBOUND</option><option>INVENTORY</option></select>
+            </div>
+            <div><label class="pmLabel">Target Volume</label><input type="number" id="mpFcVolume" placeholder="e.g. 15000"/></div>
+          </div>
+          <div class="btns">
+            <button class="primary" id="mpCalcBtn">Calculate Forecast</button>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><b id="mpKpiTotal">0</b><span>Total MP Needed</span></div>
+          <div class="kpi"><b id="mpKpiS1">0</b><span>Shift 1 (06-15)</span></div>
+          <div class="kpi"><b id="mpKpiS2">0</b><span>Shift 2 (15-00)</span></div>
+          <div class="kpi"><b id="mpKpiS3">0</b><span>Shift 3 (22-06)</span></div>
+        </div>
+
+        <div class="card">
+          <h2>Forecast Breakdown</h2>
+          <div class="tableWrap">
+            <table id="mpFcTable">
+              <thead><tr>
+                <th>Function</th><th>Type</th><th>Productivity/Hr</th><th>UoM</th>
+                <th>Shift 1</th><th>Shift M</th><th>Shift 2</th><th>Shift 3</th><th>Total</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Division Summary</h2>
+          <div class="tableWrap">
+            <table id="mpDivTable">
+              <thead><tr>
+                <th>Division</th><th>Shift 1</th><th>Shift M</th><th>Shift 2</th><th>Shift 3</th><th>Total</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Roster -->
+      <div data-mppane="roster" class="hidden">
+        <div class="card">
+          <div class="filterGrid">
+            <div><label class="pmLabel">Division</label>
+              <select id="mpRstDiv"><option value="">All</option><option>OUTBOUND</option><option>INBOUND</option><option>INVENTORY</option></select>
+            </div>
+            <div><label class="pmLabel">Function</label>
+              <select id="mpRstFunc"><option value="">All</option></select>
+            </div>
+            <div><label class="pmLabel">Shift</label>
+              <select id="mpRstShift"><option value="">All</option><option>1</option><option>M</option><option>2</option><option>3</option><option>OFF</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Employee Roster</h2>
+          <div class="tableWrap">
+            <table id="mpRosterTable">
+              <thead><tr>
+                <th>No</th><th>Name</th><th>Function</th><th>Division</th>
+                <th>Status</th><th>Type</th><th>Grade</th><th>Task</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="small" id="mpRosterCount">0 employees</p>
+        </div>
+      </div>
+
+      <!-- TAB: MP Pool -->
+      <div data-mppane="pool" class="hidden">
+        <div class="card">
+          <div class="filterGrid">
+            <div><label class="pmLabel">Division</label>
+              <select id="mpPoolDiv"><option value="">All</option><option>OUTBOUND</option><option>INBOUND</option><option>INVENTORY</option></select>
+            </div>
+            <div><label class="pmLabel">Status</label>
+              <select id="mpPoolStatus"><option value="">All</option><option>Active</option><option>Inactive</option></select>
+            </div>
+            <div><label class="pmLabel">Search</label><input type="text" id="mpPoolSearch" placeholder="Search by name..."/></div>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><b id="mpPoolTotal">0</b><span>Total Employees</span></div>
+          <div class="kpi"><b id="mpPoolActive">0</b><span>Active</span></div>
+          <div class="kpi"><b id="mpPoolOB">0</b><span>Outbound</span></div>
+          <div class="kpi"><b id="mpPoolIB">0</b><span>Inbound</span></div>
+        </div>
+
+        <div class="card">
+          <h2>Manpower Pool</h2>
+          <div class="tableWrap">
+            <table id="mpPoolTable">
+              <thead><tr>
+                <th>Name</th><th>Function</th><th>Division</th>
+                <th>Status</th><th>Type</th><th>Grade</th><th>Source</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="small" id="mpPoolCount">0 employees</p>
         </div>
       </div>
     </section>
