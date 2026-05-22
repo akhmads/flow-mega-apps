@@ -16,33 +16,46 @@
 
 <link rel="stylesheet" href="css/styles.css"/>
 <link rel="stylesheet" href="css/revamp.css"/>
+<style>
+  /* ID / EN language toggle (app header + login) */
+  .langToggle{display:inline-flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:3px;flex-shrink:0}
+  .langToggle button{border:0;background:transparent;color:var(--muted);font-family:inherit;font-weight:700;font-size:12px;letter-spacing:.04em;padding:5px 12px;border-radius:999px;cursor:pointer;transition:all .18s}
+  .langToggle button:hover{color:var(--text)}
+  .langToggle button.active{background:var(--primary);color:#fff}
+  .loginLangToggle{display:flex;justify-content:center;margin-bottom:14px}
+</style>
 </head>
 <body>
 
 <!-- LOGIN GATE -->
 <div id="loginGate" class="loginGate">
   <div class="loginBox">
+    <div class="loginLangToggle">
+      <div class="langToggle">
+        <button data-lang="id">ID</button>
+        <button data-lang="en">EN</button>
+      </div>
+    </div>
     <div class="loginBrand">
       <img src="assets/logo-full.svg" alt="Flowgistik" class="logo-img" style="height:40px"/>
-      <div><b>Mega Apps</b><br><span>Internal tooling — Flowgistik Indonesia</span></div>
     </div>
     <div id="loginError" class="loginError hidden"></div>
-    <label class="pmLabel">Email</label>
+    <label class="pmLabel" data-i18n="login.email">Email</label>
     <input type="email" id="loginEmail" placeholder="name@flowgistik.id" autocomplete="username"/>
-    <label class="pmLabel">Password</label>
+    <label class="pmLabel" data-i18n="login.password">Password</label>
     <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"/>
     <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
       <input type="checkbox" id="rememberMe" style="width:auto;margin:0"/>
-      <label for="rememberMe" style="font-size:13px;color:var(--text-secondary);cursor:pointer;user-select:none">Remember me</label>
+      <label for="rememberMe" data-i18n="login.remember" style="font-size:13px;color:var(--text-secondary);cursor:pointer;user-select:none">Remember me</label>
     </div>
     <div class="btns" style="margin-top:14px">
-      <button class="primary" id="loginBtn" style="width:100%">Sign In</button>
+      <button class="primary" id="loginBtn" data-i18n="login.signin" style="width:100%">Sign In</button>
     </div>
-    <p class="small" style="margin-top:14px">No account yet? Ask a supervisor to create one for you. Forgot your password? A supervisor can reset it from User Management.</p>
+    <p class="small" data-i18n="login.help" style="margin-top:14px">No account yet? Ask a supervisor to create one for you. Forgot your password? A supervisor can reset it from User Management.</p>
 
     <!-- DEMO ACCOUNTS — visible in PREVIEW MODE only, hidden by app.js in production -->
     <div id="demoHelper" style="margin-top:14px;padding:14px;background:#fef3c7;border-radius:10px;font-size:12px;color:#78350f;line-height:1.7;border:2px dashed #f59e0b">
-      <b>DEMO MODE — click any account to auto-fill:</b><br>
+      <b data-i18n="login.demoTitle">DEMO MODE — click any account to auto-fill:</b><br>
       <button type="button" class="demoLoginBtn" data-email="admin@demo" data-pwd="demo" style="display:block;width:100%;text-align:left;margin-top:6px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;cursor:pointer;font-size:12px;color:#78350f">
         <b>admin@demo</b> · password: <b>demo</b> → Admin · sees everything, READ-ONLY
       </button>
@@ -82,36 +95,38 @@
       <img src="assets/logo-full-white.svg" alt="Flow" class="logo-img" style="height:28px"/>
     </div>
     <div class="nav">
-      <button class="active" data-menu="dashboard">Dashboard</button>
-      <div class="navGroup">Sales</div>
-      <button data-menu="dailyTrackerSales">Daily Tracker</button>
-      <button data-menu="revenueCalc">Revenue Calculator</button>
-      <div class="navGroup">Sales Support</div>
-      <button data-menu="dailyTrackerSS">Daily Tracker</button>
-      <button data-menu="dailyIssue">Daily Issue Tracker</button>
-      <div class="navGroup">Operations</div>
-      <button data-menu="inboundMonitoring">Inbound Monitoring</button>
-      <button data-menu="mpForecasting">MP Forecasting</button>
-      <div class="navGroup">General Affairs</div>
-      <button data-menu="dailyTrackerGA">Daily Tracker</button>
-      <div class="navGroup">Department</div>
-      <button data-menu="ticketing">Internal Tickets</button>
-      <div class="navGroup">Tools</div>
-      <button data-menu="projectManagement">Projection Management</button>
-      <button data-menu="mergerSystem">Merge System</button>
-      <button data-menu="orderProcessing">Transaction</button>
-      <button data-menu="dailyReconcile">Daily Reconcile</button>
-      <button data-menu="weeklyReportGen">Weekly Report Generator</button>
-      <button data-menu="forecastOrdersGen">Forecast Orders Generator</button>
-      <div class="navGroup" data-show-for-supervisor>Management</div>
-      <button data-menu="oneOnOne" data-show-for-supervisor>1-on-1 Summarizer</button>
-      <button data-menu="masterData" data-show-for-supervisor>Master Data</button>
-      <button data-menu="users" data-show-for-supervisor>User Management</button>
+      <button class="active" data-menu="dashboard" data-i18n="nav.dashboard">Dashboard</button>
+      <div class="navGroup" data-i18n="group.sales">Sales</div>
+      <button data-menu="dailyTrackerSales" data-i18n="nav.dailyTracker">Daily Tracker</button>
+      <button data-menu="revenueCalc" data-i18n="nav.revenueCalc">Revenue Calculator</button>
+      <button data-menu="salesToolkit" data-i18n="nav.salesToolkit">Sales Toolkit</button>
+      <div class="navGroup" data-i18n="group.ss">Sales Support</div>
+      <button data-menu="dailyTrackerSS" data-i18n="nav.dailyTracker">Daily Tracker</button>
+      <button data-menu="dailyIssue" data-i18n="nav.dailyIssue">Daily Issue Tracker</button>
+      <div class="navGroup" data-i18n="group.ops">Operations</div>
+      <button data-menu="inboundMonitoring" data-i18n="nav.inboundMonitoring">Inbound Monitoring</button>
+      <button data-menu="mpForecasting" data-i18n="nav.mpForecasting">MP Forecasting</button>
+      <div class="navGroup" data-i18n="group.ga">General Affairs</div>
+      <button data-menu="dailyTrackerGA" data-i18n="nav.dailyTracker">Daily Tracker</button>
+      <div class="navGroup" data-i18n="group.department">Department</div>
+      <button data-menu="ticketing" data-i18n="nav.ticketing">Internal Tickets</button>
+      <div class="navGroup" data-i18n="group.tools">Tools</div>
+      <button data-menu="projectManagement" data-i18n="nav.projectManagement">Projection Management</button>
+      <button data-menu="mergerSystem" data-i18n="nav.mergerSystem">Merge System</button>
+      <button data-menu="orderProcessing" data-i18n="nav.orderProcessing">Transaction</button>
+      <button data-menu="dailyReconcile" data-i18n="nav.dailyReconcile">Daily Reconcile</button>
+      <button data-menu="weeklyReportGen" data-i18n="nav.weeklyReportGen">Weekly Report Generator</button>
+      <button data-menu="forecastOrdersGen" data-i18n="nav.forecastOrdersGen">Forecast Orders Generator</button>
+      <div class="navGroup" data-show-for-supervisor data-i18n="group.management">Management</div>
+      <button data-menu="oneOnOne" data-show-for-supervisor data-i18n="nav.oneOnOne">1-on-1 Summarizer</button>
+      <button data-menu="masterData" data-show-for-supervisor data-i18n="nav.masterData">Master Data</button>
+      <button data-menu="auditLog" data-show-for-supervisor data-i18n="nav.auditLog">Activity Log</button>
+      <button data-menu="users" data-show-for-supervisor data-i18n="nav.users">User Management</button>
     </div>
     <div class="sidebarFooter">
       <div class="userBadge"><span id="userBadgeEmail">—</span></div>
       <div class="userRoleBadge"><span id="userRoleBadge" class="badge">—</span></div>
-      <button class="secondary" id="logoutBtn">Sign Out</button>
+      <button class="secondary" id="logoutBtn" data-i18n="common.signout">Sign Out</button>
     </div>
   </aside>
 
@@ -125,11 +140,33 @@
 
   <main class="main">
     <div class="top">
-      <div class="title">
-        <h1 id="pageTitle">Dashboard</h1>
-        <p id="pageSubtitle">Overview of today's operations</p>
+      <div class="topLeft">
+        <button id="navCollapseBtn" class="navCollapseBtn" aria-label="Show or hide menu" title="Show / hide menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="title">
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="pageSubtitle">Overview of today's operations</p>
+        </div>
       </div>
       <div class="topActions">
+        <div class="langToggle" id="langToggle">
+          <button data-lang="id">ID</button>
+          <button data-lang="en">EN</button>
+        </div>
+        <div class="globalSearch">
+          <input type="text" id="globalSearchInput" autocomplete="off"
+                 data-i18n-ph="search.placeholder"
+                 placeholder="Search issues, tickets, tasks…  (Ctrl+K)"/>
+          <div id="globalSearchResults" class="searchResults hidden"></div>
+        </div>
+        <div class="notifWrap">
+          <button id="notifBell" class="notifBell" aria-label="Notifications" title="Notifications">
+            <span class="notifBellIcon">🔔</span>
+            <span id="notifCount" class="notifCount hidden">0</span>
+          </button>
+          <div id="notifPanel" class="notifPanel hidden"></div>
+        </div>
         <span class="pmPill" id="todayPill"></span>
       </div>
     </div>
@@ -169,7 +206,7 @@
         <div class="pmHeaderActions">
           <div class="left">
             <h2 style="margin:0">Overview</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Live KPIs across all modules. Filter by date range.</p>
+            <p style="color:var(--muted);margin:6px 0 0">Live KPIs for your department. Filter by date range.</p>
           </div>
         </div>
         <div class="filterGrid" style="margin-top:14px">
@@ -188,22 +225,10 @@
           <div><label class="pmLabel">To</label><input type="date" id="dashTo"/></div>
         </div>
       </div>
-      <div class="kpis">
-        <div class="kpi"><b id="kpiOpenIssues">0</b><span>Open Issues</span></div>
-        <div class="kpi"><b id="kpiCritical">0</b><span>Critical (High)</span></div>
-        <div class="kpi"><b id="kpiOpenTickets">0</b><span>Open Tickets</span></div>
-        <div class="kpi"><b id="kpiTasksToday">0</b><span>Tasks (range)</span></div>
-      </div>
-      <div class="grid">
-        <div class="card">
-          <h2>Latest Issues</h2>
-          <div id="dashIssuesList" class="output">Loading…</div>
-        </div>
-        <div class="card">
-          <h2>Latest Tickets</h2>
-          <div id="dashTicketsList" class="output">Loading…</div>
-        </div>
-      </div>
+      <!-- KPI tiles + panels are rendered by dashboard.js, tailored to the
+           logged-in user's department (e.g. GA sees no issue log). -->
+      <div class="kpis" id="dashKpis"></div>
+      <div class="grid" id="dashPanels"></div>
     </section>
 
     <!-- DAILY ISSUE TRACKER (matches your SS Daily Issue sheet schema) -->
@@ -266,6 +291,25 @@
         <!-- DATA HEALTH — warns about dirty data that will corrupt MBR reports -->
         <div id="issueDataHealth" class="card hidden" style="border-left:4px solid #f59e0b;background:rgba(245,158,11,.06)"></div>
 
+        <!-- ISSUE TABLE — kept above the charts so the raw log is the first
+             thing seen; charts sit below as supporting analysis. -->
+        <div class="card">
+          <h2>Issues</h2>
+          <div class="tableWrap">
+            <table id="issueTable">
+              <thead><tr>
+                <th style="width:36px" title="Tick to close (auto-sets solving date to today)"></th>
+                <th>Update By</th><th>Complain Date</th><th>Solving Date</th><th>Yr</th><th>Wk</th><th>Client</th>
+                <th>Order Code</th><th title="Number of orders impacted by this issue">Order Count</th>
+                <th>Site</th><th>Categori</th><th>Details</th><th>Root Cause</th><th>Short Term</th><th>Long Term</th>
+                <th>Status</th><th>Notes</th><th>Actions</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="small" id="issueTableCount">0 issues</p>
+        </div>
+
         <div class="grid">
           <div class="card">
             <div class="chartHead">
@@ -321,24 +365,6 @@
             </div>
           </div>
           <canvas id="chartCategori" height="160"></canvas>
-        </div>
-
-        <!-- ISSUE TABLE — new columns: checklist + Order Count -->
-        <div class="card">
-          <h2>Issues</h2>
-          <div class="tableWrap">
-            <table id="issueTable">
-              <thead><tr>
-                <th style="width:36px" title="Tick to close (auto-sets solving date to today)"></th>
-                <th>Update By</th><th>Complain Date</th><th>Solving Date</th><th>Yr</th><th>Wk</th><th>Client</th>
-                <th>Order Code</th><th title="Number of orders impacted by this issue">Order Count</th>
-                <th>Site</th><th>Categori</th><th>Details</th><th>Root Cause</th><th>Short Term</th><th>Long Term</th>
-                <th>Status</th><th>Notes</th><th>Actions</th>
-              </tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <p class="small" id="issueTableCount">0 issues</p>
         </div>
 
       </div><!-- /detail pane -->
@@ -1043,6 +1069,12 @@
       <div id="forecastOrdersHost"></div>
     </section>
 
+    <!-- Sales Toolkit — Warehouse Fulfillment (self-contained, iframe-isolated) -->
+    <section id="salesToolkit" class="menu hidden">
+      <iframe id="salesToolkitFrame" title="Sales Toolkit — Warehouse Fulfillment"
+              style="width:100%;height:calc(100vh - 150px);min-height:600px;border:0;border-radius:12px;display:block"></iframe>
+    </section>
+
     <!-- USERS (Admin only) -->
     <section id="oneOnOne" class="menu hidden">
       <div id="oneOnOneRoot"></div>
@@ -1050,6 +1082,10 @@
 
     <section id="masterData" class="menu hidden">
       <div id="masterDataRoot"></div>
+    </section>
+
+    <section id="auditLog" class="menu hidden">
+      <div id="auditLogRoot"></div>
     </section>
 
     <section id="users" class="menu hidden">
@@ -1103,6 +1139,10 @@
     <textarea id="im_longTerm" rows="2" placeholder="Permanent prevention…"></textarea>
     <label class="pmLabel">Notes</label>
     <textarea id="im_notes" rows="2" placeholder="Other notes…"></textarea>
+    <div class="attachBlock hidden" id="im_attachBlock">
+      <label class="pmLabel">Attachments <span class="small" style="color:var(--muted)">— optional</span></label>
+      <div id="im_attachments"></div>
+    </div>
     <datalist id="clientsList"></datalist>
     <datalist id="picsList"></datalist>
     <datalist id="categoriList"></datalist>
@@ -1159,6 +1199,11 @@
     <input type="text" id="tkm_subject" placeholder="Short summary…"/>
     <label class="pmLabel">Description *</label>
     <textarea id="tkm_description" rows="4"></textarea>
+
+    <div class="attachBlock hidden" id="tkm_attachBlock">
+      <label class="pmLabel">Attachments <span class="small" style="color:var(--muted)">— optional</span></label>
+      <div id="tkm_attachments"></div>
+    </div>
 
     <!-- Comments thread (only visible when editing existing ticket) -->
     <div id="tkm_commentsWrap" class="hidden" style="margin-top:18px">

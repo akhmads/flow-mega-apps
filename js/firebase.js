@@ -162,6 +162,52 @@ function requireDb(action) {
   }
 }
 
+// ============================================================
+// SLOW-OP TIMING — surfaces sluggish reads/writes in the Debug
+// Panel. Best-effort; never affects the operation itself.
+// ============================================================
+const SLOW_OP_MS = 3000;
+function _recordOp(label, ms) {
+  if (ms < SLOW_OP_MS || typeof window === "undefined") return;
+  const list = (window.__flowSlowOps = window.__flowSlowOps || []);
+  list.unshift({ op: label, ms: Math.round(ms), at: new Date().toLocaleTimeString() });
+  if (list.length > 20) list.pop();
+}
+
+/** Best-effort current user email (real auth or preview). */
+function _currentEmail() {
+  return _auth?.currentUser?.email
+    || (typeof window !== "undefined" && window.__previewUserEmail)
+    || "anonymous";
+}
+
+// ============================================================
+// AUDIT TRAIL — every create/update/delete is recorded centrally
+// here so the Activity Log shows a complete history with zero
+// changes to individual modules. Best-effort: a failed audit
+// write never blocks (or fails) the real operation.
+// ============================================================
+function _auditSummary(data) {
+  if (!data || typeof data !== "object") return "";
+  return String(
+    data.subject || data.client || data.task || data.name ||
+    data.number || data.poNumber || data.clientName || data.text || ""
+  ).slice(0, 80);
+}
+function writeAudit(colName, action, docId, data) {
+  if (colName === "audit_log") return;          // never audit the audit log
+  Promise.resolve().then(() =>
+    addDoc(collection("audit_log"), {
+      kind: colName,
+      action,                                    // "create" | "update" | "delete"
+      docId: docId || null,
+      summary: _auditSummary(data),
+      at: serverTimestamp(),
+      by: _currentEmail()
+    })
+  ).catch(() => { /* non-critical */ });
+}
+
 /** Convenience to expose the preview-store reset for debug tooling */
 export const _resetPreviewStore = isFirebaseConfigured
   ? () => { throw new Error("Reset is only available in preview mode."); }
@@ -169,47 +215,72 @@ export const _resetPreviewStore = isFirebaseConfigured
 
 /** Add a document with auto-id + createdAt + createdBy */
 export async function addDocument(colName, data) {
-  requireDb("write");
-  assertCanWrite("write", colName);
-  const user = _auth?.currentUser;
-  // In preview mode, "current user" is set by app.js via window
-  const currentEmail = user?.email || (typeof window !== "undefined" && window.__previewUserEmail) || "anonymous";
-  const ref = await addDoc(collection(colName), {
-    ...data,
-    createdAt: serverTimestamp(),
-    createdBy: currentEmail
-  });
-  return ref.id;
+  const _t0 = performance.now();
+  try {
+    requireDb("write");
+    assertCanWrite("write", colName);
+    const user = _auth?.currentUser;
+    // In preview mode, "current user" is set by app.js via window
+    const currentEmail = user?.email || (typeof window !== "undefined" && window.__previewUserEmail) || "anonymous";
+    const ref = await addDoc(collection(colName), {
+      ...data,
+      createdAt: serverTimestamp(),
+      createdBy: currentEmail
+    });
+    writeAudit(colName, "create", ref.id, data);
+    return ref.id;
+  } finally {
+    _recordOp("add " + colName, performance.now() - _t0);
+  }
 }
 
 /** Get all docs in a collection (optionally with constraints) */
 export async function getDocuments(colName, ...constraints) {
   if (!_db) return [];
-  const q = constraints.length
-    ? query(collection(colName), ...constraints)
-    : collection(colName);
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const _t0 = performance.now();
+  try {
+    const q = constraints.length
+      ? query(collection(colName), ...constraints)
+      : collection(colName);
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } finally {
+    _recordOp("read " + colName, performance.now() - _t0);
+  }
 }
 
 /** Update a doc by ID */
 export async function updateDocument(colName, id, data) {
-  requireDb("update");
-  assertCanWrite("update", colName);
-  const user = _auth?.currentUser;
-  const currentEmail = user?.email || (typeof window !== "undefined" && window.__previewUserEmail) || "anonymous";
-  return updateDoc(doc(colName, id), {
-    ...data,
-    updatedAt: serverTimestamp(),
-    updatedBy: currentEmail
-  });
+  const _t0 = performance.now();
+  try {
+    requireDb("update");
+    assertCanWrite("update", colName);
+    const user = _auth?.currentUser;
+    const currentEmail = user?.email || (typeof window !== "undefined" && window.__previewUserEmail) || "anonymous";
+    const result = await updateDoc(doc(colName, id), {
+      ...data,
+      updatedAt: serverTimestamp(),
+      updatedBy: currentEmail
+    });
+    writeAudit(colName, "update", id, data);
+    return result;
+  } finally {
+    _recordOp("update " + colName, performance.now() - _t0);
+  }
 }
 
 /** Delete a doc by ID */
 export async function deleteDocument(colName, id) {
-  requireDb("delete");
-  assertCanWrite("delete", colName);
-  return deleteDoc(doc(colName, id));
+  const _t0 = performance.now();
+  try {
+    requireDb("delete");
+    assertCanWrite("delete", colName);
+    const result = await deleteDoc(doc(colName, id));
+    writeAudit(colName, "delete", id, null);
+    return result;
+  } finally {
+    _recordOp("delete " + colName, performance.now() - _t0);
+  }
 }
 
 /** Subscribe to a collection in real-time. Returns unsubscribe fn. */

@@ -3,15 +3,24 @@
 //
 // PREVIEW_MODE controls login behavior:
 //   - true  = demo accounts (no Firebase auth needed)
-//   - false = real Firebase auth (production)
+//   - false = real Firebase auth + Firestore sync (production)
 //
-// Defaults to true (demo mode). Set to false before deploying,
-// or add ?prod to the URL to force production mode.
-// Add ?demo to force demo mode even when set to false.
+// It now AUTO-DETECTS from firebase-applet-config.json:
+//   - real apiKey present  → production mode (Firebase database sync)
+//   - config empty / {}    → demo mode (localStorage sandbox)
+// This keeps the login flow consistent with the data layer in
+// firebase.js (which already auto-detects the same way).
+//
+// URL overrides: add ?demo to force the demo sandbox, or ?prod
+// to force production — handy for testing either way.
 // ============================================================
 
+import { isFirebaseConfigured } from "./firebase.js";
+
 const _params = new URLSearchParams(location.search);
-const PREVIEW_MODE = _params.has("prod") ? false : true;
+const PREVIEW_MODE = _params.has("prod") ? false
+                   : _params.has("demo") ? true
+                   : !isFirebaseConfigured;
 
 // 4 demo accounts — type these into the login form to test each role.
 // Password for ALL of them is just "demo"
@@ -42,15 +51,22 @@ import { initMPForecasting } from "./modules/mp-forecasting.js";
 import { initWeeklyReport } from "./modules/weekly-report.js";
 import { initTickets, consumeTicketsNavAction } from "./modules/ticketing.js";
 import { initRevenueCalc } from "./modules/revenue-calc.js";
+import { initSalesToolkit } from "./modules/sales-toolkit.js";
 import { initProjection } from "./modules/projection.js";
 import { initUsers } from "./modules/users.js";
 import { initMasterData, bootstrapMasterData } from "./modules/master-data.js";
 import { initOneOnOne } from "./modules/one-on-one.js";
-import { mountDebugPanel } from "./debug-panel.js";
+import { mountDebugPanel, mountReportButton, logBreadcrumb } from "./debug-panel.js";
 import { initMerger, initOrderProcessing, initDailyReconcile, initWeeklyReportGen, initForecastOrdersGen } from "./legacy/legacy-loader.js";
+import { initGlobalSearch } from "./modules/global-search.js";
+import { initAuditLog } from "./modules/audit-log.js";
+import { initNotifications } from "./modules/notifications.js";
+import { FEATURES } from "./features.js";
+import { initI18n, t, onLangChange } from "./i18n.js";
 import { $, toast } from "./utils.js";
 
 const inited = {};
+let _currentMenu = null;   // tracks the open page so its title can be re-translated
 
 const PAGES = {
   dashboard: { title: "Dashboard", sub: "Overview of today's operations", init: initDashboard },
@@ -62,6 +78,7 @@ const PAGES = {
   dailyTrackerGA: { title: "Daily Tracker — General Affairs", sub: "Daily tasks and requests for GA team", init: initGATracker },
   ticketing: { title: "Internal Tickets", sub: "Department-wide ticket system", init: initTickets, onShow: consumeTicketsNavAction },
   revenueCalc: { title: "Revenue Calculator", sub: "Calculate monthly revenue per client", init: initRevenueCalc },
+  salesToolkit: { title: "Sales Toolkit", sub: "Deal scoring, follow-up templates & objection playbook", init: initSalesToolkit },
   projectManagement: { title: "Projection Management", sub: "Client onboarding projects · multi-user, real-time", init: initProjection },
   mergerSystem: { title: "Merge System", sub: "Merge orders, Excel, PDF (v21)", init: initMerger },
   orderProcessing: { title: "Transaction", sub: "Master item, screening stock, orders generator (v21)", init: initOrderProcessing },
@@ -69,9 +86,22 @@ const PAGES = {
   weeklyReportGen: { title: "Weekly Report Generator", sub: "Inbound/outbound volume Excel generator (v21)", init: initWeeklyReportGen },
   forecastOrdersGen: { title: "Forecast Orders Generator", sub: "Outbound forecast summary · chart + by-client tables (v21)", init: initForecastOrdersGen },
   masterData: { title: "Master Data", sub: "Standardize departments, clients, and categories", init: initMasterData },
+  auditLog: { title: "Activity Log", sub: "Audit trail — who changed what, and when", init: initAuditLog },
   oneOnOne: { title: "1-on-1 Summarizer", sub: "Run structured 1-on-1s · AI summary", init: initOneOnOne },
   users: { title: "User Management", sub: "Manage team accounts and roles", init: initUsers }
 };
+
+// ============================================================
+// APP-SHELL i18n (ID / EN) — nav, page titles, login, header.
+// Individual modules still render Indonesian; migrate later.
+// ============================================================
+initI18n();
+onLangChange(() => {
+  if (_currentMenu && PAGES[_currentMenu]) {
+    $("pageTitle").textContent = t(`page.${_currentMenu}.title`);
+    $("pageSubtitle").textContent = t(`page.${_currentMenu}.sub`);
+  }
+});
 
 // ============================================================
 // NAV
@@ -128,6 +158,24 @@ function bindNav() {
   }
   if (overlay) overlay.addEventListener("click", closeMobileNav);
 
+  // Desktop sidebar collapse — burger button in the top bar. State is
+  // persisted so the sidebar stays hidden/shown across navigations and
+  // page reloads.
+  const app = document.querySelector(".app");
+  const collapseBtn = $("navCollapseBtn");
+  const NAV_KEY = "flow.navCollapsed";
+  if (app && localStorage.getItem(NAV_KEY) === "1") {
+    app.classList.add("nav-collapsed");
+  }
+  if (collapseBtn && !collapseBtn._wired) {
+    collapseBtn._wired = true;
+    collapseBtn.addEventListener("click", () => {
+      // On mobile the burger is hidden; this controls the desktop sidebar.
+      const collapsed = app.classList.toggle("nav-collapsed");
+      try { localStorage.setItem(NAV_KEY, collapsed ? "1" : "0"); } catch (e) {}
+    });
+  }
+
   document.querySelectorAll(".nav button[data-menu]").forEach(btn => {
     btn.addEventListener("click", () => {
       closeMobileNav();
@@ -172,8 +220,10 @@ function switchPage(menuId, clickedBtn) {
   if (target) target.classList.remove("hidden");
   const page = PAGES[menuId];
   if (page) {
-    $("pageTitle").textContent = page.title;
-    $("pageSubtitle").textContent = page.sub;
+    _currentMenu = menuId;
+    $("pageTitle").textContent = t(`page.${menuId}.title`);
+    $("pageSubtitle").textContent = t(`page.${menuId}.sub`);
+    logBreadcrumb("Page → " + t(`page.${menuId}.title`));
     if (!inited[menuId]) {
       try {
         page.init();
@@ -231,11 +281,32 @@ function bootApp(email, role, name, department) {
   $("userBadgeEmail").textContent = email;
   setPreviewUser({ email, role, name, department });
   window.PREVIEW_MODE_INTERNAL = PREVIEW_MODE;
+  // Activity Log — optional (toggle in features.js). Hide its nav
+  // entry entirely when disabled.
+  if (!FEATURES.auditLog) {
+    const ab = document.querySelector('.nav button[data-menu="auditLog"]');
+    if (ab) ab.remove();
+  }
   applyRoleVisibility();
   bindNav();
+  // Global search — optional (toggle in features.js).
+  if (FEATURES.globalSearch) {
+    initGlobalSearch();
+  } else {
+    const gs = document.querySelector(".globalSearch");
+    if (gs) gs.style.display = "none";
+  }
+  // Notifications — optional (toggle in features.js).
+  if (FEATURES.notifications) {
+    initNotifications();
+  } else {
+    const nw = document.querySelector(".notifWrap");
+    if (nw) nw.style.display = "none";
+  }
   bindGlobalModalClose();
   bootstrapMasterData();
   mountDebugPanel();
+  mountReportButton();
   // Show the preview banner only in preview mode + wire the wipe button
   if (PREVIEW_MODE) {
     const banner = $("previewBanner");

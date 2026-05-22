@@ -6,6 +6,68 @@
 
 ---
 
+## 0. Launch checklist (start here)
+
+The file **`firebase-applet-config.json`** is the mode switch:
+
+| Contents of that file | Mode | Data |
+|---|---|---|
+| Empty `{}` | **Demo** | Browser localStorage — isolated per browser |
+| Real Firebase config | **Production** | Shared live Firestore database |
+
+**Current local state:** `firebase-applet-config.json` is empty (`{}`) so the
+app runs in demo mode for local testing. The real config is saved in
+`firebase-applet-config.prod.json`.
+
+### Test locally (demo mode) — no setup
+
+Serve the folder over HTTP (not `file://`) and log in with a built-in account —
+password is `demo` for all:
+
+- `admin@demo` — full access, best for a feature walkthrough
+- `supervisor.ops@demo` / `.sales@demo` / `.ss@demo` / `.ga@demo` — create/edit/delete + User Management
+- `user.ops@demo` / `.sales@demo` / `.ss@demo` / `.ga@demo` — view-only
+
+### Go live (production) — do these in order
+
+- [ ] **Swap in the real config** before uploading to the server:
+      ```powershell
+      Copy-Item firebase-applet-config.prod.json firebase-applet-config.json -Force
+      ```
+      Confirm the file now has the real `apiKey` — if it is still `{}` the
+      server runs in demo mode and nobody shares data.
+- [ ] **Enable Email/Password login** — Firebase Console → Authentication →
+      Sign-in method → Email/Password → Enable.
+      *(Skipping this causes the `auth/configuration-not-found` login error.)*
+- [ ] **Create the first supervisor's Auth account** — Console → Authentication
+      → Users → Add user (email + password). This login bootstraps everyone else.
+- [ ] **Give that account the supervisor role** — Console → Firestore →
+      collection `users` → add a doc with **Document ID = that exact email**:
+
+      | Field | Type | Value |
+      |---|---|---|
+      | `email` | string | the same email |
+      | `name` | string | display name |
+      | `role` | string | `supervisor` |
+      | `department` | string | e.g. `Operations` |
+
+      Required once: security rules let only an existing admin/supervisor
+      create `users` docs, so the first one is placed by hand.
+- [ ] **Deploy the security rules** — `firebase deploy --only firestore:rules`
+- [ ] **Onboard the team** — log in as the supervisor, then for each person:
+      add their Auth account in the Console, and add their email + role +
+      department in the app's User Management page.
+
+> An account that logs in without a `users` doc defaults to **user**
+> (view-only) — it cannot self-promote.
+
+> Do not commit the empty `{}` config to the launch branch, or the server
+> ships in demo mode.
+
+The sections below are the full reference for each step.
+
+---
+
 ## 1. Plug in Firebase credentials
 
 Edit **`firebase-applet-config.json`** in the project root with your project's config:
@@ -51,7 +113,7 @@ In **Firebase Console** for the project:
 
 ---
 
-## 4. Seed the first admin user
+## 4. Seed the first user
 
 After enabling Auth, create one Email/Password user in Firebase Console → Authentication → Users.
 
@@ -63,11 +125,14 @@ Document ID: bryan@flowgistik.id  (use the email as doc ID)
 Fields:
   email:      "bryan@flowgistik.id"
   name:       "Bryan"
-  role:       "admin"
+  role:       "supervisor"
   department: "Operations"
 ```
 
-After this Bryan can log in and manage everyone else through the User Management UI.
+Recommended role for the bootstrap account is **`supervisor`** — it can both
+manage user accounts AND create/edit/delete operational data. `admin` can
+manage users but is read-only on data. After this the account can log in and
+manage everyone else through the User Management UI.
 
 ---
 

@@ -6,17 +6,21 @@
 // ============================================================
 
 import {
-  COL, addDocument, updateDocument, deleteDocument, subscribeCollection, orderBy
+  COL, addDocument, updateDocument, deleteDocument, subscribeCollection,
+  orderBy, getDocuments
 } from "../firebase.js";
 import {
   $, esc, toDateStr, friendlyDate, dateRange, toast,
-  badgeClass, downloadXLSX, today, confirmAction, getISOWeek
+  badgeClass, downloadXLSX, today, confirmAction, getISOWeek, slaAge,
+  generateTicketNumber
 } from "../utils.js";
 import { getStaffForTeam, getCurrentProfile } from "../roles.js";
 import { createDropdown, findNearestMatch } from "../components/dropdown.js";
 import {
   subscribeMasterData, addMasterItem, getClientByName, getMasterData
 } from "./master-data.js";
+import { createAttachmentField } from "../components/attachments.js";
+import { FEATURES } from "../features.js";
 
 let allIssues = [];
 let filteredIssues = [];
@@ -24,6 +28,7 @@ let unsub = null;
 let charts = {};
 let editingId = null;
 let currentTab = "detail"; // "detail" | "summary"
+let issueAttachField = null;  // attachment widget (created on first modal open)
 
 const ISSUE_SITES = ["Outbound", "Commercial", "Lastmile", "Technology", "Inbound", "Buyer", "Client", "Inventory", "Marketplace"];
 
@@ -366,8 +371,18 @@ function renderTable() {
   tbody.innerHTML = display.map(i => {
     const orderQty = toOrderCodesArray(i).length;
     const isClosed = i.status === "Close";
+    // Aging / SLA — only meaningful for still-open issues.
+    const age = (!isClosed && FEATURES.slaHighlight) ? slaAge(i.complainDate) : { level: "", label: "", days: 0 };
+    const rowCls = (age.level === "warn" || age.level === "stale") ? ` class="sla-${age.level}"` : "";
+    const agePill = (age.days >= 1) ? ` <span class="agePill ${age.level}">${esc(age.label)}</span>` : "";
+    const attachTag = (i.attachments && i.attachments.length)
+      ? ` <span class="small" title="${i.attachments.length} attachment(s)">📎 ${i.attachments.length}</span>` : "";
+    const ticketBtn = !FEATURES.issueToTicket ? ""
+      : i.linkedTicketId
+        ? `<span class="small" title="Converted to Internal Ticket" style="color:var(--primary)">🎫 ${esc(i.linkedTicketNumber || "linked")}</span>`
+        : `<button class="secondary iconBtn" data-totkt="${i.id}" title="Create an Internal Ticket from this issue">→ Ticket</button>`;
     return `
-    <tr>
+    <tr${rowCls}>
       <td style="text-align:center">
         <input type="checkbox" class="quickCloseChk" data-id="${i.id}" ${isClosed ? "checked" : ""} title="${isClosed ? "Reopen this issue" : "Close & auto-set solving date to today"}"/>
       </td>
@@ -385,10 +400,11 @@ function renderTable() {
       <td class="long">${esc(i.rootCause || "")}</td>
       <td class="long">${esc(i.shortTermSolution || "")}</td>
       <td class="long">${esc(i.longTermSolution || "")}</td>
-      <td><span class="${badgeClass(isClosed ? "resolved" : "open")}">${esc(i.status || "")}</span></td>
-      <td class="long">${esc(i.notes || "")}</td>
+      <td><span class="${badgeClass(isClosed ? "resolved" : "open")}">${esc(i.status || "")}</span>${agePill}</td>
+      <td class="long">${esc(i.notes || "")}${attachTag}</td>
       <td>
         <button class="secondary iconBtn" data-edit="${i.id}">Edit</button>
+        ${ticketBtn}
         <button class="danger iconBtn" data-del="${i.id}">Del</button>
       </td>
     </tr>`;
@@ -403,6 +419,62 @@ function renderTable() {
     b.addEventListener("click", () => openModal(b.dataset.edit)));
   tbody.querySelectorAll("[data-del]").forEach(b =>
     b.addEventListener("click", () => removeIssue(b.dataset.del)));
+  tbody.querySelectorAll("[data-totkt]").forEach(b =>
+    b.addEventListener("click", () => convertToTicket(b.dataset.totkt)));
+}
+
+// ============================================================
+// ISSUE → TICKET — spin an issue into an Internal Ticket so it
+// can be routed to another team. Links both records together.
+// ============================================================
+async function convertToTicket(id) {
+  const i = allIssues.find(x => x.id === id);
+  if (!i) return;
+  if (i.linkedTicketId) return toast("This issue already has a linked ticket", "error");
+  if (!confirmAction(`Create an Internal Ticket from this ${i.client || ""} issue?`)) return;
+
+  const me = getCurrentProfile();
+  const codes = toOrderCodesArray(i);
+  const description = [
+    `Converted from Daily Issue Tracker.`,
+    `Client: ${i.client || "—"}`,
+    `Issue site: ${i.issueSite || "—"}`,
+    `Complain date: ${friendlyDate(i.complainDate)}`,
+    codes.length ? `Order code(s): ${codes.join(", ")}` : "",
+    i.detailsComplain ? `\nDetails: ${i.detailsComplain}` : "",
+    i.rootCause ? `Root cause: ${i.rootCause}` : ""
+  ].filter(Boolean).join("\n");
+
+  try {
+    // Ticket number needs a running count of existing tickets.
+    let count = 0;
+    try { count = (await getDocuments(COL.TICKETS)).length; } catch (e) { /* best effort */ }
+
+    const ticket = {
+      type: "internal",
+      priority: "Medium",
+      status: "Open",
+      requester: me?.name || i.updateBy || "—",
+      dept: i.issueSite || "Operations",
+      assignee: "",
+      subject: `Issue: ${i.client || "—"} — ${i.categoriComplain || i.issueSite || "complaint"}`,
+      description,
+      comments: [],
+      number: generateTicketNumber("internal", count),
+      source: "from-issue",
+      linkedIssueId: i.id,
+      createdAtMs: Date.now()
+    };
+    const ticketId = await addDocument(COL.TICKETS, ticket);
+    await updateDocument(COL.ISSUES, id, {
+      linkedTicketId: ticketId,
+      linkedTicketNumber: ticket.number
+    });
+    toast(`Ticket ${ticket.number} created from this issue`, "success");
+  } catch (e) {
+    console.error(e);
+    toast("Could not create ticket: " + e.message, "error");
+  }
 }
 
 // Quick-close / re-open from the checkbox column.
@@ -735,6 +807,18 @@ window.exportIssueSummary = function () {
 // ============================================================
 // MODAL CRUD
 // ============================================================
+/** Build the attachment widget once and reveal its block.
+ *  No-op when the feature is disabled in features.js. */
+function ensureAttachField() {
+  const block = $("im_attachBlock");
+  if (!block) return;
+  if (!FEATURES.attachments) { block.classList.add("hidden"); return; }
+  block.classList.remove("hidden");
+  if (!issueAttachField) {
+    issueAttachField = createAttachmentField($("im_attachments"));
+  }
+}
+
 async function openModal(id = null) {
   editingId = id;
   $("issueModalTitle").textContent = id ? "Edit Issue" : "New Issue";
@@ -747,10 +831,12 @@ async function openModal(id = null) {
     staff.map(s => `<option value="${esc(s.name)}">${esc(s.name)}</option>`).join("");
 
   ensureDropdowns();
+  ensureAttachField();
 
   if (id) {
     const i = allIssues.find(x => x.id === id);
     if (!i) return;
+    issueAttachField?.setItems(i.attachments || []);
     $("im_updateBy").value = i.updateBy || "";
     clientDropdown?.setValue(i.client || "");
     $("im_complainDate").value = toDateStr(i.complainDate) || today();
@@ -765,6 +851,7 @@ async function openModal(id = null) {
     $("im_longTerm").value = i.longTermSolution || "";
     $("im_notes").value = i.notes || "";
   } else {
+    issueAttachField?.clear();
     const myStaff = staff.find(s => s.email === me?.email);
     $("im_updateBy").value = myStaff?.name || "";
     clientDropdown?.setValue("");
@@ -914,6 +1001,11 @@ async function saveIssue() {
     data.resolutionDays = Math.max(0, daysBetween(data.complainDate, data.solvingDate));
   } else {
     data.resolutionDays = null;
+  }
+
+  // Optional attachments
+  if (FEATURES.attachments && issueAttachField) {
+    data.attachments = issueAttachField.getItems();
   }
 
   try {

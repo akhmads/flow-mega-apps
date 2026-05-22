@@ -34,7 +34,10 @@
 }
 
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+/* scrollbar-gutter:stable always reserves space for the vertical scrollbar
+   so the layout (and the sidebar) never shifts horizontally when switching
+   between a short tab and a tall, scrollable one. */
+html{scroll-behavior:smooth;scrollbar-gutter:stable}
 body{
   margin:0;
   font-family:'Sora',Inter,system-ui,sans-serif;
@@ -57,6 +60,7 @@ h1,h2,h3,h4{font-family:'Reddit Sans','Sora',system-ui,sans-serif;font-weight:70
   color:#fff;padding:20px 16px;position:sticky;top:0;height:100vh;
   display:flex;flex-direction:column;
   border-right:1px solid rgba(255,255,255,.06);
+  transition:margin-left .22s ease;
 }
 .logo{display:flex;gap:12px;align-items:center;margin-bottom:28px;padding:0 4px}
 .logoMark{display:none}
@@ -89,7 +93,30 @@ h1,h2,h3,h4{font-family:'Reddit Sans','Sora',system-ui,sans-serif;font-weight:70
   cursor:pointer;font-family:inherit;transition:.15s ease}
 .sidebarFooter button:hover{background:rgba(255,255,255,.14);color:#fff}
 
-.main{flex:1;padding:24px 28px;max-width:1400px;margin:auto;width:100%}
+/* min-width:0 lets this flex child shrink below its content's intrinsic
+   width — without it a wide table (e.g. Inbound Monitoring's 16-column
+   log) forces .main wider than the viewport and shoves the sidebar. */
+.main{flex:1;min-width:0;padding:24px 28px;max-width:1400px;margin:auto;width:100%}
+/* Every tab/section gets the same minimum height (Daily Tracker is the
+   guideline) so short pages don't collapse and the sidebar stays put. */
+.menu{min-height:calc(100vh - 130px)}
+
+/* Desktop collapsible sidebar — toggled by the burger button in .top.
+   Mobile (≤820px) keeps its own fixed-overlay sidebar, so scope to desktop. */
+@media (min-width:821px){
+  .app.nav-collapsed .sidebar{margin-left:-256px}
+}
+.navCollapseBtn{
+  background:none;border:1px solid var(--border);border-radius:var(--radius-sm);
+  cursor:pointer;padding:9px 8px;display:flex;flex-direction:column;gap:4px;
+  flex-shrink:0;transition:background .15s ease;
+}
+.navCollapseBtn:hover{background:var(--bg)}
+.navCollapseBtn span{
+  display:block;width:18px;height:2px;background:var(--text);border-radius:2px;
+}
+.topLeft{display:flex;align-items:center;gap:14px;min-width:0}
+@media (max-width:820px){.navCollapseBtn{display:none}}
 .top{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
 .title h1{margin:0;font-size:22px;font-family:'Reddit Sans',system-ui,sans-serif;color:var(--text)}
 .title p{margin:4px 0 0;color:var(--muted);font-size:13px}
@@ -784,13 +811,15 @@ td.wrap, td.long{white-space:normal;max-width:340px}
    =========================================================== */
 #debugFab{
   position:fixed;bottom:24px;right:24px;z-index:9000;
-  width:44px;height:44px;border-radius:50%;border:none;
-  background:var(--text);
-  color:#fff;font-size:20px;cursor:pointer;
-  box-shadow:0 4px 12px rgba(19,6,28,.3);
+  width:46px;height:46px;border-radius:50%;border:none;
+  background:var(--primary);
+  color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(99,55,216,.4);
   transition:.15s ease;
 }
-#debugFab:hover{box-shadow:0 6px 16px rgba(19,6,28,.4)}
+#debugFab:hover{box-shadow:0 6px 18px rgba(99,55,216,.55);transform:translateY(-1px)}
+#debugFab svg{width:22px;height:22px}
 
 #debugPanel{
   position:fixed;bottom:80px;right:24px;z-index:9000;
@@ -899,6 +928,26 @@ td.wrap, td.long{white-space:normal;max-width:340px}
 }
 .dbgGenBtn:hover{background:#fbbf24;color:#fff}
 
+/* Debug Panel — v3.11 additions */
+.dbgActionBtn{
+  display:inline-block;margin:2px 4px 2px 0;padding:8px 12px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);
+  border-radius:var(--radius-sm);font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:.15s ease;
+}
+.dbgActionBtn:hover{border-color:var(--primary);color:var(--primary)}
+.dbgActionBtn.dbgPrimary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.dbgActionBtn.dbgPrimary:hover{background:var(--primary-hover);color:#fff}
+.dbgToggleRow{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:5px 0;font-size:13px;border-bottom:1px solid var(--border-light);
+}
+.dbgToggleRow:last-child{border-bottom:none}
+.dbgToggleRow input{width:auto;margin:0;cursor:pointer}
+.dbgTrail{max-height:160px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+#reportFab svg{width:22px;height:22px}
+#reportFab:hover{box-shadow:0 6px 18px rgba(99,55,216,.55);transform:translateY(-1px)}
+
 /* Very small phones */
 @media (max-width:480px){
   .kpis{grid-template-columns:1fr 1fr}
@@ -910,4 +959,126 @@ td.wrap, td.long{white-space:normal;max-width:340px}
   .tabs button{font-size:12px;padding:9px 8px}
   .pmHeaderActions .right{flex-wrap:wrap}
   .pmHeaderActions .right button{flex:1;min-width:0;text-align:center}
+}
+
+/* ================== GLOBAL SEARCH ================== */
+.topActions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.globalSearch{position:relative}
+#globalSearchInput{
+  width:280px;max-width:46vw;padding:9px 12px;font-size:13px;
+  border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;
+}
+#globalSearchInput:focus{outline:2px solid var(--primary);outline-offset:-1px}
+.searchResults{
+  position:absolute;top:calc(100% + 6px);right:0;width:420px;max-width:80vw;
+  max-height:60vh;overflow:auto;background:#fff;border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--card-shadow-hover);z-index:950;
+}
+.searchResult{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;
+  border-bottom:1px solid var(--border-light);
+}
+.searchResult:last-child{border-bottom:none}
+.searchResult:hover,.searchResult:focus{background:rgba(99,55,216,.06);outline:none}
+.searchType{
+  flex-shrink:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--primary);background:rgba(99,55,216,.1);padding:3px 7px;border-radius:10px;
+}
+.searchText{flex:1;min-width:0}
+.searchTitle{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.searchSub{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.searchEmpty,.searchMore{padding:12px;color:var(--muted);text-align:center}
+
+/* ================== AGING / SLA HIGHLIGHT ================== */
+tr.sla-warn > td{background:rgba(245,158,11,.06)}
+tr.sla-stale > td{background:rgba(239,68,68,.07)}
+tr.sla-warn:hover > td{background:rgba(245,158,11,.12)}
+tr.sla-stale:hover > td{background:rgba(239,68,68,.13)}
+.agePill{
+  display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;
+  border-radius:10px;margin-left:5px;vertical-align:middle;
+}
+.agePill.ok{background:#ecfdf5;color:#047857}
+.agePill.warn{background:#fffbeb;color:#b45309}
+.agePill.stale{background:#fef2f2;color:#b91c1c}
+
+/* ================== ATTACHMENTS ================== */
+.attachBlock{margin-top:12px}
+.attachField{display:flex;flex-direction:column;gap:8px}
+.attachAddBtn{
+  align-self:flex-start;cursor:pointer;font-size:13px;font-weight:600;
+  padding:8px 14px;border:1px dashed var(--primary);border-radius:var(--radius-sm);
+  color:var(--primary);background:rgba(99,55,216,.04);transition:.15s ease;
+}
+.attachAddBtn:hover{background:rgba(99,55,216,.1)}
+.attachList{display:flex;flex-direction:column;gap:6px}
+.attachItem{
+  display:flex;align-items:center;gap:8px;padding:6px 10px;
+  background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius-sm);
+}
+.attachIcon{flex-shrink:0}
+.attachName{flex:1;min-width:0;font-size:13px;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.attachSize{flex-shrink:0;color:var(--muted)}
+.attachRemove{
+  flex-shrink:0;border:none;background:none;cursor:pointer;font-size:18px;
+  line-height:1;color:var(--muted);padding:0 4px;
+}
+.attachRemove:hover{color:var(--bad)}
+.attachEmpty,.attachHint{color:var(--muted);margin:0}
+
+@media (max-width:820px){
+  #globalSearchInput{width:160px}
+  .searchResults{width:300px}
+}
+
+/* ================== NOTIFICATIONS ================== */
+.notifWrap{position:relative}
+.notifBell{
+  background:none;border:1px solid var(--border);border-radius:var(--radius-sm);
+  cursor:pointer;padding:7px 9px;line-height:1;position:relative;
+  transition:background .15s ease;
+}
+.notifBell:hover{background:var(--bg)}
+.notifBellIcon{font-size:15px}
+.notifCount{
+  position:absolute;top:-6px;right:-6px;background:var(--bad);color:#fff;
+  font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;padding:0 3px;
+}
+.notifPanel{
+  position:absolute;top:calc(100% + 8px);right:0;width:340px;max-width:85vw;
+  max-height:62vh;overflow:auto;background:#fff;border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--card-shadow-hover);z-index:950;
+}
+.notifHead{
+  padding:12px 14px;font-weight:700;border-bottom:1px solid var(--border-light);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.notifHeadCount{
+  background:rgba(99,55,216,.1);color:var(--primary);font-size:11px;
+  padding:2px 8px;border-radius:10px;
+}
+.notifEmpty{padding:26px 14px;text-align:center;color:var(--muted)}
+.notifItem{
+  display:flex;gap:10px;padding:10px 14px;cursor:pointer;align-items:flex-start;
+  border-bottom:1px solid var(--border-light);
+}
+.notifItem:last-child{border-bottom:none}
+.notifItem:hover,.notifItem:focus{background:rgba(99,55,216,.06);outline:none}
+.notifDot{flex-shrink:0;width:8px;height:8px;border-radius:50%;margin-top:5px}
+.notifDot.ok{background:var(--warn)}
+.notifDot.stale{background:var(--bad)}
+.notifText{flex:1;min-width:0}
+.notifTitle{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.notifSub{color:var(--muted)}
+.notifMore{padding:10px;text-align:center;color:var(--muted)}
+
+/* Nav count badges */
+.nav button{position:relative}
+.navBadge{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:var(--bad);color:#fff;font-size:10px;font-weight:700;
+  min-width:17px;height:17px;border-radius:9px;padding:0 4px;
+  display:flex;align-items:center;justify-content:center;
 }

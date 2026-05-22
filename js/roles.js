@@ -124,15 +124,16 @@ export async function loadCurrentUserRole(firebaseUser) {
   const snap = await getDoc(userRef);
   if (snap.exists()) {
     currentProfile = { id: snap.id, ...snap.data() };
-    currentRole = currentProfile.role || "sales"; // safe default
+    currentRole = currentProfile.role || "user"; // safe default — lowest privileges
   } else {
     // User exists in Auth but not in /users. Create a minimal profile.
-    // Default to "sales" (lowest privileges).
+    // Default to "user" (lowest privileges) — a supervisor/admin must
+    // explicitly promote them via User Management.
     currentProfile = {
       id: firebaseUser.email,
       email: firebaseUser.email,
       name: firebaseUser.email.split("@")[0],
-      role: "sales"
+      role: "user"
     };
     try {
       await setDoc(userRef, {
@@ -143,7 +144,7 @@ export async function loadCurrentUserRole(firebaseUser) {
     } catch (e) {
       console.warn("Could not create user profile:", e);
     }
-    currentRole = "sales";
+    currentRole = "user";
   }
   return currentRole;
 }
@@ -288,6 +289,7 @@ export function canViewModule(moduleId) {
     dailyIssue: isSSTeam(),            // SS only
     ticketing: true,                   // shared across all departments
     revenueCalc: isSalesTeam(),        // Sales only
+    salesToolkit: isSalesTeam(),       // Sales only
     projectManagement: isSalesTeam() || isSSTeam(),  // Sales + SS
     mergerSystem: true,                // shared tool
     orderProcessing: true,             // shared tool
@@ -296,6 +298,7 @@ export function canViewModule(moduleId) {
     forecastOrdersGen: true,           // shared tool
     oneOnOne: false,                   // supervisor+admin only
     masterData: canViewMasterData(),   // everyone (view)
+    auditLog: false,                   // supervisor+admin only
     users: false                       // admin only
   };
   return rules[moduleId] ?? false;

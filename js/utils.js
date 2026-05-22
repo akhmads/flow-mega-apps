@@ -145,6 +145,27 @@ export function downloadXLSX(rows, filename, sheetName = "Sheet1") {
   XLSX.writeFile(wb, filename);
 }
 
+/**
+ * Aging / SLA severity for an open record.
+ * @param {string|Date} dateStr  the record's start date (e.g. complain/created date)
+ * @param {{ok?:number, warn?:number}} thresholds  day cut-offs
+ * @returns {{days:number, level:string, label:string}}
+ *   level ∈ "" | "fresh" | "ok" | "warn" | "stale"
+ */
+export function slaAge(dateStr, { ok = 3, warn = 7 } = {}) {
+  const ds = toDateStr(dateStr);
+  if (!ds) return { days: 0, level: "", label: "" };
+  const start = new Date(ds + "T00:00:00");
+  if (isNaN(start.getTime())) return { days: 0, level: "", label: "" };
+  const days = Math.max(0, Math.floor((Date.now() - start.getTime()) / 86400000));
+  let level = "fresh";
+  if (days > warn) level = "stale";
+  else if (days > ok) level = "warn";
+  else if (days >= 1) level = "ok";
+  const label = days === 0 ? "today" : days === 1 ? "1d" : `${days}d`;
+  return { days, level, label };
+}
+
 /** Hours between two date-likes */
 export function hoursBetween(a, b) {
   if (!a || !b) return 0;

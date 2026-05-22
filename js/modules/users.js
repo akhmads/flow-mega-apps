@@ -25,7 +25,7 @@ import {
 } from "../roles.js";
 import { isFirebaseConfigured } from "../firebase.js";
 import { createDropdown } from "../components/dropdown.js";
-import { subscribeMasterData, addMasterItem } from "./master-data.js";
+import { subscribeMasterData } from "./master-data.js";
 
 let allUsers = [];
 let userDeptDropdown = null;
@@ -253,17 +253,12 @@ function ensureUserDeptDropdown() {
     container,
     hiddenInput,
     getItems: () => userDeptList,
-    onAddNew: async (value) => {
-      try {
-        await addMasterItem("departments", value);
-        return value;
-      } catch (e) {
-        toast("Failed to add department: " + e.message, "error");
-        return null;
-      }
-    },
+    // No onAddNew / addNewLabel on purpose: a user's department must be
+    // PICKED from the existing department list. Creating an account must
+    // never silently generate a new department name. New departments are
+    // added deliberately on the Master Data page.
     placeholder: "Select department…",
-    addNewLabel: "+ Add new department…",
+    emptyMsg: "No departments yet — add them on the Master Data page first.",
     recentKey: "flow.recent.dept"
   });
   subscribeMasterData("departments", (items) => {

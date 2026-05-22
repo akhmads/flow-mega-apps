@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Toolkit — Warehouse Fulfillment</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    /* Aligned with FLOW Mega Apps light theme (css/styles.css) */
+    --bg:#F3F4F5;--card:#ffffff;--card2:#faf9fd;--card3:#f4f2f8;
+    --primary:#6337D8;--primary-light:#8976FF;--primary-hover:#5228c0;
+    --accent:#2ED8FB;--green:#0ea672;--amber:#d97706;--red:#dc2626;
+    --text:#13061C;--text2:#5a5267;--text3:#8c8497;
+    --border:#e5e2ea;--border2:#d8d4e0;
+    --radius:10px;--radius-sm:6px;--radius-lg:14px;
+    --shadow:0 1px 3px rgba(19,6,28,.06),0 1px 2px rgba(19,6,28,.04);
+    --shadow-hover:0 4px 12px rgba(19,6,28,.1);
+  }
+  body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+  /* HEADER */
+  .hero{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);padding:36px 40px 30px;position:relative;overflow:hidden;color:#fff}
+  .hero::before{content:'';position:absolute;top:-90px;right:-60px;width:380px;height:380px;background:radial-gradient(circle,rgba(46,216,251,0.22) 0%,transparent 70%);pointer-events:none}
+  .hero-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;color:#fff;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:14px}
+  .hero-tag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;box-shadow:0 0 8px var(--accent)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+  .hero h1{font-size:30px;font-weight:700;line-height:1.2;margin-bottom:8px;color:#fff}
+  .hero p{color:rgba(255,255,255,0.85);font-size:14px;line-height:1.6;max-width:620px}
+  .hero-meta{display:flex;gap:20px;margin-top:18px;flex-wrap:wrap}
+  .hero-stat{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,0.7)}
+  .hero-stat strong{color:#fff;font-weight:700}
+
+  /* NAV TABS */
+  .nav{display:flex;gap:6px;padding:14px 40px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;overflow-x:auto;box-shadow:var(--shadow)}
+  .nav::-webkit-scrollbar{height:0}
+  .nav-btn{display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:var(--radius-sm);border:1px solid transparent;background:transparent;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--text2);white-space:nowrap;transition:all 0.18s}
+  .nav-btn:hover{background:var(--card3);color:var(--text)}
+  .nav-btn.active{background:rgba(99,55,216,0.08);border-color:rgba(99,55,216,0.25);color:var(--primary)}
+  .nav-btn .nav-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:6px;font-size:12px}
+  .n1 .nav-icon{background:rgba(99,55,216,0.12)}
+  .n2 .nav-icon{background:rgba(14,166,114,0.12)}
+  .n3 .nav-icon{background:rgba(46,216,251,0.16)}
+  .n4 .nav-icon{background:rgba(217,119,6,0.12)}
+
+  /* MAIN */
+  .main{max-width:1100px;margin:0 auto;padding:30px 40px}
+  .panel{display:none}.panel.active{display:block}
+
+  /* CARDS */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:14px}
+
+  /* SECTION HEADER */
+  .sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+  .sec-hdr h2{font-size:19px;font-weight:700;color:var(--text)}
+  .sec-dot{width:9px;height:9px;border-radius:50%}
+
+  /* SCORING */
+  .score-grid{display:grid;gap:10px}
+  .score-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:15px 18px;box-shadow:var(--shadow)}
+  .score-item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+  .score-item-label{font-size:14px;font-weight:600;color:var(--text)}
+  .score-item-desc{font-size:12px;color:var(--text3);margin-top:2px}
+  .score-pts-badge{display:flex;align-items:center;justify-content:center;min-width:44px;height:28px;border-radius:var(--radius-sm);background:rgba(99,55,216,0.08);border:1px solid rgba(99,55,216,0.2);font-size:13px;font-weight:700;color:var(--primary);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+  .score-select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:9px 12px;font-family:inherit;font-size:13px;cursor:pointer;transition:border-color 0.2s}
+  .score-select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,55,216,.1)}
+
+  .result-panel{background:linear-gradient(135deg,var(--card2),var(--card3));border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;text-align:center;margin-top:18px;box-shadow:var(--shadow)}
+  .result-number{font-size:68px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1;transition:all 0.4s}
+  .result-max{font-size:15px;color:var(--text3);margin-top:4px}
+  .result-tier{font-size:19px;font-weight:700;margin-top:16px}
+  .result-action{font-size:14px;color:var(--text2);margin-top:8px;line-height:1.6;max-width:520px;margin-left:auto;margin-right:auto}
+
+  /* PROGRESS BAR */
+  .score-bar-wrap{background:var(--card3);border-radius:4px;height:7px;margin:16px auto 8px;overflow:hidden;border:1px solid var(--border)}
+  .score-bar{height:100%;border-radius:4px;transition:width 0.5s ease,background 0.4s}
+  .tier-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--text3)}
+
+  /* TEMPLATES */
+  .tmpl-chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{padding:7px 14px;border-radius:20px;border:1px solid var(--border2);background:var(--card);font-family:inherit;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all 0.18s;white-space:nowrap}
+  .chip:hover{border-color:var(--primary);color:var(--primary)}
+  .chip.active{background:rgba(99,55,216,0.08);border-color:var(--primary);color:var(--primary)}
+  .tmpl-meta{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .tmpl-title{font-size:14px;font-weight:700;color:var(--text)}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+  .badge-wa{background:rgba(37,211,102,0.12);color:#1faa54;border:1px solid rgba(37,211,102,0.3)}
+  .badge-email{background:rgba(46,216,251,0.14);color:#0b8fb0;border:1px solid rgba(46,216,251,0.35)}
+  .tmpl-box{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;font-size:13px;line-height:1.8;white-space:pre-wrap;color:var(--text);font-family:'JetBrains Mono',monospace;min-height:180px}
+  .copy-btn{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:9px 16px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--card);font-family:inherit;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all 0.18s}
+  .copy-btn:hover{border-color:var(--primary);color:var(--primary)}
+  .copy-btn svg{width:14px;height:14px}
+  .tmpl-tips{background:rgba(217,119,6,0.07);border:1px solid rgba(217,119,6,0.22);border-radius:var(--radius);padding:13px 16px;font-size:13px;color:var(--text2);line-height:1.6;margin-top:12px}
+  .tmpl-tips::before{content:'💡 ';font-weight:600}
+
+  /* OBJECTIONS */
+  .obj-list{display:flex;flex-direction:column;gap:8px}
+  .obj-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color 0.2s;box-shadow:var(--shadow)}
+  .obj-card:hover{border-color:var(--border2)}
+  .obj-header{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;user-select:none}
+  .obj-num{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+  .obj-title{font-size:14px;font-weight:600;color:var(--text);flex:1}
+  .obj-level{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;white-space:nowrap}
+  .lvl-high{background:rgba(220,38,38,0.1);color:var(--red);border:1px solid rgba(220,38,38,0.25)}
+  .lvl-med{background:rgba(217,119,6,0.1);color:var(--amber);border:1px solid rgba(217,119,6,0.25)}
+  .lvl-low{background:rgba(14,166,114,0.1);color:var(--green);border:1px solid rgba(14,166,114,0.25)}
+  .obj-chevron{width:18px;height:18px;color:var(--text3);transition:transform 0.25s;flex-shrink:0}
+  .obj-chevron.open{transform:rotate(180deg)}
+  .obj-body{display:none;padding:0 18px 18px}
+  .obj-body.open{display:block}
+  .acr-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+  @media(max-width:700px){.acr-grid{grid-template-columns:1fr}}
+  .acr-block{border-radius:var(--radius-sm);padding:12px 14px}
+  .acr-a{background:rgba(99,55,216,0.05);border:1px solid rgba(99,55,216,0.15)}
+  .acr-c{background:rgba(217,119,6,0.05);border:1px solid rgba(217,119,6,0.15)}
+  .acr-r{background:rgba(14,166,114,0.05);border:1px solid rgba(14,166,114,0.15)}
+  .acr-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px}
+  .acr-a .acr-label{color:var(--primary)}
+  .acr-c .acr-label{color:var(--amber)}
+  .acr-r .acr-label{color:var(--green)}
+  .acr-block>div:last-child{font-size:12px;color:var(--text2)}
+  .acr-script{font-size:12px;line-height:1.7;color:var(--text2);font-style:italic}
+  .acr-notes{background:var(--card3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--text3);line-height:1.6;margin-top:4px}
+  .acr-notes::before{content:'📌 ';font-style:normal}
+
+  /* PIPELINE */
+  .pipeline-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+  @media(max-width:600px){.pipeline-stats{grid-template-columns:repeat(2,1fr)}}
+  .stat-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  .stat-val{font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace}
+  .stat-lbl{font-size:11px;color:var(--text3);margin-top:4px}
+  .pipeline-table{width:100%;border-collapse:collapse;font-size:13px}
+  .pipeline-table th{background:var(--bg);color:var(--text3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+  .pipeline-table td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+  .pipeline-table tr:hover td{background:var(--card2)}
+  .stage-badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600}
+  .stage-prospecting{background:rgba(140,132,151,0.15);color:var(--text2)}
+  .stage-qualified{background:rgba(46,216,251,0.16);color:#0b8fb0}
+  .stage-demo{background:rgba(99,55,216,0.1);color:var(--primary)}
+  .stage-proposal{background:rgba(217,119,6,0.12);color:var(--amber)}
+  .stage-negotiation{background:rgba(220,38,38,0.1);color:var(--red)}
+  .stage-won{background:rgba(14,166,114,0.12);color:var(--green)}
+  .score-pill{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace}
+  .add-row-btn{display:flex;align-items:center;gap:6px;padding:10px 16px;border-radius:var(--radius-sm);border:1px dashed var(--border2);background:transparent;font-family:inherit;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;transition:all 0.18s;margin-top:12px;width:100%;justify-content:center}
+  .add-row-btn:hover{border-color:var(--primary);color:var(--primary)}
+  .cell-input{background:#fff;border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-family:inherit;font-size:12px}
+  .cell-input:focus{outline:none;border-color:var(--primary)}
+
+  /* EDITABLE FEATURES — deal info, forms, deals table, toast */
+  .tk-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:600px){.tk-row{grid-template-columns:1fr}}
+  .tk-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+  .tk-field label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)}
+  .tk-input,.tk-textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:9px 12px;font-family:inherit;font-size:13px}
+  .tk-textarea{font-family:'JetBrains Mono',monospace;line-height:1.6;resize:vertical}
+  .tk-input:focus,.tk-textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,55,216,.1)}
+  .tk-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .tk-primary:hover{background:var(--primary-hover);color:#fff;border-color:var(--primary-hover)}
+  .tk-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}
+  .tk-del{border:0;background:transparent;color:var(--text3);cursor:pointer;font-size:13px;font-weight:700;padding:3px 8px;border-radius:6px;line-height:1;flex-shrink:0}
+  .tk-del:hover{background:rgba(220,38,38,0.1);color:var(--red)}
+  .tk-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:rgba(99,55,216,.1);color:var(--primary);padding:2px 7px;border-radius:6px}
+  .deals-table{width:100%;border-collapse:collapse;font-size:13px}
+  .deals-table th{background:var(--bg);color:var(--text3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border)}
+  .deals-table td{padding:10px 12px;border-bottom:1px solid var(--border)}
+  .tk-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:#fff;padding:11px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;z-index:999;box-shadow:var(--shadow-hover);opacity:0;transition:opacity .2s;pointer-events:none}
+  .tk-toast.show{opacity:1}
+  .tk-toast.err{background:var(--red)}
+  .tk-toast.ok{background:var(--green)}
+  .hidden{display:none!important}
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+  /* FOOTER */
+  .footer{text-align:center;padding:28px 40px;color:var(--text3);font-size:12px;border-top:1px solid var(--border);margin-top:36px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag" id="heroTag">● Live</div>
+  <h1 id="heroTitle"></h1>
+  <p id="heroDesc"></p>
+  <div class="hero-meta" id="heroMeta"></div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn n1 active" data-tab="scoring"><div class="nav-icon">⚡</div> <span data-nav="scoring"></span></button>
+  <button class="nav-btn n2" data-tab="followup"><div class="nav-icon">✉</div> <span data-nav="followup"></span></button>
+  <button class="nav-btn n3" data-tab="objection"><div class="nav-icon">🛡</div> <span data-nav="objection"></span></button>
+  <button class="nav-btn n4" data-tab="pipeline"><div class="nav-icon">📊</div> <span data-nav="pipeline"></span></button>
+</div>
+
+<div class="main">
+
+  <!-- SCORING -->
+  <div id="panel-scoring" class="panel active">
+    <div class="sec-hdr">
+      <div class="sec-dot" style="background:var(--primary)"></div>
+      <h2 data-sec="scoring"></h2>
+    </div>
+    <div class="card">
+      <div class="card-title" id="deal-info-title"></div>
+      <div class="tk-row">
+        <div class="tk-field"><label id="lbl-client"></label><input type="text" id="deal-client" class="tk-input"/></div>
+        <div class="tk-field" style="margin-bottom:0"><label id="lbl-pic"></label><select id="deal-pic" class="tk-input"></select></div>
+      </div>
+    </div>
+    <div class="score-grid" id="score-grid"></div>
+    <div class="result-panel">
+      <div class="result-number" id="r-num" style="color:var(--text3)">0</div>
+      <div class="result-max" id="r-max">/ 100</div>
+      <div class="score-bar-wrap" style="max-width:400px">
+        <div class="score-bar" id="r-bar" style="width:0%;background:var(--text3)"></div>
+      </div>
+      <div class="tier-labels" style="max-width:400px;margin:0 auto" id="tier-labels"></div>
+      <div class="result-tier" id="r-tier">—</div>
+      <div class="result-action" id="r-action"></div>
+      <button class="copy-btn tk-primary" id="saveDealBtn" style="margin-top:18px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span id="saveDealLabel"></span>
+      </button>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px">
+        <div class="card-title" id="saved-deals-title" style="margin-bottom:0"></div>
+        <button class="copy-btn" id="exportExcelBtn" style="margin-top:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span id="exportExcelLabel"></span>
+        </button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="deals-table">
+          <thead><tr id="deals-head"></tr></thead>
+          <tbody id="deals-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOLLOW-UP -->
+  <div id="panel-followup" class="panel">
+    <div class="sec-hdr">
+      <div class="sec-dot" style="background:var(--green)"></div>
+      <h2 data-sec="followup"></h2>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px">
+        <div class="card-title" id="t-chips-title" style="margin-bottom:0"></div>
+        <button class="copy-btn tk-primary tk-sup-only hidden" id="addTmplBtn" style="margin-top:0"></button>
+      </div>
+      <div class="tmpl-chips" id="tmpl-chips"></div>
+    </div>
+    <div class="card hidden" id="tmplForm">
+      <div class="card-title" id="tmplFormTitle"></div>
+      <div class="tk-field"><label id="lbl-tf-label"></label><input type="text" id="tf-label" class="tk-input"/></div>
+      <div class="tk-field"><label id="lbl-tf-channel"></label><select id="tf-channel" class="tk-input"><option>WhatsApp</option><option>Email</option></select></div>
+      <div class="tk-field"><label id="lbl-tf-content"></label><textarea id="tf-content" class="tk-textarea" rows="8"></textarea></div>
+      <div class="tk-field"><label id="lbl-tf-tips"></label><textarea id="tf-tips" class="tk-textarea" rows="2"></textarea></div>
+      <div class="tk-actions">
+        <button class="chip" id="tf-cancel"></button>
+        <button class="copy-btn tk-primary" id="tf-save" style="margin-top:0"></button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tmpl-meta">
+        <span class="tmpl-title" id="t-title">—</span>
+        <span class="badge" id="t-badge"></span>
+        <span class="tk-tag hidden" id="t-custom-tag">Custom</span>
+      </div>
+      <div class="tmpl-box" id="t-content"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="copy-btn" id="copyBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          <span id="copyBtnLabel"></span>
+        </button>
+        <button class="copy-btn hidden" id="delTmplBtn"></button>
+      </div>
+      <div class="tmpl-tips" id="t-tips"></div>
+    </div>
+  </div>
+
+  <!-- OBJECTION -->
+  <div id="panel-objection" class="panel">
+    <div class="sec-hdr">
+      <div class="sec-dot" style="background:var(--accent)"></div>
+      <h2 data-sec="objection"></h2>
+    </div>
+    <div class="card" style="margin-bottom:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px">
+        <div class="card-title" id="acr-title" style="margin-bottom:0"></div>
+        <button class="copy-btn tk-primary tk-sup-only hidden" id="addObjBtn" style="margin-top:0"></button>
+      </div>
+      <div class="acr-grid">
+        <div class="acr-block acr-a"><div class="acr-label">A — Acknowledge</div><div id="acr-a-desc"></div></div>
+        <div class="acr-block acr-c"><div class="acr-label">C — Challenge</div><div id="acr-c-desc"></div></div>
+        <div class="acr-block acr-r"><div class="acr-label">R — Redirect</div><div id="acr-r-desc"></div></div>
+      </div>
+    </div>
+    <div class="card hidden" id="objForm">
+      <div class="card-title" id="objFormTitle"></div>
+      <div class="tk-row">
+        <div class="tk-field"><label id="lbl-of-title"></label><input type="text" id="of-title" class="tk-input"/></div>
+        <div class="tk-field"><label id="lbl-of-level"></label><select id="of-level" class="tk-input"></select></div>
+      </div>
+      <div class="tk-field"><label id="lbl-of-ack"></label><textarea id="of-ack" class="tk-textarea" rows="2"></textarea></div>
+      <div class="tk-field"><label id="lbl-of-challenge"></label><textarea id="of-challenge" class="tk-textarea" rows="2"></textarea></div>
+      <div class="tk-field"><label id="lbl-of-redirect"></label><textarea id="of-redirect" class="tk-textarea" rows="2"></textarea></div>
+      <div class="tk-field"><label id="lbl-of-notes"></label><textarea id="of-notes" class="tk-textarea" rows="2"></textarea></div>
+      <div class="tk-actions">
+        <button class="chip" id="of-cancel"></button>
+        <button class="copy-btn tk-primary" id="of-save" style="margin-top:0"></button>
+      </div>
+    </div>
+    <div class="obj-list" id="obj-list"></div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div id="panel-pipeline" class="panel">
+    <div class="sec-hdr">
+      <div class="sec-dot" style="background:var(--amber)"></div>
+      <h2 data-sec="pipeline"></h2>
+    </div>
+    <div class="pipeline-stats" id="pipe-stats"></div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px">
+        <div class="card-title" id="pipe-deals-title" style="margin-bottom:0"></div>
+        <button class="copy-btn" id="exportCsvBtn" style="margin-top:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span id="exportCsvLabel"></span>
+        </button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="pipeline-table">
+          <thead><tr id="pipe-head"></tr></thead>
+          <tbody id="pipe-tbody"></tbody>
+        </table>
+      </div>
+      <button class="add-row-btn" id="addRowBtn"></button>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<div class="footer" id="footer"></div>
+
+<script>
+// ============================================================
+// i18n — UI strings + content, Indonesian (id) + English (en)
+// ============================================================
+const UI = {
+  id: {
+    heroTag:'● Live · Commercial Toolkit',
+    heroTitle:'Sales Acceleration Kit — Warehouse Fulfillment',
+    heroDesc:'Deal scoring, template follow-up, dan objection playbook yang dikustomisasi untuk bisnis warehouse fulfillment B2C & B2B.',
+    stats:[['10','skrip objection'],['7','template follow-up'],['ACR','framework'],['Pipeline','tracker']],
+    nav:{scoring:'Deal Scoring',followup:'Template Follow-up',objection:'Objection Playbook',pipeline:'Pipeline Tracker'},
+    sec:{scoring:'Deal Scoring — Prospek Fulfillment',followup:'Template Follow-up',objection:'Playbook Objection Handling',pipeline:'Pipeline Tracker'},
+    pts:'poin',
+    scoringDefault:'Isi kriteria di atas untuk melihat rekomendasi',
+    tierLabels:['0','Dingin','Hangat','Panas','100'],
+    chipsTitle:'Pilih skenario',
+    copyBtn:'Salin template',copiedBtn:'✓ Tersalin!',
+    acrTitle:'Framework ACR',
+    acrDesc:['Akui & validasi keberatan prospect tanpa defensif','Gali asumsi di balik keberatan dengan pertanyaan yang tepat','Arahkan ke solusi konkret atau data yang relevan'],
+    levels:{high:'Prioritas Tinggi',med:'Sedang',low:'Rendah'},
+    pipeStats:['Total Prospek','Total Pipeline','Hot Deals','Avg Score'],
+    pipeHead:['Perusahaan','PIC','Tipe','Stage','Score','Est. Revenue/bln','Next Action','Deadline'],
+    dealsTitle:'Active Deals',
+    exportCsv:'Ekspor CSV',
+    addRow:'+ Tambah prospect baru',
+    rowPh:{co:'Nama perusahaan',pic:'PIC',rev:'Rp 0',next:'Next action',dl:'Tanggal'},
+    typeOpts:['B2C','B2B','Keduanya'],
+    footer:'Sales Acceleration Kit — Warehouse Fulfillment B2C & B2B · Customized for Commercial Team',
+    dealInfo:'Info Deal',client:'Klien',salesPic:'Sales PIC',picPlaceholder:'— Pilih Sales PIC —',
+    saveDeal:'Simpan Deal',savedDeals:'Deal Tersimpan',exportExcel:'Ekspor Excel',
+    dealCols:['Klien','Sales PIC','Skor','Tier','Tanggal','Disimpan oleh'],
+    noDeals:'Belum ada deal tersimpan.',needClient:'Isi nama klien terlebih dahulu.',
+    dealSaved:'Deal tersimpan ✓',
+    addTemplate:'+ Tambah Template',addObjection:'+ Tambah Objection',
+    newTemplate:'Template Baru',newObjection:'Objection Baru',
+    fLabel:'Nama / Label',fChannel:'Channel',fContent:'Isi Template',fTips:'Tips (opsional)',
+    fTitle:'Judul Objection',fLevel:'Prioritas',fAck:'A — Acknowledge',fChallenge:'C — Challenge',fRedirect:'R — Redirect',fNotes:'Catatan (opsional)',
+    save:'Simpan',cancel:'Batal',del:'Hapus',
+    itemSaved:'Tersimpan ✓',deleted:'Dihapus ✓',
+    confirmDel:'Hapus item ini?',needFields:'Lengkapi field yang wajib diisi.'
+  },
+  en: {
+    heroTag:'● Live · Commercial Toolkit',
+    heroTitle:'Sales Acceleration Kit — Warehouse Fulfillment',
+    heroDesc:'Deal scoring, follow-up templates, and an objection playbook customized for B2C & B2B warehouse fulfillment businesses.',
+    stats:[['10','objection scripts'],['7','follow-up templates'],['ACR','framework'],['Pipeline','tracker']],
+    nav:{scoring:'Deal Scoring',followup:'Follow-up Templates',objection:'Objection Playbook',pipeline:'Pipeline Tracker'},
+    sec:{scoring:'Deal Scoring — Fulfillment Prospect',followup:'Follow-up Templates',objection:'Objection Handling Playbook',pipeline:'Pipeline Tracker'},
+    pts:'pts',
+    scoringDefault:'Fill in the criteria above to see a recommendation',
+    tierLabels:['0','Cold','Warm','Hot','100'],
+    chipsTitle:'Choose a scenario',
+    copyBtn:'Copy template',copiedBtn:'✓ Copied!',
+    acrTitle:'ACR Framework',
+    acrDesc:["Acknowledge & validate the prospect's objection without being defensive",'Probe the assumptions behind the objection with the right questions','Steer toward a concrete solution or relevant data'],
+    levels:{high:'High Priority',med:'Medium',low:'Low'},
+    pipeStats:['Total Prospects','Total Pipeline','Hot Deals','Avg Score'],
+    pipeHead:['Company','PIC','Type','Stage','Score','Est. Revenue/mo','Next Action','Deadline'],
+    dealsTitle:'Active Deals',
+    exportCsv:'Export CSV',
+    addRow:'+ Add new prospect',
+    rowPh:{co:'Company name',pic:'PIC',rev:'Rp 0',next:'Next action',dl:'Date'},
+    typeOpts:['B2C','B2B','Both'],
+    footer:'Sales Acceleration Kit — Warehouse Fulfillment B2C & B2B · Customized for Commercial Team',
+    dealInfo:'Deal Info',client:'Client',salesPic:'Sales PIC',picPlaceholder:'— Select Sales PIC —',
+    saveDeal:'Save Deal',savedDeals:'Saved Deals',exportExcel:'Export Excel',
+    dealCols:['Client','Sales PIC','Score','Tier','Date','Saved by'],
+    noDeals:'No saved deals yet.',needClient:'Enter a client name first.',
+    dealSaved:'Deal saved ✓',
+    addTemplate:'+ Add Template',addObjection:'+ Add Objection',
+    newTemplate:'New Template',newObjection:'New Objection',
+    fLabel:'Name / Label',fChannel:'Channel',fContent:'Template Content',fTips:'Tips (optional)',
+    fTitle:'Objection Title',fLevel:'Priority',fAck:'A — Acknowledge',fChallenge:'C — Challenge',fRedirect:'R — Redirect',fNotes:'Notes (optional)',
+    save:'Save',cancel:'Cancel',del:'Delete',
+    itemSaved:'Saved ✓',deleted:'Deleted ✓',
+    confirmDel:'Delete this item?',needFields:'Please fill in the required fields.'
+  }
+};
+
+// ---- Deal scoring criteria ----
+const SCORE = {
+  id:[
+    {label:'Budget & Nilai Barang',desc:'Apakah volume/nilai barang yang akan difulfill jelas?',opts:[['Belum diketahui',0],['Ada, SKU < 50 / volume kecil',10],['Jelas, SKU > 50 / volume menengah',20],['Besar & terukur (SLA ketat, volume tinggi)',30]]},
+    {label:'Decision Maker',desc:'Siapa yang terlibat dalam keputusan kontrak fulfillment?',opts:[['Hanya staff operasional',0],['Manager / Supervisor',5],['Direktur Operasional / COO',15],['Owner / CEO langsung',20]]},
+    {label:'Timeline Go-Live',desc:'Kapan target mulai menggunakan layanan fulfillment?',opts:[['Tidak jelas / belum ada rencana',0],['> 6 bulan',5],['3–6 bulan',10],['< 3 bulan',15],['< 1 bulan (urgent)',20]]},
+    {label:'Pain Point & Urgency',desc:'Seberapa besar masalah fulfillment yang sedang dihadapi?',opts:[['Tidak ada masalah nyata',0],['Ada keluhan tapi tidak mendesak',5],['Return rate tinggi / delivery lambat',10],['Gudang penuh / mitra lama bermasalah',15]]},
+    {label:'Volume & Potensi Revenue',desc:'Estimasi order per bulan?',opts:[['< 500 order/bulan',0],['500–2.000 order/bulan',3],['2.000–10.000 order/bulan',7],['> 10.000 order/bulan',10]]},
+    {label:'Kesiapan Integrasi Sistem',desc:'Apakah prospect sudah punya WMS/OMS/marketplace yang perlu diintegrasikan?',opts:[['Belum ada sistem',0],['Manual / Excel',1],['Sudah ada tapi tidak tahu API',3],['Siap integrasi (Tokopedia, Shopee, SAP, dll)',5]]}
+  ],
+  en:[
+    {label:'Budget & Goods Value',desc:'Is the volume/value of goods to be fulfilled clear?',opts:[['Not yet known',0],['Some, SKU < 50 / small volume',10],['Clear, SKU > 50 / medium volume',20],['Large & measurable (tight SLA, high volume)',30]]},
+    {label:'Decision Maker',desc:'Who is involved in the fulfillment contract decision?',opts:[['Operational staff only',0],['Manager / Supervisor',5],['Operations Director / COO',15],['Owner / CEO directly',20]]},
+    {label:'Go-Live Timeline',desc:'When is the target to start using the fulfillment service?',opts:[['Unclear / no plan yet',0],['> 6 months',5],['3–6 months',10],['< 3 months',15],['< 1 month (urgent)',20]]},
+    {label:'Pain Point & Urgency',desc:'How significant is the fulfillment problem they currently face?',opts:[['No real problem',0],['Some complaints but not urgent',5],['High return rate / slow delivery',10],['Warehouse full / current partner failing',15]]},
+    {label:'Volume & Revenue Potential',desc:'Estimated orders per month?',opts:[['< 500 orders/month',0],['500–2,000 orders/month',3],['2,000–10,000 orders/month',7],['> 10,000 orders/month',10]]},
+    {label:'System Integration Readiness',desc:'Does the prospect already have a WMS/OMS/marketplace to integrate?',opts:[['No system yet',0],['Manual / Excel',1],['Has a system but unsure about API',3],['Integration-ready (Tokopedia, Shopee, SAP, etc.)',5]]}
+  ]
+};
+
+// ---- Score tiers (>=70 hot, >=45 warm, >=20 cold, else hold) ----
+const TIERS = {
+  id:{
+    hot:{tier:'🔥 HOT — Prioritas Tinggi',action:'Assign ke senior sales. Kirim proposal + breakdown harga dalam 2 hari. Tawarkan site visit gudang segera.'},
+    warm:{tier:'⚡ WARM — Nurturing Aktif',action:'Kirim case study klien serupa. Set demo WMS atau site visit. Follow-up 1x seminggu.'},
+    cold:{tier:'❄️ COLD — Nurture Pasif',action:'Masuk email sequence edukasi (SLA, packaging, integrasi). Follow-up 2x sebulan. Review ulang dalam 30 hari.'},
+    hold:{tier:'⏸️ HOLD',action:'Simpan di database. Set reminder re-qualify dalam 90 hari.'}
+  },
+  en:{
+    hot:{tier:'🔥 HOT — High Priority',action:'Assign to senior sales. Send proposal + price breakdown within 2 days. Offer a warehouse site visit immediately.'},
+    warm:{tier:'⚡ WARM — Active Nurturing',action:'Send a similar-client case study. Schedule a WMS demo or site visit. Follow up once a week.'},
+    cold:{tier:'❄️ COLD — Passive Nurture',action:'Add to the educational email sequence (SLA, packaging, integration). Follow up twice a month. Re-review in 30 days.'},
+    hold:{tier:'⏸️ HOLD',action:'Keep in the database. Set a reminder to re-qualify in 90 days.'}
+  }
+};
+
+// ---- Follow-up templates ----
+const TEMPLATES = {
+  id:[
+    {label:'Post-meeting',channel:'WhatsApp',content:`Halo [Nama], terima kasih sudah meluangkan waktu hari ini 🙏
+
+Berikut ringkasan diskusi kita:
+✅ Kebutuhan utama: [volume order/bulan, kategori produk, marketplace]
+✅ Solusi yang kami tawarkan: [fulfillment B2C/B2B, integrasi sistem, SLA pengiriman]
+✅ Next step: [kirim proposal / site visit / demo WMS]
+
+Saya akan kirimkan proposal + breakdown harga paling lambat [tanggal]. Ada pertanyaan sebelumnya? Langsung reply sini ya 🎯`,tips:'Selalu sertakan ringkasan spesifik (volume, SKU, marketplace) agar terlihat profesional dan memudahkan mereka presentasi ke internal.'},
+    {label:'Post-proposal',channel:'WhatsApp',content:`Halo [Nama] 👋
+
+Follow-up proposal fulfillment yang saya kirimkan [tanggal].
+
+Sudah sempat dicek? Ada bagian yang ingin didiskusikan — misalnya soal SLA pengiriman, biaya handling per SKU, atau proses integrasi marketplace?
+
+Kalau lebih mudah, kita bisa 15 menit call saja:
+📅 [Opsi waktu 1]
+📅 [Opsi waktu 2]
+
+Silakan pilih yang paling nyaman 😊`,tips:'Tawarkan call, bukan email. Untuk proposal fulfillment yang kompleks (SLA, harga/SKU, dll), diskusi langsung jauh lebih efektif dari bolak-balik teks.'},
+    {label:'No response 3 hari',channel:'WhatsApp',content:`Halo [Nama] 🙏
+
+Maaf ganggu sebentar — mungkin pesan sebelumnya terlewat di tengah kesibukan.
+
+Sekedar info, kami baru onboard klien [industri serupa] yang sebelumnya menghadapi masalah [return rate tinggi / gudang penuh / pengiriman lambat] — dan berhasil diselesaikan dalam [X minggu].
+
+Kalau timing-nya belum tepat sekarang, tidak masalah — kabari saja dan saya follow-up di waktu yang lebih pas 🙏`,tips:'Jangan tunjukkan frustrasi. Berikan "jalan keluar" yang mudah. Tambah social proof (klien serupa) agar ada alasan baru untuk mereka merespons. Ini yang sering trigger reply.'},
+    {label:'Minta waktu lagi',channel:'Email',content:`Subject: Re: [Nama Proposal] — Material pendukung untuk diskusi internal
+
+Halo [Nama],
+
+Tentu, kami mengerti prosesnya perlu waktu yang tepat.
+
+Sambil menunggu, saya lampirkan:
+📎 Case study klien [industri/kategori serupa] yang berhasil turunkan biaya fulfillment 25–40%
+📎 Comparison sheet: in-house warehouse vs outsource fulfillment (cost breakdown lengkap)
+📎 FAQ untuk membantu diskusi internal tim kamu
+
+Adakah concern spesifik yang ingin saya bantu klarifikasi? Misalnya soal kontrak minimum, keamanan barang, atau integrasi sistem?
+
+Saya siap dihubungi kapanpun.
+
+Best,
+[Nama Kamu] | [Jabatan]`,tips:'Kirim comparison sheet cost in-house vs outsource — ini biasanya sangat persuasif untuk CFO atau decision maker keuangan. Ini senjata terkuat untuk mempercepat keputusan.'},
+    {label:'Push closing EOM',channel:'WhatsApp',content:`Halo [Nama] 😊
+
+Update singkat — kami ada slot onboarding terbatas di [bulan ini/bulan depan], dan kalau keputusan bisa dikonfirmasi sebelum [tanggal], kami bisa include:
+🎁 Gratis setup & integrasi marketplace (senilai Rp [X])
+🎁 Prioritas slot gudang di lokasi [nama lokasi]
+🎁 1 bulan free setup fee
+
+Ini bukan tekanan — hanya ingin pastikan [Nama Perusahaan] dapat benefit maksimal di awal.
+
+Ada yang perlu kita klarifikasi dulu? 🙏`,tips:'Urgency yang paling kuat di fulfillment: slot gudang terbatas, promo setup gratis, atau momentum seasonality (Harbolnas, Lebaran, dll). Jangan gunakan urgensi palsu.'},
+    {label:'Site visit / demo',channel:'WhatsApp',content:`Halo [Nama] 🏭
+
+Senang sekali kamu tertarik untuk lihat operasional kami langsung!
+
+Kami siapkan:
+✅ Tour gudang + demo WMS live
+✅ Penjelasan alur picking, packing & pengiriman
+✅ Sesi tanya jawab langsung dengan tim operasional
+
+Berikut opsi jadwal:
+📅 [Hari, tanggal, waktu]
+📅 [Hari, tanggal, waktu]
+
+Berapa orang yang akan hadir? Kami siapkan area meeting + refreshment 😊`,tips:'Site visit adalah closing tool terkuat di bisnis fulfillment — 70%+ prospect yang datang ke gudang akan convert. Prioritaskan ini untuk hot prospect. Selalu tanya jumlah tamu.'},
+    {label:'Upsell / referral',channel:'WhatsApp',content:`Halo [Nama], sudah [X] bulan berjalan — semoga operasional fulfillment lancar! 🚀
+
+Berdasarkan volume bulan ini, ada 2 hal yang ingin saya share:
+1️⃣ Kami bisa optimalkan [packaging / routing pengiriman] dan potensi turunkan cost sekitar [X]%
+2️⃣ Kalau ada rekan bisnis yang punya kebutuhan serupa, kami ada program referral dengan benefit [sebutkan]
+
+Ada yang ingin kita review dari performa bulan ini? Happy to help! 😊`,tips:'Upsell paling efektif dilakukan di "honeymoon phase" (1–3 bulan pertama). Gunakan data aktual mereka sebagai pembuka — bukan promosi generik.'}
+  ],
+  en:[
+    {label:'Post-meeting',channel:'WhatsApp',content:`Hi [Name], thank you for taking the time today 🙏
+
+Here's a summary of our discussion:
+✅ Key needs: [orders/month, product category, marketplace]
+✅ Solution we offer: [B2C/B2B fulfillment, system integration, delivery SLA]
+✅ Next step: [send proposal / site visit / WMS demo]
+
+I'll send the proposal + price breakdown by [date] at the latest. Any questions before then? Just reply here 🎯`,tips:'Always include a specific summary (volume, SKU, marketplace) — it looks professional and makes it easier for them to present internally.'},
+    {label:'Post-proposal',channel:'WhatsApp',content:`Hi [Name] 👋
+
+Following up on the fulfillment proposal I sent on [date].
+
+Had a chance to review it? Anything you'd like to discuss — delivery SLA, handling cost per SKU, or the marketplace integration process?
+
+If it's easier, we can do a quick 15-minute call:
+📅 [Time option 1]
+📅 [Time option 2]
+
+Pick whichever works best for you 😊`,tips:'Offer a call, not email. For complex fulfillment proposals (SLA, price/SKU, etc.), a live discussion is far more effective than back-and-forth texts.'},
+    {label:'No response 3 days',channel:'WhatsApp',content:`Hi [Name] 🙏
+
+Sorry to bother you briefly — my previous message may have been missed amid a busy schedule.
+
+Just so you know, we recently onboarded a client in [similar industry] who previously faced [high return rate / full warehouse / slow delivery] — and it was resolved within [X weeks].
+
+If the timing isn't right now, that's completely fine — just let me know and I'll follow up at a better time 🙏`,tips:"Don't show frustration. Give them an easy 'way out'. Add social proof (a similar client) so there's a fresh reason to respond — this often triggers a reply."},
+    {label:'Asking for more time',channel:'Email',content:`Subject: Re: [Proposal Name] — Supporting material for your internal discussion
+
+Hi [Name],
+
+Of course, we understand the process needs the right timing.
+
+In the meantime, I've attached:
+📎 A case study of a client in [similar industry/category] who cut fulfillment costs by 25–40%
+📎 Comparison sheet: in-house warehouse vs. outsourced fulfillment (full cost breakdown)
+📎 An FAQ to support your team's internal discussion
+
+Is there a specific concern I can help clarify? For example, minimum contract, goods security, or system integration?
+
+I'm available anytime.
+
+Best,
+[Your Name] | [Title]`,tips:'Send the in-house vs. outsource cost comparison sheet — it is usually very persuasive for a CFO or financial decision maker. It is your strongest tool to speed up the decision.'},
+    {label:'Push closing (EOM)',channel:'WhatsApp',content:`Hi [Name] 😊
+
+Quick update — we have limited onboarding slots for [this month/next month], and if the decision can be confirmed before [date], we can include:
+🎁 Free setup & marketplace integration (worth Rp [X])
+🎁 Priority warehouse slot at [location name]
+🎁 1 month free setup fee
+
+This isn't pressure — I just want to make sure [Company Name] gets maximum benefit from the start.
+
+Anything we should clarify first? 🙏`,tips:'The strongest urgency in fulfillment: limited warehouse slots, a free-setup promo, or seasonal momentum (Harbolnas, Eid, etc.). Never use fake urgency.'},
+    {label:'Site visit / demo',channel:'WhatsApp',content:`Hi [Name] 🏭
+
+We're delighted you're interested in seeing our operations firsthand!
+
+We'll prepare:
+✅ Warehouse tour + live WMS demo
+✅ A walkthrough of the picking, packing & shipping flow
+✅ A live Q&A session with the operations team
+
+Here are some schedule options:
+📅 [Day, date, time]
+📅 [Day, date, time]
+
+How many people will attend? We'll set up a meeting area + refreshments 😊`,tips:'A site visit is the strongest closing tool in fulfillment — 70%+ of prospects who visit the warehouse convert. Prioritize this for hot prospects. Always ask the number of guests.'},
+    {label:'Upsell / referral',channel:'WhatsApp',content:`Hi [Name], it's been [X] months — hope your fulfillment operations are running smoothly! 🚀
+
+Based on this month's volume, there are 2 things I'd like to share:
+1️⃣ We can optimize [packaging / delivery routing] and potentially cut costs by around [X]%
+2️⃣ If you know a business partner with similar needs, we have a referral program with [benefit]
+
+Anything you'd like to review from this month's performance? Happy to help! 😊`,tips:"Upselling is most effective during the 'honeymoon phase' (first 1–3 months). Open with their actual data — not a generic pitch."}
+  ]
+};
+
+// ---- Objection playbook ----
+const OBJECTIONS = {
+  id:[
+    {title:'Harga fulfillment kalian terlalu mahal',level:'high',ack:'Saya mengerti, biaya adalah pertimbangan utama dan saya hargai kejujurannya.',challenge:'Mahal dibanding apa — in-house warehouse atau kompetitor lain? Sudah pernah hitung total cost of ownership in-house termasuk gaji staff gudang, sewa, packaging, sistem?',redirect:'Mari kita hitung bersama. Rata-rata klien kami yang awalnya in-house ternyata 25–40% lebih mahal setelah dihitung semua komponen. Saya bisa bantu buatkan perbandingannya dalam 1 hari.',notes:'Siapkan comparison sheet cost in-house vs outsource. Ini senjata terkuat untuk objection harga di fulfillment.'},
+    {title:'Kami takut barang hilang atau rusak di gudang',level:'high',ack:'Kekhawatiran itu sangat valid — barang adalah aset utama bisnis dan kami mengerti betul pentingnya.',challenge:'Pengalaman buruk sebelumnya pernah ada? Atau ini kekhawatiran umum? Sistem apa yang saat ini digunakan untuk kontrol stok?',redirect:'Kami menerapkan WMS dengan real-time tracking, CCTV 24 jam, dan SOP cycle count harian. Kami juga punya SLA kompensasi yang tertulis di kontrak — bukan sekadar janji lisan.',notes:'Tawarkan site visit gudang. Transparansi fisik adalah cara tercepat untuk atasi trust issue ini.'},
+    {title:'Sudah punya gudang sendiri / partner lain',level:'med',ack:'Bagus kalau sudah ada setup yang berjalan — berarti kamu sudah paham betul kompleksitas fulfillment.',challenge:'Apa yang paling kamu suka dari setup sekarang? Ada area yang masih belum optimal — SLA pengiriman, biaya per order, atau kapasitas saat peak season?',redirect:'Banyak klien kami awalnya sudah punya partner — kami masuk untuk handle overflow peak season atau kategori produk tertentu. Tidak harus ganti total, bisa komplementer dulu.',notes:'Jangan attack kompetitor. Cari gap (peak season, kategori khusus, area coverage) dan masuk dari sana.'},
+    {title:'Volume order kami masih kecil, belum siap',level:'med',ack:'Justru ini yang kami dengar dari banyak klien sebelum mereka scale — dan saya mengerti logikanya.',challenge:'Berapa order per bulan sekarang? Target 6 bulan ke depan? Ada campaign atau launching produk yang akan dorong volume?',redirect:'Kami punya paket starter yang fleksibel untuk bisnis yang sedang tumbuh — tidak ada minimum order yang memberatkan, dan sistem sudah siap saat volume meningkat.',notes:"Framing: 'Lebih mudah set up sistem saat volume kecil daripada saat sudah chaos di peak season.'"},
+    {title:'Proses integrasi sistem terlalu rumit',level:'med',ack:'Saya mengerti — integrasi teknis memang bisa terasa overwhelming, terutama kalau tim tidak ada background IT.',challenge:'Platform apa yang sekarang digunakan? (Shopee, Tokopedia, Lazada, custom website, SAP?) Siapa yang handle sistem di tim kamu?',redirect:'Tim teknis kami yang handle proses integrasi dari awal sampai live — kamu tidak perlu coding sama sekali. Rata-rata integrasi marketplace selesai dalam 3–5 hari kerja.',notes:'Siapkan onboarding checklist dan timeline integrasi yang konkret — ini yang biasanya bikin prospect lebih confident.'},
+    {title:'SLA pengiriman kalian tidak memenuhi kebutuhan kami',level:'high',ack:'SLA pengiriman adalah jantung dari bisnis fulfillment dan saya sangat menghargai kamu jelas soal ini.',challenge:'SLA seperti apa yang dibutuhkan? Same day? Next day? Area coverage mana yang paling kritis? Apa yang terjadi sekarang kalau SLA tidak terpenuhi?',redirect:'Kami punya SLA tertulis per kurir partner (J&T, SiCepat, AnterAja, JNE, Ninja) termasuk pickup time. Untuk area [X] kami bisa komit [Y]. Mari lihat datanya bersama.',notes:'Selalu backup dengan data historis SLA ke kurir — jangan hanya janji verbal. Tunjukkan dashboard real-time kalau ada.'},
+    {title:'Tidak yakin kalian bisa handle peak season kami',level:'med',ack:'Kekhawatiran yang sangat masuk akal — peak season adalah momen paling kritis dan kesalahan di sana mahal sekali.',challenge:'Peak season kamu kapan? (Harbolnas, Lebaran, akhir tahun?) Berapa estimasi spike volume-nya dibanding hari biasa?',redirect:'Kami sudah handle klien dengan volume spike hingga 8x dari normal tanpa SLA break. Kami punya SOP surge capacity yang bisa di-activate 2 minggu sebelum peak.',notes:'Referensi case peak season adalah closing tool terkuat untuk objection ini. Siapkan data angka yang nyata.'},
+    {title:'Kontrak minimum terlalu panjang / mengikat',level:'med',ack:'Komitmen jangka panjang memang terasa berat terutama kalau belum pernah kerja sama sebelumnya — itu normal.',challenge:'Apa yang paling dikhawatirkan dari kontrak panjang? Soal fleksibilitas kalau bisnis berubah, atau soal performance yang belum terbukti?',redirect:'Kami bisa mulai dengan pilot 3 bulan tanpa komitmen jangka panjang — setelah kamu lihat sendiri performa kami, keputusan perpanjang jadi jauh lebih mudah.',notes:'Pilot period adalah objection killer terbaik untuk kontrak. Pastikan pilot-nya berhasil dengan full attention dari tim.'},
+    {title:'Kami ingin coba kelola sendiri dulu',level:'low',ack:'Saya menghargai keinginan untuk understand prosesnya dulu — dan itu keputusan yang wajar.',challenge:'Apa yang ingin kamu pelajari dari mengelola sendiri? Soal cost, kontrol, atau understanding operasional? Sudah ada plan untuk team dan sistemnya?',redirect:'Banyak yang mulai mandiri dan akhirnya ke kami setelah 3–6 bulan — bukan karena gagal, tapi karena sadar core business mereka bukan di logistik. Kami tetap terbuka kapanpun.',notes:"Jangan paksa. Simpan sebagai 'nurture warm' dan follow-up setelah 60 hari. Mereka akan kembali kalau struggle."},
+    {title:'Harus lapor ke pusat / atasan di luar kota dulu',level:'low',ack:'Tentu, proses approval untuk investasi seperti ini memang perlu jalur yang tepat.',challenge:'Siapa yang perlu approve? Apa concern utama yang biasanya diangkat di level itu — cost efficiency, risk, atau operasional?',redirect:'Saya bisa siapkan executive summary 1 halaman + business case ROI yang bisa langsung kamu forward. Kalau perlu, saya juga bisa join video call singkat bersama tim pusat.',notes:"Selalu tanya 'siapa lagi yang perlu terlibat?' di awal — pastikan kamu tidak deal dengan bukan decision maker."}
+  ],
+  en:[
+    {title:'Your fulfillment pricing is too expensive',level:'high',ack:'I understand — cost is a major consideration, and I appreciate your honesty.',challenge:'Expensive compared to what — an in-house warehouse or another competitor? Have you calculated the total cost of ownership of in-house, including warehouse staff salaries, rent, packaging, and systems?',redirect:'Let us calculate it together. On average, our clients who started in-house turned out to be 25–40% more expensive once all components were counted. I can prepare the comparison for you within a day.',notes:'Prepare the in-house vs. outsource cost comparison sheet. It is the strongest weapon for price objections in fulfillment.'},
+    {title:'We are worried about goods being lost or damaged in the warehouse',level:'high',ack:'That concern is completely valid — goods are a core business asset and we fully understand how important they are.',challenge:'Have you had a bad experience before, or is this a general concern? What system do you currently use for stock control?',redirect:'We run a WMS with real-time tracking, 24-hour CCTV, and a daily cycle-count SOP. We also have a compensation SLA written into the contract — not just a verbal promise.',notes:'Offer a warehouse site visit. Physical transparency is the fastest way to resolve this trust issue.'},
+    {title:'We already have our own warehouse / another partner',level:'med',ack:'It is great that you already have a running setup — it means you understand the complexity of fulfillment well.',challenge:'What do you like most about your current setup? Are there areas still not optimal — delivery SLA, cost per order, or capacity during peak season?',redirect:'Many of our clients already had a partner — we came in to handle peak-season overflow or specific product categories. You do not have to switch entirely; we can start as a complement.',notes:'Do not attack the competitor. Find the gap (peak season, special categories, coverage area) and enter from there.'},
+    {title:'Our order volume is still small, we are not ready',level:'med',ack:'This is exactly what we hear from many clients before they scale — and I understand the logic.',challenge:'How many orders per month now? What is the target in 6 months? Any campaign or product launch that will drive volume?',redirect:'We have a flexible starter package for growing businesses — no burdensome minimum order, and the system is ready when volume grows.',notes:"Framing: 'It is easier to set up the system while volume is small than when it is chaos at peak season.'"},
+    {title:'The system integration process is too complicated',level:'med',ack:'I understand — technical integration can feel overwhelming, especially if the team has no IT background.',challenge:'What platform do you currently use? (Shopee, Tokopedia, Lazada, custom website, SAP?) Who handles systems on your team?',redirect:'Our technical team handles the integration from start to go-live — you do not need to code at all. Marketplace integration averages 3–5 working days.',notes:'Prepare a concrete onboarding checklist and integration timeline — this usually makes prospects more confident.'},
+    {title:'Your delivery SLA does not meet our needs',level:'high',ack:'Delivery SLA is the heart of the fulfillment business, and I really appreciate you being clear about it.',challenge:'What kind of SLA do you need? Same day? Next day? Which coverage area is most critical? What happens now when the SLA is not met?',redirect:'We have a written SLA per courier partner (J&T, SiCepat, AnterAja, JNE, Ninja), including pickup time. For area [X] we can commit to [Y]. Let us look at the data together.',notes:'Always back it up with historical courier SLA data — not just verbal promises. Show the real-time dashboard if available.'},
+    {title:'Not sure you can handle our peak season',level:'med',ack:'A very reasonable concern — peak season is the most critical moment and mistakes there are very costly.',challenge:'When is your peak season? (Harbolnas, Eid, year-end?) What is the estimated volume spike compared to a normal day?',redirect:'We have handled clients with volume spikes up to 8x normal without an SLA break. We have a surge-capacity SOP that can be activated 2 weeks before peak.',notes:'A peak-season case reference is the strongest closing tool for this objection. Prepare real numbers.'},
+    {title:'The minimum contract is too long / binding',level:'med',ack:'A long-term commitment does feel heavy, especially without prior collaboration — that is normal.',challenge:'What worries you most about a long contract? Flexibility if the business changes, or unproven performance?',redirect:'We can start with a 3-month pilot with no long-term commitment — once you see our performance yourself, the decision to extend becomes much easier.',notes:'A pilot period is the best objection-killer for contracts. Make sure the pilot succeeds with the team full attention.'},
+    {title:'We want to try managing it ourselves first',level:'low',ack:'I appreciate the desire to understand the process first — and that is a reasonable decision.',challenge:'What do you want to learn from managing it yourself? Cost, control, or operational understanding? Do you have a plan for the team and systems?',redirect:'Many start on their own and come to us after 3–6 months — not because they failed, but because they realize logistics is not their core business. We are open whenever you are ready.',notes:"Do not push. Keep them as a 'warm nurture' and follow up after 60 days. They will return if they struggle."},
+    {title:'I need to report to head office / a manager out of town first',level:'low',ack:'Of course — approval for an investment like this does need the right channel.',challenge:'Who needs to approve? What main concern is usually raised at that level — cost efficiency, risk, or operations?',redirect:'I can prepare a one-page executive summary + ROI business case you can forward directly. If needed, I can also join a short video call with the head-office team.',notes:"Always ask 'who else needs to be involved?' early — make sure you are not dealing with a non-decision-maker."}
+  ]
+};
+
+// ---- Pipeline sample data ----
+const PIPE = {
+  id:[
+    {co:'PT Maju Bersama',pic:'Andi',tipe:'B2C',stage:'Proposal Sent',score:72,rev:'Rp 45jt',next:'Follow up proposal',dl:'25 Mei'},
+    {co:'CV Kreasi Nusantara',pic:'Rina',tipe:'B2B',stage:'Demo/Visit',score:55,rev:'Rp 28jt',next:'Set site visit',dl:'27 Mei'},
+    {co:'Toko Online Bahagia',pic:'Budi',tipe:'B2C',stage:'Qualified',score:38,rev:'Rp 12jt',next:'Kirim case study',dl:'29 Mei'},
+    {co:'PT Logistik Prima',pic:'Sari',tipe:'B2B',stage:'Negotiation',score:85,rev:'Rp 120jt',next:'Finalisasi kontrak',dl:'24 Mei'},
+    {co:'UD Sejahtera',pic:'Doni',tipe:'B2C',stage:'Prospecting',score:20,rev:'Rp 8jt',next:'Follow up WA',dl:'30 Mei'}
+  ],
+  en:[
+    {co:'PT Maju Bersama',pic:'Andi',tipe:'B2C',stage:'Proposal Sent',score:72,rev:'Rp 45M',next:'Follow up on proposal',dl:'May 25'},
+    {co:'CV Kreasi Nusantara',pic:'Rina',tipe:'B2B',stage:'Demo/Visit',score:55,rev:'Rp 28M',next:'Schedule site visit',dl:'May 27'},
+    {co:'Toko Online Bahagia',pic:'Budi',tipe:'B2C',stage:'Qualified',score:38,rev:'Rp 12M',next:'Send case study',dl:'May 29'},
+    {co:'PT Logistik Prima',pic:'Sari',tipe:'B2B',stage:'Negotiation',score:85,rev:'Rp 120M',next:'Finalize contract',dl:'May 24'},
+    {co:'UD Sejahtera',pic:'Doni',tipe:'B2C',stage:'Prospecting',score:20,rev:'Rp 8M',next:'Follow up via WhatsApp',dl:'May 30'}
+  ]
+};
+const STAGE_OPTS=['Prospecting','Qualified','Demo/Visit','Proposal Sent','Negotiation','Closed Won'];
+
+// ============================================================
+// State + helpers
+// ============================================================
+let LANG = (function(){ try{ return localStorage.getItem('flow.lang')||'id'; }catch(e){ return 'id'; } })();
+let activeTmpl = 0;
+let selScoreIdx = [];
+let lastScore = 0, lastTier = '';
+const $ = id => document.getElementById(id);
+const u = () => UI[LANG];
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// ---- Current user + custom data loaded from the parent app ----
+let USER = { email:'', role:'', canManage:false };
+let customTemplates = [], customObjections = [], savedDeals = [], salesPics = [];
+function allTemplates(){ return TEMPLATES[LANG].concat(customTemplates); }
+function allObjections(){ return OBJECTIONS[LANG].concat(customObjections); }
+
+// ---- postMessage bridge to the parent app (data layer + roles + audit) ----
+const HOST = window.parent;
+const EMBEDDED = !!HOST && HOST !== window;
+let _seq = 0;
+const _pending = {};
+function hostRequest(action, payload){
+  return new Promise((resolve,reject)=>{
+    if(!EMBEDDED){ reject(new Error('Toolkit must run inside FLOW Mega Apps.')); return; }
+    const reqId = 'r'+(++_seq);
+    _pending[reqId] = { resolve, reject };
+    HOST.postMessage({ channel:'flow-toolkit', reqId, action, payload }, '*');
+    setTimeout(()=>{ if(_pending[reqId]){ delete _pending[reqId]; reject(new Error('Request timed out')); } }, 12000);
+  });
+}
+
+// ---- Toast ----
+let _toastT = null;
+function toast(msg, kind){
+  let el = $('tkToast');
+  if(!el){ el = document.createElement('div'); el.id = 'tkToast'; document.body.appendChild(el); }
+  el.textContent = msg;
+  el.className = 'tk-toast show' + (kind ? (' '+kind) : '');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(()=>{ el.className = 'tk-toast' + (kind ? (' '+kind) : ''); }, 2800);
+}
+
+// ============================================================
+// SCORING
+// ============================================================
+function buildScoring(){
+  const crit = SCORE[LANG];
+  if (selScoreIdx.length !== crit.length) selScoreIdx = new Array(crit.length).fill(0);
+  const g = $('score-grid');
+  g.innerHTML = '';
+  crit.forEach((c,i)=>{
+    const el = document.createElement('div');
+    el.className = 'score-item';
+    el.innerHTML = `<div class="score-item-top">
+      <div><div class="score-item-label">${c.label}</div><div class="score-item-desc">${c.desc}</div></div>
+      <div class="score-pts-badge" id="pts${i}">${c.opts[selScoreIdx[i]][1]}</div>
+    </div>
+    <select class="score-select" data-idx="${i}">
+      ${c.opts.map((o,j)=>`<option value="${j}"${j===selScoreIdx[i]?' selected':''}>${o[0]} (${o[1]} ${u().pts})</option>`).join('')}
+    </select>`;
+    g.appendChild(el);
+  });
+  g.querySelectorAll('select').forEach(s=>{
+    s.addEventListener('change',()=>{ selScoreIdx[+s.dataset.idx] = s.selectedIndex; recalcScore(); });
+  });
+  recalcScore();
+}
+
+function recalcScore(){
+  const crit = SCORE[LANG];
+  let total = 0;
+  crit.forEach((c,i)=>{
+    const pts = c.opts[selScoreIdx[i]][1];
+    total += pts;
+    const b = $('pts'+i); if (b) b.textContent = pts;
+  });
+  const rn = $('r-num'), rb = $('r-bar');
+  rn.textContent = total;
+  rb.style.width = Math.min(total,100) + '%';
+  const T = TIERS[LANG];
+  let color, tier;
+  if (total>=70){ color='#6337D8'; tier=T.hot; }
+  else if (total>=45){ color='#d97706'; tier=T.warm; }
+  else if (total>=20){ color='#2ED8FB'; tier=T.cold; }
+  else { color='#8c8497'; tier=T.hold; }
+  rb.style.background = color;
+  rn.style.color = (total===0) ? 'var(--text3)' : color;
+  $('r-tier').textContent = (total===0) ? '—' : tier.tier;
+  $('r-tier').style.color = color;
+  $('r-action').textContent = (total===0) ? u().scoringDefault : tier.action;
+  lastScore = total;
+  lastTier = (total===0) ? '' : tier.tier;
+}
+
+// ============================================================
+// TEMPLATES
+// ============================================================
+function buildTemplates(){
+  const chips = $('tmpl-chips');
+  chips.innerHTML = '';
+  const list = allTemplates();
+  if (activeTmpl >= list.length) activeTmpl = 0;
+  list.forEach((t,i)=>{
+    const b = document.createElement('button');
+    b.className = 'chip' + (i===activeTmpl?' active':'');
+    b.textContent = t.label;
+    b.onclick = () => showTmpl(i);
+    chips.appendChild(b);
+  });
+  showTmpl(activeTmpl);
+}
+function showTmpl(i){
+  const list = allTemplates();
+  if (!list.length) return;
+  if (i >= list.length) i = 0;
+  activeTmpl = i;
+  const t = list[i];
+  $('t-title').textContent = t.label;
+  const badge = $('t-badge');
+  badge.textContent = t.channel;
+  badge.className = 'badge ' + (t.channel==='WhatsApp'?'badge-wa':'badge-email');
+  $('t-content').textContent = t.content;
+  $('t-tips').textContent = t.tips || '';
+  $('t-tips').style.display = t.tips ? '' : 'none';
+  $('t-custom-tag').classList.toggle('hidden', !t._custom);
+  $('delTmplBtn').classList.toggle('hidden', !(t._custom && USER.canManage));
+  document.querySelectorAll('.tmpl-chips .chip').forEach((c,j)=>c.classList.toggle('active',j===i));
+}
+function copyTmpl(){
+  const t = allTemplates()[activeTmpl];
+  if (!t) return;
+  navigator.clipboard.writeText(t.content).then(()=>{
+    const lbl = $('copyBtnLabel');
+    lbl.textContent = u().copiedBtn;
+    setTimeout(()=>{ lbl.textContent = u().copyBtn; }, 2000);
+  });
+}
+
+// ============================================================
+// OBJECTIONS
+// ============================================================
+function buildObjections(){
+  const list = $('obj-list');
+  list.innerHTML = '';
+  allObjections().forEach((o,i)=>{
+    const el = document.createElement('div');
+    el.className = 'obj-card';
+    const lvlClass = o.level==='high'?'lvl-high':o.level==='med'?'lvl-med':'lvl-low';
+    const lvlText = u().levels[o.level] || o.level;
+    const numBg = o.level==='high'?'rgba(220,38,38,0.1)':o.level==='med'?'rgba(217,119,6,0.1)':'rgba(14,166,114,0.1)';
+    const numColor = o.level==='high'?'#dc2626':o.level==='med'?'#d97706':'#0ea672';
+    const canDel = o._custom && USER.canManage;
+    el.innerHTML = `<div class="obj-header">
+      <div class="obj-num" style="background:${numBg};color:${numColor}">${i+1}</div>
+      <div class="obj-title">${esc(o.title)}</div>
+      ${o._custom?'<span class="tk-tag">Custom</span>':''}
+      <span class="obj-level ${lvlClass}">${lvlText}</span>
+      ${canDel?`<button class="tk-del" data-objdel="${esc(o.id)}" title="Delete">✕</button>`:''}
+      <svg class="obj-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="obj-body">
+      <div class="acr-grid">
+        <div class="acr-block acr-a"><div class="acr-label">A — Acknowledge</div><div class="acr-script">"${esc(o.ack)}"</div></div>
+        <div class="acr-block acr-c"><div class="acr-label">C — Challenge</div><div class="acr-script">"${esc(o.challenge)}"</div></div>
+        <div class="acr-block acr-r"><div class="acr-label">R — Redirect</div><div class="acr-script">"${esc(o.redirect)}"</div></div>
+      </div>
+      ${o.notes?`<div class="acr-notes">${esc(o.notes)}</div>`:''}
+    </div>`;
+    el.querySelector('.obj-header').addEventListener('click',(ev)=>{
+      if (ev.target.closest('[data-objdel]')) return;
+      el.querySelector('.obj-body').classList.toggle('open');
+      el.querySelector('.obj-chevron').classList.toggle('open');
+    });
+    const delBtn = el.querySelector('[data-objdel]');
+    if (delBtn) delBtn.addEventListener('click',(ev)=>{ ev.stopPropagation(); deleteObjection(delBtn.dataset.objdel); });
+    list.appendChild(el);
+  });
+}
+
+// ============================================================
+// PIPELINE
+// ============================================================
+function stageClass(s){
+  return {'Prospecting':'stage-prospecting','Qualified':'stage-qualified','Demo/Visit':'stage-demo','Proposal Sent':'stage-proposal','Negotiation':'stage-negotiation','Closed Won':'stage-won'}[s]||'stage-prospecting';
+}
+function scoreStyle(s){
+  if (s>=70) return 'background:rgba(99,55,216,0.12);color:#6337D8';
+  if (s>=45) return 'background:rgba(217,119,6,0.14);color:#d97706';
+  return 'background:rgba(220,38,38,0.1);color:#dc2626';
+}
+function buildPipeline(){
+  const data = PIPE[LANG];
+  const stats = [
+    {val:data.length,                                             lbl:u().pipeStats[0], color:'var(--primary)'},
+    {val:'Rp 213jt',                                              lbl:u().pipeStats[1], color:'var(--green)'},
+    {val:data.filter(d=>d.score>=70).length,                      lbl:u().pipeStats[2], color:'var(--red)'},
+    {val:Math.round(data.reduce((a,d)=>a+d.score,0)/data.length), lbl:u().pipeStats[3], color:'var(--amber)'}
+  ];
+  const sg = $('pipe-stats');
+  sg.innerHTML = '';
+  stats.forEach(s=>{
+    const d = document.createElement('div');
+    d.className = 'stat-box';
+    d.innerHTML = `<div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-lbl">${s.lbl}</div>`;
+    sg.appendChild(d);
+  });
+  $('pipe-head').innerHTML = u().pipeHead.map(h=>`<th>${h}</th>`).join('');
+  const tb = $('pipe-tbody');
+  tb.innerHTML = '';
+  data.forEach(d=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td style="font-weight:600;color:var(--text)">${d.co}</td>
+      <td style="color:var(--text2)">${d.pic}</td>
+      <td><span style="font-size:11px;padding:2px 8px;border-radius:8px;background:rgba(99,55,216,0.08);color:var(--primary)">${d.tipe}</span></td>
+      <td><span class="stage-badge ${stageClass(d.stage)}">${d.stage}</span></td>
+      <td><span class="score-pill" style="${scoreStyle(d.score)}">${d.score}</span></td>
+      <td style="color:var(--green);font-weight:600;font-family:'JetBrains Mono',monospace;font-size:12px">${d.rev}</td>
+      <td style="color:var(--text2);font-size:12px">${d.next}</td>
+      <td style="color:var(--text3);font-size:12px">${d.dl}</td>`;
+    tb.appendChild(tr);
+  });
+}
+function addRow(){
+  const ph = u().rowPh;
+  const tb = $('pipe-tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input type="text" class="cell-input" placeholder="${ph.co}" style="width:100%"></td>
+    <td><input type="text" class="cell-input" placeholder="${ph.pic}" style="width:80px"></td>
+    <td><select class="cell-input">${u().typeOpts.map(o=>`<option>${o}</option>`).join('')}</select></td>
+    <td><select class="cell-input">${STAGE_OPTS.map(o=>`<option>${o}</option>`).join('')}</select></td>
+    <td><input type="number" class="cell-input" placeholder="0" min="0" max="100" style="width:60px"></td>
+    <td><input type="text" class="cell-input" placeholder="${ph.rev}" style="width:84px"></td>
+    <td><input type="text" class="cell-input" placeholder="${ph.next}" style="width:120px"></td>
+    <td><input type="text" class="cell-input" placeholder="${ph.dl}" style="width:80px"></td>`;
+  tb.appendChild(tr);
+  tr.querySelector('input').focus();
+}
+
+// Export the Pipeline Tracker table (sample rows + rows the user
+// added) to a CSV file. Reads live cell values straight from the DOM.
+function exportPipelineCSV(){
+  const rows = [u().pipeHead.slice()];
+  document.querySelectorAll('#pipe-tbody tr').forEach(tr=>{
+    const cells = [];
+    tr.querySelectorAll('td').forEach(td=>{
+      const f = td.querySelector('input,select');
+      cells.push(f ? (f.value||'') : td.textContent.trim());
+    });
+    if (cells.some(c=>c!=='')) rows.push(cells);
+  });
+  const csv = rows.map(r=>r.map(c=>{
+    const s = String(c).replace(/"/g,'""');
+    return /[",\n\r]/.test(s) ? '"'+s+'"' : s;
+  }).join(',')).join('\r\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sales-pipeline.csv';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 100);
+}
+
+// ============================================================
+// PARENT-APP DATA — custom templates/objections + saved deals
+// ============================================================
+function onUserReady(){
+  document.querySelectorAll('.tk-sup-only').forEach(el=>el.classList.toggle('hidden', !USER.canManage));
+  loadData();
+}
+async function loadData(){
+  if(!EMBEDDED) return;
+  try{
+    const [tpls,objs,deals] = await Promise.all([
+      hostRequest('list',{kind:'templates'}),
+      hostRequest('list',{kind:'objections'}),
+      hostRequest('list',{kind:'deals'})
+    ]);
+    customTemplates = (tpls||[]).map(t=>({ id:t.id, _custom:true, label:t.label||'(untitled)', channel:t.channel==='Email'?'Email':'WhatsApp', content:t.content||'', tips:t.tips||'' }));
+    customObjections = (objs||[]).map(o=>({ id:o.id, _custom:true, title:o.title||'(untitled)', level:['high','med','low'].includes(o.level)?o.level:'med', ack:o.ack||'', challenge:o.challenge||'', redirect:o.redirect||'', notes:o.notes||'' }));
+    savedDeals = (deals||[]).slice().sort((a,b)=>String(b.savedAt||'').localeCompare(String(a.savedAt||'')));
+    buildTemplates(); buildObjections(); renderDeals();
+  }catch(e){ console.warn('[Sales Toolkit] load failed:', e); }
+  // Sales PIC dropdown — the Sales-team roster from the app.
+  try{
+    salesPics = (await hostRequest('salesPics')) || [];
+    renderPicOptions();
+  }catch(e){ console.warn('[Sales Toolkit] sales PIC list failed:', e); }
+}
+
+// ---- Saved deals ----
+function fmtDate(s){ if(!s) return ''; const d=new Date(s); return isNaN(d.getTime())?'':d.toLocaleDateString(); }
+function renderPicOptions(){
+  const sel = $('deal-pic');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">${esc(u().picPlaceholder)}</option>`
+    + salesPics.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  if(cur && salesPics.indexOf(cur)>=0) sel.value = cur;
+}
+function renderDeals(){
+  const cols = u().dealCols;
+  const head = $('deals-head'), tb = $('deals-tbody');
+  if(!head || !tb) return;
+  head.innerHTML = cols.map(c=>`<th>${c}</th>`).join('') + (USER.canManage?'<th></th>':'');
+  if(!savedDeals.length){
+    tb.innerHTML = `<tr><td colspan="${cols.length+1}" style="text-align:center;color:var(--text3);padding:22px">${u().noDeals}</td></tr>`;
+    return;
+  }
+  tb.innerHTML = savedDeals.map(d=>`<tr>
+    <td style="font-weight:600;color:var(--text)">${esc(d.client)}</td>
+    <td style="color:var(--text2)">${esc(d.salesPic||'—')}</td>
+    <td><span class="score-pill" style="${scoreStyle(d.score||0)}">${d.score!=null?d.score:'—'}</span></td>
+    <td style="font-size:12px;color:var(--text2)">${esc(d.tier||'—')}</td>
+    <td style="font-size:12px;color:var(--text3)">${fmtDate(d.savedAt)}</td>
+    <td style="font-size:12px;color:var(--text3)">${esc(d.createdBy||'—')}</td>
+    ${USER.canManage?`<td><button class="tk-del" data-dealdel="${esc(d.id)}" title="Delete">✕</button></td>`:''}
+  </tr>`).join('');
+  tb.querySelectorAll('[data-dealdel]').forEach(b=>b.addEventListener('click',()=>deleteDeal(b.dataset.dealdel)));
+}
+async function saveDeal(){
+  const client = $('deal-client').value.trim();
+  const pic = $('deal-pic').value.trim();
+  if(!client){ toast(u().needClient,'err'); $('deal-client').focus(); return; }
+  const crit = SCORE[LANG];
+  const criteria = crit.map((c,i)=>({ label:c.label, choice:c.opts[selScoreIdx[i]][0], pts:c.opts[selScoreIdx[i]][1] }));
+  const btn = $('saveDealBtn'); btn.disabled = true;
+  try{
+    await hostRequest('add',{ kind:'deals', data:{ client, salesPic:pic, score:lastScore, tier:lastTier, criteria, savedAt:new Date().toISOString() } });
+    toast(u().dealSaved,'ok');
+    $('deal-client').value = ''; $('deal-pic').value = '';
+    const deals = await hostRequest('list',{kind:'deals'});
+    savedDeals = (deals||[]).slice().sort((a,b)=>String(b.savedAt||'').localeCompare(String(a.savedAt||'')));
+    renderDeals();
+  }catch(e){ toast(e.message,'err'); }
+  finally{ btn.disabled = false; }
+}
+async function deleteDeal(id){
+  if(!confirm(u().confirmDel)) return;
+  try{
+    await hostRequest('delete',{kind:'deals',id});
+    toast(u().deleted,'ok');
+    savedDeals = savedDeals.filter(d=>d.id!==id);
+    renderDeals();
+  }catch(e){ toast(e.message,'err'); }
+}
+function exportDeals(){
+  if(!savedDeals.length){ toast(u().noDeals,'err'); return; }
+  const headers = u().dealCols;
+  const rows = savedDeals.map(d=>[ d.client||'', d.salesPic||'', d.score!=null?d.score:'', d.tier||'', fmtDate(d.savedAt), d.createdBy||'' ]);
+  hostRequest('exportDeals',{headers,rows}).catch(e=>toast(e.message,'err'));
+}
+
+// ---- Add / delete custom follow-up templates (supervisors) ----
+function openTmplForm(){ $('tmplForm').classList.remove('hidden'); $('tf-label').focus(); }
+function closeTmplForm(){ $('tmplForm').classList.add('hidden'); $('tf-label').value=''; $('tf-content').value=''; $('tf-tips').value=''; }
+async function saveTemplate(){
+  const label = $('tf-label').value.trim(), channel = $('tf-channel').value;
+  const content = $('tf-content').value.trim(), tips = $('tf-tips').value.trim();
+  if(!label || !content){ toast(u().needFields,'err'); return; }
+  const btn = $('tf-save'); btn.disabled = true;
+  try{
+    await hostRequest('add',{ kind:'templates', data:{ label, channel, content, tips } });
+    toast(u().itemSaved,'ok');
+    closeTmplForm();
+    const tpls = await hostRequest('list',{kind:'templates'});
+    customTemplates = (tpls||[]).map(t=>({ id:t.id, _custom:true, label:t.label||'(untitled)', channel:t.channel==='Email'?'Email':'WhatsApp', content:t.content||'', tips:t.tips||'' }));
+    activeTmpl = TEMPLATES[LANG].length + customTemplates.length - 1;
+    buildTemplates();
+  }catch(e){ toast(e.message,'err'); }
+  finally{ btn.disabled = false; }
+}
+async function deleteTemplate(){
+  const t = allTemplates()[activeTmpl];
+  if(!t || !t._custom) return;
+  if(!confirm(u().confirmDel)) return;
+  try{
+    await hostRequest('delete',{kind:'templates',id:t.id});
+    toast(u().deleted,'ok');
+    customTemplates = customTemplates.filter(x=>x.id!==t.id);
+    activeTmpl = 0;
+    buildTemplates();
+  }catch(e){ toast(e.message,'err'); }
+}
+
+// ---- Add / delete custom objections (supervisors) ----
+function openObjForm(){ $('objForm').classList.remove('hidden'); $('of-title').focus(); }
+function closeObjForm(){ $('objForm').classList.add('hidden'); ['of-title','of-ack','of-challenge','of-redirect','of-notes'].forEach(id=>{ $(id).value=''; }); }
+async function saveObjection(){
+  const data = { title:$('of-title').value.trim(), level:$('of-level').value, ack:$('of-ack').value.trim(), challenge:$('of-challenge').value.trim(), redirect:$('of-redirect').value.trim(), notes:$('of-notes').value.trim() };
+  if(!data.title || !data.ack || !data.challenge || !data.redirect){ toast(u().needFields,'err'); return; }
+  const btn = $('of-save'); btn.disabled = true;
+  try{
+    await hostRequest('add',{ kind:'objections', data });
+    toast(u().itemSaved,'ok');
+    closeObjForm();
+    const objs = await hostRequest('list',{kind:'objections'});
+    customObjections = (objs||[]).map(o=>({ id:o.id, _custom:true, title:o.title||'(untitled)', level:['high','med','low'].includes(o.level)?o.level:'med', ack:o.ack||'', challenge:o.challenge||'', redirect:o.redirect||'', notes:o.notes||'' }));
+    buildObjections();
+  }catch(e){ toast(e.message,'err'); }
+  finally{ btn.disabled = false; }
+}
+async function deleteObjection(id){
+  if(!confirm(u().confirmDel)) return;
+  try{
+    await hostRequest('delete',{kind:'objections',id});
+    toast(u().deleted,'ok');
+    customObjections = customObjections.filter(x=>x.id!==id);
+    buildObjections();
+  }catch(e){ toast(e.message,'err'); }
+}
+
+// ============================================================
+// STATIC TEXT + TABS + LANGUAGE
+// ============================================================
+function applyStaticText(){
+  const d = u();
+  document.documentElement.lang = LANG;
+  $('heroTag').textContent = d.heroTag;
+  $('heroTitle').textContent = d.heroTitle;
+  $('heroDesc').textContent = d.heroDesc;
+  $('heroMeta').innerHTML = d.stats.map(s=>`<div class="hero-stat"><strong>${s[0]}</strong> ${s[1]}</div>`).join('');
+  document.querySelectorAll('[data-nav]').forEach(el=>{ el.textContent = d.nav[el.dataset.nav]; });
+  document.querySelectorAll('[data-sec]').forEach(el=>{ el.textContent = d.sec[el.dataset.sec]; });
+  $('r-max').textContent = '/ 100';
+  $('tier-labels').innerHTML = d.tierLabels.map(l=>`<span>${l}</span>`).join('');
+  $('t-chips-title').textContent = d.chipsTitle;
+  $('copyBtnLabel').textContent = d.copyBtn;
+  $('acr-title').textContent = d.acrTitle;
+  $('acr-a-desc').textContent = d.acrDesc[0];
+  $('acr-c-desc').textContent = d.acrDesc[1];
+  $('acr-r-desc').textContent = d.acrDesc[2];
+  $('pipe-deals-title').textContent = d.dealsTitle;
+  $('exportCsvLabel').textContent = d.exportCsv;
+  $('addRowBtn').textContent = d.addRow;
+  $('footer').textContent = d.footer;
+  // Deal scoring — save + saved deals
+  $('deal-info-title').textContent = d.dealInfo;
+  $('lbl-client').textContent = d.client;
+  $('lbl-pic').textContent = d.salesPic;
+  $('saveDealLabel').textContent = d.saveDeal;
+  $('saved-deals-title').textContent = d.savedDeals;
+  $('exportExcelLabel').textContent = d.exportExcel;
+  // Add-template form
+  $('addTmplBtn').textContent = d.addTemplate;
+  $('tmplFormTitle').textContent = d.newTemplate;
+  $('lbl-tf-label').textContent = d.fLabel;
+  $('lbl-tf-channel').textContent = d.fChannel;
+  $('lbl-tf-content').textContent = d.fContent;
+  $('lbl-tf-tips').textContent = d.fTips;
+  $('tf-cancel').textContent = d.cancel;
+  $('tf-save').textContent = d.save;
+  $('delTmplBtn').textContent = d.del;
+  // Add-objection form
+  $('addObjBtn').textContent = d.addObjection;
+  $('objFormTitle').textContent = d.newObjection;
+  $('lbl-of-title').textContent = d.fTitle;
+  $('lbl-of-level').textContent = d.fLevel;
+  $('lbl-of-ack').textContent = d.fAck;
+  $('lbl-of-challenge').textContent = d.fChallenge;
+  $('lbl-of-redirect').textContent = d.fRedirect;
+  $('lbl-of-notes').textContent = d.fNotes;
+  $('of-cancel').textContent = d.cancel;
+  $('of-save').textContent = d.save;
+  const ofLevel = $('of-level'), curLevel = ofLevel.value || 'med';
+  ofLevel.innerHTML = ['high','med','low'].map(k=>`<option value="${k}">${d.levels[k]}</option>`).join('');
+  ofLevel.value = curLevel;
+}
+function renderAll(){
+  applyStaticText();
+  buildScoring();
+  buildTemplates();
+  buildObjections();
+  buildPipeline();
+  renderDeals();
+  renderPicOptions();
+}
+function setLang(lang){
+  if (lang===LANG || !UI[lang]) return;
+  LANG = lang;
+  try { localStorage.setItem('flow.lang', lang); } catch(e){}
+  renderAll();
+}
+function switchTab(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  $('panel-'+name).classList.add('active');
+  document.querySelector(`.nav-btn[data-tab="${name}"]`).classList.add('active');
+}
+
+// ============================================================
+// WIRE UP
+// ============================================================
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+$('copyBtn').addEventListener('click', copyTmpl);
+$('addRowBtn').addEventListener('click', addRow);
+$('exportCsvBtn').addEventListener('click', exportPipelineCSV);
+
+// Deal scoring — save + export
+$('saveDealBtn').addEventListener('click', saveDeal);
+$('exportExcelBtn').addEventListener('click', exportDeals);
+// Add-template form
+$('addTmplBtn').addEventListener('click', openTmplForm);
+$('tf-cancel').addEventListener('click', closeTmplForm);
+$('tf-save').addEventListener('click', saveTemplate);
+$('delTmplBtn').addEventListener('click', deleteTemplate);
+// Add-objection form
+$('addObjBtn').addEventListener('click', openObjForm);
+$('of-cancel').addEventListener('click', closeObjForm);
+$('of-save').addEventListener('click', saveObjection);
+
+// Sync language with the parent app: it writes the same localStorage
+// key, and `storage` events fire across same-origin documents.
+window.addEventListener('storage', e=>{
+  if (e.key==='flow.lang' && (e.newValue==='id'||e.newValue==='en')) setLang(e.newValue);
+});
+
+// Receive user context + data replies from the parent app.
+window.addEventListener('message', e=>{
+  const m = e.data;
+  if(!m || m.channel!=='flow-toolkit-host') return;
+  if(m.type==='flow-user'){
+    USER = { email:m.email||'', role:m.role||'', canManage:!!m.canManage };
+    onUserReady();
+    return;
+  }
+  if(m.type==='reply' && _pending[m.reqId]){
+    const p = _pending[m.reqId]; delete _pending[m.reqId];
+    m.ok ? p.resolve(m.data) : p.reject(new Error(m.error||'Request failed'));
+  }
+});
+
+renderAll();
+if(EMBEDDED) HOST.postMessage({ channel:'flow-toolkit', action:'ready' }, '*');
+</script>
+</body>
+</html>

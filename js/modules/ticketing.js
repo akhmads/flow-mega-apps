@@ -10,11 +10,13 @@ import {
 } from "../firebase.js";
 import {
   $, esc, toDateStr, friendlyDate, toast, badgeClass, downloadXLSX,
-  today, confirmAction, generateTicketNumber, dateRange
+  today, confirmAction, generateTicketNumber, dateRange, slaAge
 } from "../utils.js";
 import { listUsers, getCurrentProfile, getCurrentEmail } from "../roles.js";
 import { createDropdown } from "../components/dropdown.js";
 import { subscribeMasterData, addMasterItem } from "./master-data.js";
+import { createAttachmentField } from "../components/attachments.js";
+import { FEATURES } from "../features.js";
 
 let allTickets = [];
 let filteredTickets = [];
@@ -23,6 +25,7 @@ let editingId = null;
 let allStaff = [];
 let deptDropdown = null;
 let deptList = [];
+let ticketAttachField = null;  // attachment widget (created on first modal open)
 
 const STATUSES = ["Open", "In Progress", "Waiting", "Resolved", "Closed"];
 const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
@@ -206,22 +209,29 @@ function renderTable() {
     tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:32px">No tickets match the current filters.</td></tr>`;
     return;
   }
-  tbody.innerHTML = filteredTickets.map(t => `
-    <tr>
+  tbody.innerHTML = filteredTickets.map(t => {
+    const isOpen = t.status !== "Resolved" && t.status !== "Closed";
+    const age = (isOpen && FEATURES.slaHighlight) ? slaAge(toDateStr(t.createdAt)) : { level: "", label: "", days: 0 };
+    const rowCls = (age.level === "warn" || age.level === "stale") ? ` class="sla-${age.level}"` : "";
+    const agePill = (age.days >= 1) ? ` <span class="agePill ${age.level}">${esc(age.label)}</span>` : "";
+    const attachTag = (t.attachments && t.attachments.length)
+      ? `<br><span class="small" title="${t.attachments.length} attachment(s)">📎 ${t.attachments.length} file${t.attachments.length > 1 ? "s" : ""}</span>` : "";
+    return `
+    <tr${rowCls}>
       <td><b>${esc(t.number || "—")}</b></td>
       <td>${esc(friendlyDate(toDateStr(t.createdAt)))}</td>
       <td>${esc(t.requester || "—")}</td>
       <td>${esc(t.dept || "—")}</td>
-      <td class="long"><b>${esc(t.subject || "")}</b><br><span class="small">${esc(truncate(t.description, 100))}</span>${t.comments?.length ? `<br><span class="small" style="color:#7c3aed">${t.comments.length} comment${t.comments.length>1?"s":""}</span>` : ""}</td>
+      <td class="long"><b>${esc(t.subject || "")}</b><br><span class="small">${esc(truncate(t.description, 100))}</span>${t.comments?.length ? `<br><span class="small" style="color:#7c3aed">${t.comments.length} comment${t.comments.length>1?"s":""}</span>` : ""}${attachTag}</td>
       <td><span class="${badgeClass(t.priority)}">${esc(t.priority || "—")}</span></td>
-      <td><span class="${badgeClass(t.status)}">${esc(t.status || "—")}</span></td>
+      <td><span class="${badgeClass(t.status)}">${esc(t.status || "—")}</span>${agePill}</td>
       <td>${esc(t.assignee || "—")}</td>
       <td>
         <button class="secondary iconBtn" data-edit="${t.id}">Open</button>
         <button class="danger iconBtn" data-del="${t.id}">Del</button>
       </td>
-    </tr>
-  `).join("");
+    </tr>`;
+  }).join("");
 
   tbody.querySelectorAll("[data-edit]").forEach(b =>
     b.addEventListener("click", () => openModal(b.dataset.edit)));
@@ -244,16 +254,30 @@ function populateAssigneeSelect() {
     list.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("");
 }
 
+/** Build the attachment widget once and reveal its block.
+ *  No-op when the feature is disabled in features.js. */
+function ensureTicketAttachField() {
+  const block = $("tkm_attachBlock");
+  if (!block) return;
+  if (!FEATURES.attachments) { block.classList.add("hidden"); return; }
+  block.classList.remove("hidden");
+  if (!ticketAttachField) {
+    ticketAttachField = createAttachmentField($("tkm_attachments"));
+  }
+}
+
 function openModal(id = null) {
   editingId = id;
   $("ticketModalTitle").textContent = id ? "Edit Internal Ticket" : "New Internal Ticket";
 
   populateAssigneeSelect();
   ensureDeptDropdown();
+  ensureTicketAttachField();
 
   if (id) {
     const t = allTickets.find(x => x.id === id);
     if (!t) return;
+    ticketAttachField?.setItems(t.attachments || []);
     $("tkm_priority").value = t.priority || "Medium";
     $("tkm_status").value = t.status || "Open";
     $("tkm_requester").value = t.requester || "";
@@ -268,6 +292,7 @@ function openModal(id = null) {
     renderComments(t.comments || []);
     $("tkm_commentInput").value = "";
   } else {
+    ticketAttachField?.clear();
     $("tkm_priority").value = "Medium";
     $("tkm_status").value = "Open";
     const me = getCurrentProfile();
@@ -383,6 +408,11 @@ async function saveTicket() {
     description: $("tkm_description").value.trim(),
     createdAtMs: Date.now()
   };
+
+  // Optional attachments
+  if (FEATURES.attachments && ticketAttachField) {
+    data.attachments = ticketAttachField.getItems();
+  }
 
   if (!data.requester) return toast("Requester required", "error");
   if (!data.dept) return toast("Department required", "error");
