@@ -22,20 +22,20 @@
   .langToggle button{border:0;background:transparent;color:var(--muted);font-family:inherit;font-weight:700;font-size:12px;letter-spacing:.04em;padding:5px 12px;border-radius:999px;cursor:pointer;transition:all .18s}
   .langToggle button:hover{color:var(--text)}
   .langToggle button.active{background:var(--primary);color:#fff}
-  .loginLangToggle{display:flex;justify-content:center;margin-bottom:14px}
+  .loginLangToggle{position:fixed;top:20px;right:20px;z-index:10}
 </style>
 </head>
 <body>
 
 <!-- LOGIN GATE -->
 <div id="loginGate" class="loginGate">
-  <div class="loginBox">
-    <div class="loginLangToggle">
-      <div class="langToggle">
-        <button data-lang="id">ID</button>
-        <button data-lang="en">EN</button>
-      </div>
+  <div class="loginLangToggle">
+    <div class="langToggle">
+      <button data-lang="id">ID</button>
+      <button data-lang="en">EN</button>
     </div>
+  </div>
+  <div class="loginBox">
     <div class="loginBrand">
       <img src="assets/logo-full.svg" alt="Flowgistik" class="logo-img" style="height:40px"/>
     </div>
