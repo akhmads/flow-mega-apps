@@ -17,10 +17,49 @@
 
 import { isFirebaseConfigured } from "./firebase.js";
 
+// ============================================================
+// MODE RESOLUTION (preview/demo vs production)
+// Priority (highest → lowest):
+//   1. URL flag (?demo / ?prod) — one-off override for the visiting tab
+//   2. localStorage "flow.modeOverride" — persistent toggle set by the
+//      Master Console (so master can flip modes without editing files
+//      or remembering URL params)
+//   3. Auto-detect from firebase-applet-config.json
+// ============================================================
 const _params = new URLSearchParams(location.search);
+let _modeOverride = null;
+try { _modeOverride = localStorage.getItem("flow.modeOverride"); } catch (e) {}
+// Defensive: a "prod" override only makes sense if a real Firebase
+// config is actually present. Otherwise we'd try to call Firebase Auth
+// with auth=null and crash with "Cannot read properties of null".
+// Silently demote to demo in that case and clear the bad override.
+if (_modeOverride === "prod" && !isFirebaseConfigured) {
+  try { localStorage.removeItem("flow.modeOverride"); } catch (e) {}
+  _modeOverride = null;
+  console.warn("[Mode] 'prod' override ignored — no Firebase config present. Falling back to demo.");
+}
 const PREVIEW_MODE = _params.has("prod") ? false
                    : _params.has("demo") ? true
+                   : _modeOverride === "demo" ? true
+                   : _modeOverride === "prod" ? false
                    : !isFirebaseConfigured;
+
+// ============================================================
+// MASTER ACCOUNT — single hardcoded account with full control.
+// Works in BOTH preview and production modes (bypasses Firebase Auth
+// when needed). Anyone reading the JS source can see this credential,
+// so treat it as a known internal-only login.
+// To rotate: change the password here, redeploy.
+// To transfer: change the email here OR (in production) set
+//   /users/{newEmail}.role = "master" in Firestore.
+// ============================================================
+const MASTER_ACCOUNT = {
+  email: "allen@flowgistik.id",
+  password: "Allen!Flow2026",
+  name: "Allen",
+  role: "master",
+  department: "Master"
+};
 
 // 4 demo accounts — type these into the login form to test each role.
 // Password for ALL of them is just "demo"
@@ -41,7 +80,7 @@ import { initAuth } from "./auth.js";
 import {
   loadCurrentUserRole, setPreviewUser, canViewModule,
   roleLabel, roleBadgeClass, getCurrentRole, getCurrentEmail,
-  isAdmin, isSupervisor
+  isAdmin, isSupervisor, isMaster
 } from "./roles.js";
 import { initDashboard } from "./modules/dashboard.js";
 import { initIssues, consumeIssuesNavAction } from "./modules/daily-issue.js";
@@ -56,6 +95,8 @@ import { initProjection } from "./modules/projection.js";
 import { initUsers } from "./modules/users.js";
 import { initMasterData, bootstrapMasterData } from "./modules/master-data.js";
 import { initOneOnOne } from "./modules/one-on-one.js";
+import { initMasterConsole } from "./modules/master-console.js";
+import { initClientLinks } from "./modules/client-links.js";
 import { mountDebugPanel, mountReportButton, logBreadcrumb } from "./debug-panel.js";
 import { initMerger, initOrderProcessing, initDailyReconcile, initWeeklyReportGen, initForecastOrdersGen } from "./legacy/legacy-loader.js";
 import { initGlobalSearch } from "./modules/global-search.js";
@@ -88,7 +129,9 @@ const PAGES = {
   masterData: { title: "Master Data", sub: "Standardize departments, clients, and categories", init: initMasterData },
   auditLog: { title: "Activity Log", sub: "Audit trail — who changed what, and when", init: initAuditLog },
   oneOnOne: { title: "1-on-1 Summarizer", sub: "Run structured 1-on-1s · AI summary", init: initOneOnOne },
-  users: { title: "User Management", sub: "Manage team accounts and roles", init: initUsers }
+  users: { title: "User Management", sub: "Manage team accounts and roles", init: initUsers },
+  clientLinks: { title: "Client Marketplace Links", sub: "Quick access to every client's marketplace URLs", init: initClientLinks },
+  masterConsole: { title: "Master Console", sub: "Master-only controls · mode toggle, broadcast, kill switches", init: initMasterConsole }
 };
 
 // ============================================================
@@ -117,6 +160,10 @@ function applyRoleVisibility() {
   // Supervisor + Admin sections (1-on-1, Master Data label)
   document.querySelectorAll("[data-show-for-supervisor]").forEach(el => {
     el.style.display = (isAdmin() || isSupervisor()) ? "" : "none";
+  });
+  // Master-only sections (the entire Master Console nav group)
+  document.querySelectorAll("[data-master-only]").forEach(el => {
+    el.style.display = isMaster() ? "" : "none";
   });
   // Auto-hide nav group labels when none of their following sibling
   // buttons (up to next group label) are visible — prevents empty
@@ -245,8 +292,13 @@ function switchPage(menuId, clickedBtn) {
 
 // ============================================================
 // REMEMBER ME
+// Two storage keys:
+//   • flow.rememberMe          — saved session (email/role/name/dept)
+//   • flow.rememberMe.checked  — last state of the checkbox (so it
+//     stays checked across visits if the user opted in)
 // ============================================================
 const REMEMBER_KEY = "flow.rememberMe";
+const REMEMBER_CHECKED_KEY = "flow.rememberMe.checked";
 
 function saveSession(email, role, name, department) {
   try {
@@ -264,13 +316,210 @@ function loadSession() {
 }
 
 function clearSession() {
-  try { localStorage.removeItem(REMEMBER_KEY); } catch (e) { /* ignore */ }
+  try {
+    localStorage.removeItem(REMEMBER_KEY);
+    localStorage.removeItem(REMEMBER_CHECKED_KEY);
+  } catch (e) { /* ignore */ }
+}
+
+/** Restore the "Ingat saya" checkbox state from the last login.
+ *  Called on page load so the box stays ticked if the user opted in
+ *  before, and persists the new state when they click it. */
+function wireRememberCheckbox() {
+  const el = document.getElementById("rememberMe");
+  if (!el) return;
+  try {
+    el.checked = localStorage.getItem(REMEMBER_CHECKED_KEY) === "1";
+  } catch (e) { /* ignore */ }
+  el.addEventListener("change", () => {
+    try {
+      localStorage.setItem(REMEMBER_CHECKED_KEY, el.checked ? "1" : "0");
+      // If they UN-checked it, drop any saved session immediately
+      // (otherwise next reload would still auto-login).
+      if (!el.checked) localStorage.removeItem(REMEMBER_KEY);
+    } catch (e) { /* ignore */ }
+  });
+}
+
+/** Wire the eye icon next to the password field — toggles
+ *  type=password / type=text and swaps the SVG. */
+function wireViewPasswordToggle() {
+  const btn = document.getElementById("pwToggleBtn");
+  const input = document.getElementById("loginPassword");
+  const eyeOpen = document.getElementById("pwEyeOpen");
+  const eyeOff = document.getElementById("pwEyeOff");
+  if (!btn || !input || !eyeOpen || !eyeOff) return;
+  btn.addEventListener("click", () => {
+    const showing = input.type === "text";
+    input.type = showing ? "password" : "text";
+    eyeOpen.style.display = showing ? "" : "none";
+    eyeOff.style.display = showing ? "none" : "";
+    btn.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+    btn.title = showing ? "Show password" : "Hide password";
+    input.focus();
+  });
+}
+
+// Wire UI helpers as soon as the login form exists in the DOM.
+wireRememberCheckbox();
+wireViewPasswordToggle();
+
+// Master setting: hide the yellow demo helper box on the login screen
+// (set via Master Console → Mode & Display → Hide Box). Stays hidden
+// across reloads until the master toggles it back on.
+try {
+  if (localStorage.getItem("flow.hideDemoHelper") === "1") {
+    const helper = document.getElementById("demoHelper");
+    if (helper) helper.style.display = "none";
+  }
+} catch (e) { /* ignore */ }
+
+// Pre-seed disabled-modules from last session's cache so the nav
+// doesn't show a hidden item for a split-second before the Firestore
+// settings snapshot arrives and corrects it.
+try {
+  const cached = JSON.parse(localStorage.getItem("flow.disabledModules") || "[]");
+  if (Array.isArray(cached)) window.__flowDisabledModules = cached;
+} catch (e) { /* ignore */ }
+
+// ============================================================
+// MASTER LOGIN — checked FIRST in both preview and production paths.
+// Bypasses Firebase Auth so the hardcoded credential works even when
+// the email isn't registered in Firebase. Returns true if handled.
+// ============================================================
+function tryMasterLogin(email, password) {
+  if (email !== MASTER_ACCOUNT.email.toLowerCase()) return false;
+  if (password !== MASTER_ACCOUNT.password) return false;
+  const errEl = document.getElementById("loginError");
+  if (errEl) errEl.classList.add("hidden");
+  bootApp(MASTER_ACCOUNT.email, MASTER_ACCOUNT.role, MASTER_ACCOUNT.name, MASTER_ACCOUNT.department);
+  return true;
+}
+
+// ============================================================
+// IMPERSONATION — master can set flow.impersonateAs in localStorage
+// (via Master Console). When set, the next boot uses that identity
+// instead of the actual login. Master themselves doesn't get
+// impersonated — they cleared it before reloading.
+// ============================================================
+function applyImpersonationOverride(email, role, name, department) {
+  try {
+    const raw = localStorage.getItem("flow.impersonateAs");
+    if (!raw) return { email, role, name, department };
+    const imp = JSON.parse(raw);
+    if (imp && imp.email) {
+      console.log(`[Master] Impersonating ${imp.email} (${imp.role}) — clear via Master Console.`);
+      return { email: imp.email, role: imp.role || "user", name: imp.name || imp.email, department: imp.department || "" };
+    }
+  } catch (e) { /* fall through */ }
+  return { email, role, name, department };
+}
+
+// ============================================================
+// SESSION START — used to decide whether a force-refresh signal
+// from /app_settings/global.forceRefreshAt applies to us (yes if
+// our session predates it, otherwise we already loaded the new code).
+// ============================================================
+const SESSION_START_MS = Date.now();
+
+// ============================================================
+// ORG-WIDE SETTINGS SUBSCRIBER
+// Subscribes to /app_settings/global and reacts to:
+//   • maintenanceMode      → lockscreen for non-master users
+//   • broadcastMessage     → banner strip across the top
+//   • forceRefreshAt       → auto-reload if our session is older
+// ============================================================
+let _settingsBound = false;
+async function bindMasterSettings() {
+  if (_settingsBound) return;
+  _settingsBound = true;
+  try {
+    const { doc, onSnapshot } = await import("./firebase.js");
+    const ref = doc("app_settings", "global");
+    onSnapshot(ref, (snap) => {
+      const s = (snap && snap.exists && snap.exists()) ? snap.data() : {};
+      applyMasterSettings(s);
+    });
+  } catch (e) {
+    console.warn("[Master] settings subscription failed (likely offline):", e?.message);
+  }
+}
+
+function applyMasterSettings(s) {
+  // Maintenance lockscreen (non-master only)
+  if (s.maintenanceMode && !isMaster()) {
+    showMaintenanceLock(s.maintenanceMessage || "Under maintenance. Back shortly.");
+  } else {
+    hideMaintenanceLock();
+  }
+  // Broadcast banner
+  if (s.broadcastMessage) {
+    showBroadcastBanner(s.broadcastMessage, s.broadcastSeverity || "info");
+  } else {
+    hideBroadcastBanner();
+  }
+  // Force refresh
+  if (s.forceRefreshAt && s.forceRefreshAt > SESSION_START_MS && !isMaster()) {
+    // Random 0-30s jitter so a thousand tabs don't reload simultaneously
+    const jitter = Math.floor(Math.random() * 30000);
+    setTimeout(() => location.reload(), jitter);
+  }
+  // Module visibility — master-curated list of module IDs hidden from
+  // non-master users. Cached in localStorage to eliminate flicker on
+  // next page load (Firestore snapshot then replaces the cache).
+  const disabled = Array.isArray(s.disabledModules) ? s.disabledModules : [];
+  window.__flowDisabledModules = disabled;
+  try { localStorage.setItem("flow.disabledModules", JSON.stringify(disabled)); } catch (e) {}
+  // Re-apply nav visibility live (no reload needed)
+  try { applyRoleVisibility(); } catch (e) { /* bootApp not done yet */ }
+}
+
+function showMaintenanceLock(msg) {
+  if (document.getElementById("maintLock")) return;
+  const lock = document.createElement("div");
+  lock.id = "maintLock";
+  lock.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.95);color:#fff;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px;font-family:inherit";
+  lock.innerHTML = `<div style="max-width:420px"><div style="font-size:56px">🔒</div><h2 style="color:#fff;margin:16px 0 8px;font-size:24px">Under Maintenance</h2><p style="color:#cbd5e1;line-height:1.6">${msg.replace(/[<>]/g, "")}</p><p class="small" style="color:#64748b;margin-top:24px">This page will refresh automatically when access is restored.</p></div>`;
+  document.body.appendChild(lock);
+}
+function hideMaintenanceLock() {
+  const el = document.getElementById("maintLock");
+  if (el) el.remove();
+}
+
+function showBroadcastBanner(msg, severity) {
+  let bar = document.getElementById("broadcastBar");
+  const colors = {
+    info:   { bg: "#dbeafe", text: "#1e40af", border: "#3b82f6" },
+    warn:   { bg: "#fef3c7", text: "#92400e", border: "#f59e0b" },
+    danger: { bg: "#fee2e2", text: "#991b1b", border: "#dc2626" }
+  };
+  const c = colors[severity] || colors.info;
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "broadcastBar";
+    bar.style.cssText = "position:sticky;top:0;z-index:9000;padding:10px 18px;font-size:13px;font-weight:600;text-align:center;border-bottom:2px solid";
+    document.body.insertBefore(bar, document.body.firstChild);
+  }
+  bar.style.background = c.bg;
+  bar.style.color = c.text;
+  bar.style.borderBottomColor = c.border;
+  bar.textContent = "📣 " + msg;
+}
+function hideBroadcastBanner() {
+  const el = document.getElementById("broadcastBar");
+  if (el) el.remove();
 }
 
 // ============================================================
 // SHARED BOOT (after auth/demo success)
 // ============================================================
 function bootApp(email, role, name, department) {
+  // Apply impersonation BEFORE setting the preview user, so all
+  // role checks downstream see the impersonated identity.
+  const impersonated = applyImpersonationOverride(email, role, name, department);
+  email = impersonated.email; role = impersonated.role;
+  name = impersonated.name; department = impersonated.department;
   // Save session if remember me is checked
   const rememberEl = $("rememberMe");
   if (rememberEl && rememberEl.checked) {
@@ -323,6 +572,9 @@ function bootApp(email, role, name, department) {
     }
   }
   switchPage("dashboard", document.querySelector('.nav button[data-menu="dashboard"]'));
+  // Org-wide settings subscriber — maintenance lock, broadcast banner,
+  // forced refresh. Bound once per session, applies live to every user.
+  bindMasterSettings();
 }
 
 // Single delegated handler for ALL modal X buttons — works for
@@ -371,6 +623,9 @@ if (PREVIEW_MODE) {
       const password = $("loginPassword").value;
       const errEl = $("loginError");
 
+      // 0. Master account — works in preview AND production
+      if (tryMasterLogin(email, password)) return;
+
       // 1. Hardcoded demo accounts
       const account = DEMO_ACCOUNTS[email];
       if (account && account.password === password) {
@@ -416,6 +671,14 @@ if (PREVIEW_MODE) {
   // PRODUCTION: real Firebase auth + hide demo helper
   const demoHelper = document.getElementById("demoHelper");
   if (demoHelper) demoHelper.style.display = "none";
+
+  // In PRODUCTION mode the master must exist in Firebase Auth (created
+  // manually in Firebase Console — see DEPLOY.md) so that Firestore
+  // writes from the master session work. We let the normal Firebase
+  // login flow handle it — roles.js auto-detects MASTER_EMAIL and
+  // grants the master role on first login, also self-bootstrapping
+  // the /users/{email} doc. No client-side bypass needed here.
+
   initAuth(
     async (user) => {
       await loadCurrentUserRole(user);

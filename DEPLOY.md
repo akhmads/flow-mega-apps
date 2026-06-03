@@ -1,4 +1,4 @@
-# FLOW Mega Apps — Deployment Guide
+# FLOW Mega Apps — Deployment Guide (v3.10)
 
 > **For:** Bryan's dev. This is the internal tooling for Flowgistik Indonesia.
 > Static SPA, no build step required (vanilla ES modules + CDN imports).
@@ -6,41 +6,71 @@
 
 ---
 
+## 🚀 v3.10 — what's new in this drop
+
+- **Master account** (`allen@flowgistik.id`) — top-level role above admin/supervisor. Single hardcoded credential gives full org-wide control via the new **Master Console** (mode toggle, broadcast banner, maintenance lock, force-refresh-all, feature kill switches, impersonation, org-wide AI key, role promotions, DB backup, audit feed).
+- **Production config activated** — `firebase-applet-config.json` now contains the real `flow-fe96c` Firebase keys. Server runs in production mode out-of-the-box.
+- **Updated Firestore rules** — adds master role + `/app_settings/global` collection (settings doc used by Master Console). **Must be re-deployed** (`firebase deploy --only firestore:rules`).
+- **Reset-password hierarchy** in User Management — Master/Admin/Supervisor with proper guard rails; supervisors must re-enter their own password to reset a user's. New password shown ONCE in a reveal modal with Copy button.
+- **AI key is org-wide** — set once in Master Console → AI. The per-user API Key button on the 1-on-1 page has been removed.
+- **Login screen QoL** — eye-icon toggle to show/hide password; Remember Me checkbox actually persists state now.
+
 ## 0. Launch checklist (start here)
 
-The file **`firebase-applet-config.json`** is the mode switch:
+The file **`firebase-applet-config.json`** controls the runtime mode:
 
 | Contents of that file | Mode | Data |
 |---|---|---|
 | Empty `{}` | **Demo** | Browser localStorage — isolated per browser |
 | Real Firebase config | **Production** | Shared live Firestore database |
 
-**Current local state:** `firebase-applet-config.json` is empty (`{}`) so the
-app runs in demo mode for local testing. The real config is saved in
-`firebase-applet-config.prod.json`.
+**Current state of this drop:** `firebase-applet-config.json` already has the
+real Firebase config. The app will boot in production mode immediately. The
+empty version is saved in `firebase-applet-config.example.json` if you ever
+need to revert to demo for local poking.
 
-### Test locally (demo mode) — no setup
+### Test locally (demo mode) — temporarily
 
-Serve the folder over HTTP (not `file://`) and log in with a built-in account —
-password is `demo` for all:
+If you want to click through without touching Firestore:
+
+```powershell
+Copy-Item firebase-applet-config.example.json firebase-applet-config.json -Force
+```
+
+Serve the folder over HTTP (not `file://`) and log in with a built-in demo
+account — password is `demo` for all:
 
 - `admin@demo` — full access, best for a feature walkthrough
 - `supervisor.ops@demo` / `.sales@demo` / `.ss@demo` / `.ga@demo` — create/edit/delete + User Management
 - `user.ops@demo` / `.sales@demo` / `.ss@demo` / `.ga@demo` — view-only
 
+When done testing, swap the real config back in:
+```powershell
+Copy-Item firebase-applet-config.prod.json firebase-applet-config.json -Force
+```
+
 ### Go live (production) — do these in order
 
-- [ ] **Swap in the real config** before uploading to the server:
-      ```powershell
-      Copy-Item firebase-applet-config.prod.json firebase-applet-config.json -Force
-      ```
-      Confirm the file now has the real `apiKey` — if it is still `{}` the
-      server runs in demo mode and nobody shares data.
+- [ ] **Confirm the live config is correct** — `firebase-applet-config.json`
+      should contain the real `apiKey: "AIzaSy..."` (it already does in this
+      drop). If it shows `{}` the server runs in demo mode and nobody shares
+      data.
 - [ ] **Enable Email/Password login** — Firebase Console → Authentication →
       Sign-in method → Email/Password → Enable.
       *(Skipping this causes the `auth/configuration-not-found` login error.)*
+- [ ] **Create the MASTER Auth account** — Console → Authentication → Users →
+      Add user. **Email + password MUST match the hardcoded constant**:
+
+      | Field | Value |
+      |---|---|
+      | Email | `allen@flowgistik.id` |
+      | Password | `Allen!Flow2026` |
+
+      The role doc (`/users/allen@flowgistik.id` with `role: "master"`) is
+      auto-created on first login — no manual Firestore step needed.
 - [ ] **Create the first supervisor's Auth account** — Console → Authentication
-      → Users → Add user (email + password). This login bootstraps everyone else.
+      → Users → Add user (email + password). This is one of Bryan / Dimas /
+      Farah / etc. so they can onboard everyone else.
 - [ ] **Give that account the supervisor role** — Console → Firestore →
       collection `users` → add a doc with **Document ID = that exact email**:
 
@@ -51,18 +81,39 @@ password is `demo` for all:
       | `role` | string | `supervisor` |
       | `department` | string | e.g. `Operations` |
 
-      Required once: security rules let only an existing admin/supervisor
-      create `users` docs, so the first one is placed by hand.
-- [ ] **Deploy the security rules** — `firebase deploy --only firestore:rules`
+      Required once: security rules let only an existing admin/supervisor/master
+      create `users` docs, so the first non-master one is placed by hand. After
+      this, the supervisor uses the in-app User Management page for everyone else.
+- [ ] **Deploy the updated security rules** —
+      ```bash
+      firebase deploy --only firestore:rules
+      ```
+      The v3.10 rules add the `master` role + `/app_settings/global` collection.
+      Without this deploy, the Master Console will hit permission-denied when
+      it tries to save settings.
+- [ ] **(Optional) Set the org-wide Anthropic API key** — log in as master →
+      Master Console → AI → paste your `sk-ant-…` key → Save. Every supervisor's
+      1-on-1 Summarizer will use it automatically. Skip if you're not using AI
+      summaries yet.
 - [ ] **Onboard the team** — log in as the supervisor, then for each person:
-      add their Auth account in the Console, and add their email + role +
-      department in the app's User Management page.
+      add their Auth account in the Firebase Console, and add their email +
+      role + department in the app's User Management page.
 
 > An account that logs in without a `users` doc defaults to **user**
-> (view-only) — it cannot self-promote.
+> (view-only) — it cannot self-promote. The master is the only exception
+> (self-bootstraps as master).
 
 > Do not commit the empty `{}` config to the launch branch, or the server
 > ships in demo mode.
+
+### After-launch quick check
+
+1. Open the live URL in an **incognito window** and log in as `allen@flowgistik.id`.
+2. Open a **second browser** and log in as the supervisor.
+3. In one browser, add a user via User Management.
+4. In the other browser, refresh — the new user should appear in the same list.
+   If they don't, the server is still in demo mode (check
+   `firebase-applet-config.json` on the server is not `{}`).
 
 The sections below are the full reference for each step.
 

@@ -39,10 +39,11 @@ const cache = {
   departments: [],   // Array<{id, name, archived, createdAt, ...}>
   clients: [],       // Array<{id, name, defaultSalesPic, defaultSsPic, archived, ...}>
   issueCategories: [],
-  oneOnOneQuestions: []  // v3.8 — Array<{id, text, type: "personal"|"work", department, order, archived}>
+  oneOnOneQuestions: [], // v3.8 — Array<{id, text, type: "personal"|"work", department, order, archived}>
+  marketplaces: []   // v3.10 — Array<{id, name, archived, ...}> for Client Marketplace Links module
 };
 
-const subscribers = { departments: [], clients: [], issueCategories: [], oneOnOneQuestions: [] };
+const subscribers = { departments: [], clients: [], issueCategories: [], oneOnOneQuestions: [], marketplaces: [] };
 
 let _bootstrapped = false;
 
@@ -51,6 +52,13 @@ const SEED_DEPARTMENTS = [
   "Sales", "Sales Support", "Operations", "Finance", "Tech",
   "IT", "HR", "Legal", "General Affairs", "HSE",
   "Marketing", "Quality Management"
+];
+
+// v3.10 — seeded once, then SS team curates via Master Data UI.
+const SEED_MARKETPLACES = [
+  "Shopee", "TikTok Shop", "Tokopedia", "Lazada", "Blibli",
+  "Bukalapak", "JD.ID", "Zalora", "Instagram", "WhatsApp",
+  "Website (own)", "Other"
 ];
 
 // ============================================================
@@ -149,6 +157,26 @@ export function bootstrapMasterData() {
       finally { window._seedingQuestions = false; }
     }
   });
+
+  // v3.10 — marketplaces (used by Client Marketplace Links module)
+  subscribeCollection(COL.MARKETPLACES, async rows => {
+    cache.marketplaces = rows;
+    notify("marketplaces");
+    if (rows.length === 0 && !window._seedingMarketplaces) {
+      window._seedingMarketplaces = true;
+      try { await seedMarketplaces(); }
+      catch (e) { console.warn("Seed marketplaces failed:", e); }
+      finally { window._seedingMarketplaces = false; }
+    }
+  });
+}
+
+async function seedMarketplaces() {
+  for (const name of SEED_MARKETPLACES) {
+    try { await addDocument(COL.MARKETPLACES, { name, archived: false, _seeded: true }); }
+    catch (e) { /* ignore */ }
+  }
+  await logAudit("marketplaces", "seed", null, { count: SEED_MARKETPLACES.length });
 }
 
 async function seedDepartments() {
@@ -419,7 +447,7 @@ export async function updateClientPics(id, defaultSalesPic, defaultSsPic) {
 }
 
 function getColName(kind) {
-  return { departments: COL.DEPARTMENTS, clients: COL.CLIENTS, issueCategories: COL.ISSUE_CATEGORIES, oneOnOneQuestions: COL.ONE_ON_ONE_QUESTIONS }[kind];
+  return { departments: COL.DEPARTMENTS, clients: COL.CLIENTS, issueCategories: COL.ISSUE_CATEGORIES, oneOnOneQuestions: COL.ONE_ON_ONE_QUESTIONS, marketplaces: COL.MARKETPLACES }[kind];
 }
 
 // ============================================================
@@ -459,6 +487,7 @@ export async function initMasterData() {
   subscribeMasterData("clients",     () => { if (currentTab === "clients")     renderClientsTable(); });
   subscribeMasterData("issueCategories", () => { if (currentTab === "issueCategories") renderCatsTable(); });
   subscribeMasterData("oneOnOneQuestions", () => { if (currentTab === "oneOnOneQuestions") renderQuestionsTable(); });
+  subscribeMasterData("marketplaces", () => { if (currentTab === "marketplaces") renderMarketplacesTable(); });
 
   switchTab("departments");
 }
@@ -478,6 +507,7 @@ function renderShell() {
         <button data-mdtab="clients">Clients</button>
         <button data-mdtab="issueCategories">Issue Categories</button>
         <button data-mdtab="oneOnOneQuestions">1-on-1 Questions</button>
+        <button data-mdtab="marketplaces">Marketplaces</button>
       </div>
     </div>
 
@@ -500,6 +530,7 @@ function switchTab(tab) {
   if (tab === "clients") renderClientsPane();
   if (tab === "issueCategories") renderCatsPane();
   if (tab === "oneOnOneQuestions") renderQuestionsPane();
+  if (tab === "marketplaces") renderMarketplacesPane();
 }
 
 // ---------------- DEPARTMENTS PANE ----------------
@@ -580,6 +611,86 @@ function renderDeptsTable() {
     </tr>
   `).join("");
   if (editable) wireRowActions("departments", tbody);
+}
+
+// ---------------- MARKETPLACES PANE (v3.10) ----------------
+function renderMarketplacesPane() {
+  const editable = canEditMasterData();
+  $("mdContent").innerHTML = `
+    <div class="card">
+      <h2>Marketplaces</h2>
+      <p class="small" style="color:var(--muted)">Used by the Client Marketplace Links module. Add new platforms (e.g. Lazmall, TikTok Live) so SS can pick them when saving a link.</p>
+      ${editable ? `
+        <div class="mdAddRow">
+          <input type="text" id="md_mpInput" placeholder="e.g. Lazmall"/>
+          <button class="primary" id="md_mpAdd">+ Add</button>
+          <button class="secondary" onclick="document.getElementById('md_mpBulk').classList.toggle('hidden')">Bulk paste</button>
+        </div>
+        <div id="md_mpBulk" class="mdBulk hidden">
+          <textarea id="md_mpBulkInput" rows="4" placeholder="Paste one marketplace per line…"></textarea>
+          <button class="primary" id="md_mpBulkAdd">Add All</button>
+          <button class="secondary" onclick="document.getElementById('md_mpBulk').classList.add('hidden')">Cancel</button>
+        </div>
+      ` : `<p class="small" style="color:var(--muted);font-style:italic;margin-top:10px">View-only mode — contact your Admin or Supervisor to add or modify marketplaces.</p>`}
+      <div class="tableWrap" style="margin-top:14px">
+        <table id="md_mpTable">
+          <thead><tr><th>Marketplace</th><th>Status</th>${editable ? '<th style="text-align:right">Actions</th>' : ''}</tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  if (editable) {
+    $("md_mpAdd").onclick = async () => {
+      const name = $("md_mpInput").value.trim();
+      if (!name) return toast("Enter a marketplace name", "error");
+      try {
+        await addMasterItem("marketplaces", name);
+        $("md_mpInput").value = "";
+        toast("Marketplace added", "success");
+      } catch (e) { toast(e.message, "error"); }
+    };
+    $("md_mpBulkAdd").onclick = async () => {
+      const lines = $("md_mpBulkInput").value.split(/\n/).map(s => s.trim()).filter(Boolean);
+      if (!lines.length) return toast("Paste at least one name", "error");
+      let ok = 0, dup = 0;
+      for (const name of lines) {
+        try { await addMasterItem("marketplaces", name); ok++; }
+        catch (e) { if (e.message?.includes("exists")) dup++; }
+      }
+      $("md_mpBulkInput").value = "";
+      $("md_mpBulk").classList.add("hidden");
+      toast(`Added ${ok}${dup ? ` · ${dup} duplicates skipped` : ""}`, "success");
+    };
+  }
+  renderMarketplacesTable();
+}
+
+function renderMarketplacesTable() {
+  const tbody = $("md_mpTable")?.querySelector("tbody");
+  if (!tbody) return;
+  const items = [...cache.marketplaces].sort((a, b) => {
+    if (a.archived !== b.archived) return a.archived ? 1 : -1;
+    return a.name.localeCompare(b.name);
+  });
+  const editable = canEditMasterData();
+  if (!items.length) {
+    tbody.innerHTML = `<tr><td colspan="${editable ? 3 : 2}" style="text-align:center;color:var(--muted);padding:24px">No marketplaces yet.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = items.map(m => `
+    <tr class="${m.archived ? "rowArchived" : ""}">
+      <td><b>${esc(m.name)}</b></td>
+      <td>${m.archived ? '<span class="badge badge-on-hold">Archived</span>' : '<span class="badge badge-active">Active</span>'}</td>
+      ${editable ? `<td style="text-align:right">
+        <button class="secondary iconBtn" data-rename="${m.id}">Rename</button>
+        ${m.archived
+          ? `<button class="secondary iconBtn" data-unarchive="${m.id}">Restore</button>${canHardDelete() ? ` <button class="btnHardDelete" data-harddel="${m.id}">Delete Forever</button>` : ""}`
+          : `<button class="danger iconBtn" data-archive="${m.id}">Archive</button>`}
+      </td>` : ''}
+    </tr>
+  `).join("");
+  if (editable) wireRowActions("marketplaces", tbody);
 }
 
 // ---------------- CLIENTS PANE ----------------

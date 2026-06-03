@@ -317,5 +317,7 @@ export const COL = {
   ONE_ON_ONE_QUESTIONS: "one_on_one_questions",  // master data — 1-on-1 questions
   AUDIT_LOG: "audit_log",                   // who changed what, when
   ONE_ON_ONES: "one_on_ones",               // 1-on-1 session records
+  MARKETPLACE_LINKS: "marketplace_links",    // client × marketplace URL directory
+  MARKETPLACES: "marketplaces",              // master data — marketplace names (Shopee, TikTok, etc)
   USERS: "users"
 };

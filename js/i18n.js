@@ -19,7 +19,7 @@ const STR = {
     // nav groups
     "group.sales":"Sales", "group.ss":"Sales Support", "group.ops":"Operasional",
     "group.ga":"General Affairs", "group.department":"Departemen",
-    "group.tools":"Alat", "group.management":"Manajemen",
+    "group.tools":"Alat", "group.management":"Manajemen", "group.master":"Master",
     // nav buttons
     "nav.dashboard":"Dasbor", "nav.dailyTracker":"Pelacak Harian",
     "nav.revenueCalc":"Kalkulator Pendapatan", "nav.salesToolkit":"Sales Toolkit",
@@ -31,6 +31,8 @@ const STR = {
     "nav.forecastOrdersGen":"Generator Forecast Order",
     "nav.oneOnOne":"Ringkasan 1-on-1", "nav.masterData":"Master Data",
     "nav.auditLog":"Log Aktivitas", "nav.users":"Manajemen Pengguna",
+    "nav.masterConsole":"Master Console",
+    "nav.clientLinks":"Link Marketplace Klien",
     // login
     "login.email":"Email", "login.password":"Kata Sandi",
     "login.remember":"Ingat saya", "login.signin":"Masuk",
@@ -59,12 +61,14 @@ const STR = {
     "page.masterData.title":"Master Data", "page.masterData.sub":"Standarisasi departemen, klien, dan kategori",
     "page.auditLog.title":"Log Aktivitas", "page.auditLog.sub":"Jejak audit — siapa mengubah apa, dan kapan",
     "page.oneOnOne.title":"Ringkasan 1-on-1", "page.oneOnOne.sub":"Jalankan sesi 1-on-1 terstruktur · ringkasan AI",
-    "page.users.title":"Manajemen Pengguna", "page.users.sub":"Kelola akun dan peran tim"
+    "page.users.title":"Manajemen Pengguna", "page.users.sub":"Kelola akun dan peran tim",
+    "page.clientLinks.title":"Link Marketplace Klien", "page.clientLinks.sub":"Akses cepat semua URL marketplace klien · filter per klien dan marketplace",
+    "page.masterConsole.title":"Master Console", "page.masterConsole.sub":"Kontrol master · mode, broadcast, kill switch, impersonasi"
   },
   en: {
     "group.sales":"Sales", "group.ss":"Sales Support", "group.ops":"Operations",
     "group.ga":"General Affairs", "group.department":"Department",
-    "group.tools":"Tools", "group.management":"Management",
+    "group.tools":"Tools", "group.management":"Management", "group.master":"Master",
     "nav.dashboard":"Dashboard", "nav.dailyTracker":"Daily Tracker",
     "nav.revenueCalc":"Revenue Calculator", "nav.salesToolkit":"Sales Toolkit",
     "nav.dailyIssue":"Daily Issue Tracker", "nav.inboundMonitoring":"Inbound Monitoring",
@@ -75,6 +79,8 @@ const STR = {
     "nav.forecastOrdersGen":"Forecast Orders Generator",
     "nav.oneOnOne":"1-on-1 Summarizer", "nav.masterData":"Master Data",
     "nav.auditLog":"Activity Log", "nav.users":"User Management",
+    "nav.masterConsole":"Master Console",
+    "nav.clientLinks":"Marketplace Links",
     "login.email":"Email", "login.password":"Password",
     "login.remember":"Remember me", "login.signin":"Sign In",
     "login.help":"No account yet? Ask a supervisor to create one for you. Forgot your password? A supervisor can reset it from User Management.",
@@ -100,7 +106,9 @@ const STR = {
     "page.masterData.title":"Master Data", "page.masterData.sub":"Standardize departments, clients, and categories",
     "page.auditLog.title":"Activity Log", "page.auditLog.sub":"Audit trail — who changed what, and when",
     "page.oneOnOne.title":"1-on-1 Summarizer", "page.oneOnOne.sub":"Run structured 1-on-1s · AI summary",
-    "page.users.title":"User Management", "page.users.sub":"Manage team accounts and roles"
+    "page.users.title":"User Management", "page.users.sub":"Manage team accounts and roles",
+    "page.clientLinks.title":"Client Marketplace Links", "page.clientLinks.sub":"Quick access to every client's marketplace URLs · filter by client and marketplace",
+    "page.masterConsole.title":"Master Console", "page.masterConsole.sub":"Master-only controls · mode, broadcast, kill switches, impersonation"
   }
 };
 

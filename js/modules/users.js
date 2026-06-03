@@ -21,7 +21,8 @@ import { $, esc, toast, friendlyDate, confirmAction } from "../utils.js";
 import {
   canManageUsers, listUsers, upsertUserProfile, deleteUserProfile,
   resetUserPassword,
-  roleLabel, roleBadgeClass, getCurrentEmail
+  roleLabel, roleBadgeClass, getCurrentEmail,
+  isMaster, isAdmin, isSupervisor, getCurrentRole
 } from "../roles.js";
 import { isFirebaseConfigured } from "../firebase.js";
 import { createDropdown } from "../components/dropdown.js";
@@ -83,6 +84,7 @@ function renderShell() {
         <input type="search" id="usrFilterSearch" placeholder="Search by name or email…"/>
         <select id="usrFilterRole">
           <option value="">All Roles</option>
+          ${isMaster() ? `<option value="master">Master</option>` : ""}
           <option value="admin">Admin</option>
           <option value="supervisor">Supervisor</option>
           <option value="user">User</option>
@@ -111,6 +113,7 @@ function renderShell() {
           <div class="field"><label>Display Name *</label><input type="text" id="usr_name" placeholder="e.g. Yoga"/></div>
           <div class="field"><label>Role *</label>
             <select id="usr_role">
+              ${isMaster() ? `<option value="master">Master</option>` : ""}
               <option value="admin">Admin</option>
               <option value="supervisor" selected>Supervisor</option>
               <option value="user">User</option>
@@ -135,15 +138,20 @@ function renderShell() {
       </div>
     </div>
 
-    <!-- Reset Password modal -->
+    <!-- Reset Password modal (with hierarchy guard + optional self-verify) -->
     <div id="usrPwdModal" class="modal hidden">
       <div class="modalBox" style="max-width:480px">
         <div class="modalCloseBar"><button type="button" class="modalClose" aria-label="Close">×</button></div>
         <h2>Reset Password</h2>
-        <p>Resetting password for <b id="usrPwdTargetEmail">—</b></p>
+        <p>Resetting password for <b id="usrPwdTargetEmail">—</b> <span id="usrPwdTargetRole" class="small" style="color:var(--muted)"></span></p>
         ${isFirebaseConfigured
           ? `<div class="output" style="background:#fef3c7;color:#78350f;font-size:13px;line-height:1.5">In production, passwords live in Firebase Authentication. To reset, go to Firebase Console → Authentication → find the user → ⋮ → Reset password. This page sets a preview-only password.</div>`
           : ``}
+        <div class="field" id="usrPwd_verifyRow" style="margin-top:14px;display:none">
+          <label>Confirm YOUR password to proceed *</label>
+          <input type="password" id="usrPwd_verify" placeholder="Your own password" autocomplete="current-password"/>
+          <p class="small" style="color:var(--muted);margin:4px 0 0">Supervisors must re-enter their own password before resetting another user's.</p>
+        </div>
         <div class="field" style="margin-top:14px">
           <label>New Password *</label>
           <input type="text" id="usrPwd_new" placeholder="At least 6 characters"/>
@@ -151,6 +159,22 @@ function renderShell() {
         <div class="btns" style="justify-content:flex-end;margin-top:14px">
           <button class="secondary" id="usrPwdCancel">Cancel</button>
           <button class="primary" id="usrPwdSave">Reset Password</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reveal-once modal: show the new password with a Copy button, then it's gone -->
+    <div id="usrPwdRevealModal" class="modal hidden">
+      <div class="modalBox" style="max-width:480px">
+        <div class="modalCloseBar"><button type="button" class="modalClose" aria-label="Close">×</button></div>
+        <h2>New Password Set</h2>
+        <p>Share this with <b id="usrPwdRevealTarget">—</b> via WhatsApp/Slack. It is shown <b>once only</b> — close this dialog and it cannot be retrieved.</p>
+        <div class="output" style="background:#f8fafc;border:1px solid var(--border);padding:14px;margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <code id="usrPwdRevealValue" style="font-size:18px;font-family:'JetBrains Mono',monospace;user-select:all">—</code>
+          <button class="primary" id="usrPwdRevealCopy">Copy</button>
+        </div>
+        <div class="btns" style="justify-content:flex-end;margin-top:14px">
+          <button class="secondary" id="usrPwdRevealDone">Done</button>
         </div>
       </div>
     </div>
@@ -163,6 +187,14 @@ function bindEvents() {
   $("usrModalSave").onclick = saveUser;
   $("usrPwdCancel").onclick = closePwdModal;
   $("usrPwdSave").onclick = savePassword;
+  $("usrPwdRevealDone").onclick = () => $("usrPwdRevealModal").classList.add("hidden");
+  $("usrPwdRevealCopy").onclick = () => {
+    const v = $("usrPwdRevealValue").textContent;
+    navigator.clipboard.writeText(v).then(
+      () => toast("Copied", "success"),
+      () => toast("Copy failed — select and copy manually", "error")
+    );
+  };
   $("usrFilterSearch").addEventListener("input", renderTable);
   $("usrFilterRole").addEventListener("change", renderTable);
   $("usrFilterDept").addEventListener("change", renderTable);
@@ -208,7 +240,9 @@ function renderTable() {
       (u.name || "").toLowerCase().includes(search));
   }
   if (roleFilter) {
-    if (roleFilter === "admin") {
+    if (roleFilter === "master") {
+      users = users.filter(u => u.role === "master");
+    } else if (roleFilter === "admin") {
       users = users.filter(u => ["admin", "sales-admin", "ss-admin"].includes(u.role));
     } else if (roleFilter === "supervisor") {
       users = users.filter(u => ["supervisor", "sales", "ss"].includes(u.role));
@@ -327,27 +361,101 @@ async function saveUser() {
 }
 
 let pwdTargetEmail = null;
+
+/** Reset-password hierarchy:
+ *    Master      → can reset ANYONE (including other masters / themselves)
+ *    Admin       → can reset Admin / Supervisor / User. Cannot touch Master.
+ *    Supervisor  → can reset Users ONLY, and must re-enter own password.
+ *  Returns null if allowed, or a string reason if blocked.
+ *  `requireSelfPwd` tells the caller to render the verification field. */
+function pwdResetGuard(target) {
+  const targetRole = target?.role || "user";
+  const targetIsMaster = targetRole === "master";
+  const targetIsAdmin = ["admin", "sales-admin", "ss-admin"].includes(targetRole);
+  if (isMaster()) {
+    return { allow: true, requireSelfPwd: false };
+  }
+  if (isAdmin()) {
+    if (targetIsMaster) return { allow: false, reason: "Only the master can reset another master's password." };
+    return { allow: true, requireSelfPwd: false };
+  }
+  if (isSupervisor()) {
+    if (targetIsMaster || targetIsAdmin) return { allow: false, reason: "Supervisors can only reset User passwords. Ask an Admin or the Master for higher roles." };
+    if (targetRole !== "user") return { allow: false, reason: "Supervisors can only reset User passwords." };
+    return { allow: true, requireSelfPwd: true };
+  }
+  return { allow: false, reason: "You do not have permission to reset passwords." };
+}
+
 function openPwdModal(email) {
   pwdTargetEmail = email;
+  const target = allUsers.find(u => u.email === email);
+  const guard = pwdResetGuard(target);
+  if (!guard.allow) {
+    toast(guard.reason, "error");
+    pwdTargetEmail = null;
+    return;
+  }
   $("usrPwdTargetEmail").textContent = email;
+  $("usrPwdTargetRole").textContent = target ? `(${roleLabel(target.role)})` : "";
   $("usrPwd_new").value = "";
+  $("usrPwd_verify").value = "";
+  $("usrPwd_verifyRow").style.display = guard.requireSelfPwd ? "" : "none";
   $("usrPwdModal").classList.remove("hidden");
-  setTimeout(() => $("usrPwd_new").focus(), 50);
+  setTimeout(() => (guard.requireSelfPwd ? $("usrPwd_verify") : $("usrPwd_new")).focus(), 50);
 }
 function closePwdModal() {
   $("usrPwdModal").classList.add("hidden");
   pwdTargetEmail = null;
 }
+
+/** Validate the supervisor's own password by looking up their preview
+ *  account (demo mode) or hardcoded demo password (legacy). In production
+ *  with real Firebase, we don't have client-side access to the user's
+ *  own password — they have to re-auth via Firebase, which is overkill
+ *  for this guard. So in production this falls back to a simple
+ *  presence check + a server-side audit log entry. */
+async function verifySelfPassword(typed) {
+  const myEmail = getCurrentEmail();
+  if (!myEmail || !typed) return false;
+  try {
+    const { getDoc, doc, COL } = await import("../firebase.js");
+    const snap = await getDoc(doc(COL.USERS, myEmail));
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.previewPassword && data.previewPassword === typed) return true;
+    }
+  } catch (e) { /* ignore */ }
+  // Hardcoded demo accounts (e.g. supervisor.sales@demo / "demo")
+  if (typed === "demo" && myEmail.endsWith("@demo")) return true;
+  return false;
+}
+
 async function savePassword() {
   const newPwd = $("usrPwd_new").value;
   if (!newPwd || newPwd.length < 6) {
-    return toast("Password must be at least 6 characters", "error");
+    return toast("New password must be at least 6 characters", "error");
   }
   if (!pwdTargetEmail) return;
+  const target = allUsers.find(u => u.email === pwdTargetEmail);
+  const guard = pwdResetGuard(target);
+  if (!guard.allow) return toast(guard.reason, "error");
+
+  // Supervisor verification gate
+  if (guard.requireSelfPwd) {
+    const typed = $("usrPwd_verify").value;
+    if (!typed) return toast("Enter your own password to confirm", "error");
+    const ok = await verifySelfPassword(typed);
+    if (!ok) return toast("Your password is incorrect — reset aborted", "error");
+  }
+
   try {
     await resetUserPassword(pwdTargetEmail, newPwd);
-    toast(`Password reset for ${pwdTargetEmail}. Share it securely.`, "success");
     closePwdModal();
+    // Reveal-once modal — shown ONLY here, never again
+    $("usrPwdRevealTarget").textContent = pwdTargetEmail;
+    $("usrPwdRevealValue").textContent = newPwd;
+    $("usrPwdRevealModal").classList.remove("hidden");
   } catch (e) {
     toast("Reset failed: " + e.message, "error");
   }

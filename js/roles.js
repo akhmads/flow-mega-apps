@@ -21,9 +21,13 @@ import {
 
 // State
 let currentUser = null;      // Firebase auth user
-let currentRole = null;      // "admin" | "supervisor" | "user" (+ legacy aliases) | null
+let currentRole = null;      // "master" | "admin" | "supervisor" | "user" (+ legacy aliases) | null
 let currentProfile = null;   // { email, name, role }
 let _previewMode = false;    // true when setPreviewUser is called
+
+// Hardcoded master email — must match MASTER_ACCOUNT.email in js/app.js
+// AND the MASTER_EMAIL() helper in firestore.rules. Keep all 3 in sync.
+const MASTER_EMAIL = "allen@flowgistik.id";
 
 // ============================================================
 // WRITE GUARD WIRING (v3.8 permission model)
@@ -43,6 +47,8 @@ let _previewMode = false;    // true when setPreviewUser is called
 const USERS_COLLECTION = "users";  // mirrors COL.USERS — kept literal to avoid TDZ at module-eval time
 setWriteGuard((colName) => {
   const role = currentRole;
+  // Master: full write power everywhere, always. No guard.
+  if (role === "master") return null;
   // PREVIEW MODE sandbox: admin is normally read-only on operational
   // data, but in preview/demo mode that makes the sandbox feel broken
   // (debug generator fails, auto-seeds can't run, etc.). Relax the
@@ -111,6 +117,12 @@ export function setPreviewUser({ email, name, role, department }) {
 
 // ============================================================
 // LOAD CURRENT USER ROLE
+//
+// On master self-bootstrap (production): if Firebase Auth user email
+// matches MASTER_EMAIL, we force role to "master" regardless of what's
+// stored in /users, and auto-create the /users doc with role:"master"
+// if missing. This pairs with the firestore.rules carve-out that lets
+// the master email create their own doc as long as role:"master".
 // ============================================================
 export async function loadCurrentUserRole(firebaseUser) {
   currentUser = firebaseUser;
@@ -119,21 +131,32 @@ export async function loadCurrentUserRole(firebaseUser) {
     currentProfile = null;
     return null;
   }
+  const isMasterEmail = (firebaseUser.email || "").toLowerCase() === MASTER_EMAIL.toLowerCase();
+
   // Look up user in /users/{email}
   const userRef = doc(db, COL.USERS, firebaseUser.email);
   const snap = await getDoc(userRef);
   if (snap.exists()) {
     currentProfile = { id: snap.id, ...snap.data() };
     currentRole = currentProfile.role || "user"; // safe default — lowest privileges
+    // Master email always wins over whatever's stored — protects against
+    // someone editing the doc to demote the master.
+    if (isMasterEmail) {
+      currentRole = "master";
+      currentProfile.role = "master";
+    }
   } else {
     // User exists in Auth but not in /users. Create a minimal profile.
-    // Default to "user" (lowest privileges) — a supervisor/admin must
-    // explicitly promote them via User Management.
+    // Master self-bootstraps as master; everyone else as "user" until
+    // a supervisor/admin promotes them via User Management.
+    const role = isMasterEmail ? "master" : "user";
+    const name = isMasterEmail ? "Allen (Master)" : firebaseUser.email.split("@")[0];
     currentProfile = {
       id: firebaseUser.email,
       email: firebaseUser.email,
-      name: firebaseUser.email.split("@")[0],
-      role: "user"
+      name,
+      role,
+      department: isMasterEmail ? "Master" : ""
     };
     try {
       await setDoc(userRef, {
@@ -144,7 +167,7 @@ export async function loadCurrentUserRole(firebaseUser) {
     } catch (e) {
       console.warn("Could not create user profile:", e);
     }
-    currentRole = "user";
+    currentRole = role;
   }
   return currentRole;
 }
@@ -181,18 +204,28 @@ export function getCurrentEmail() { return currentUser?.email || null; }
 //   (firestore.rules). The Firestore rules are the source of truth.
 // ============================================================
 
-/** Is current user an admin (read-only super-viewer)? */
+/** Is current user THE master? Single hardcoded account (Master Console
+ *  access, mode toggle, override everything). Above admin. */
+export function isMaster() {
+  return currentRole === "master";
+}
+
+/** Is current user an admin (read-only super-viewer)?
+ *  Master inherits admin privileges. */
 export function isAdmin() {
   return currentRole === "admin"
       || currentRole === "sales-admin"
-      || currentRole === "ss-admin";
+      || currentRole === "ss-admin"
+      || currentRole === "master";    // master ⊇ admin
 }
 
-/** Is current user a supervisor (full edit power)? */
+/** Is current user a supervisor (full edit power)?
+ *  Master inherits supervisor privileges so every write path lights up. */
 export function isSupervisor() {
   return currentRole === "supervisor"
       || currentRole === "sales"      // legacy alias
-      || currentRole === "ss";        // legacy alias
+      || currentRole === "ss"         // legacy alias
+      || currentRole === "master";    // master ⊇ supervisor
 }
 
 /** Is current user a limited "user" (the lowest tier)? */
@@ -277,8 +310,23 @@ export function isGATeam() {
 
 /** Can current user see a given module? */
 export function canViewModule(moduleId) {
-  if (isAdmin()) return true;          // admin sees everything
-  if (isSupervisor()) return true;     // supervisor sees everything
+  // Master Console — hardcoded master only. Hidden from everyone else.
+  if (moduleId === "masterConsole") return isMaster();
+
+  // Master sees every other module (incl. disabled ones — needed to
+  // manage the kill switch from Master Console).
+  if (isMaster()) return true;
+
+  // Org-wide module kill switch — master can hide any module from
+  // non-master users via Master Console → Module Visibility. List is
+  // populated from /app_settings/global.disabledModules and cached on
+  // window.__flowDisabledModules.
+  const disabled = (typeof window !== "undefined" && Array.isArray(window.__flowDisabledModules))
+    ? window.__flowDisabledModules : [];
+  if (disabled.includes(moduleId)) return false;
+
+  if (isAdmin()) return true;          // admin sees everything else
+  if (isSupervisor()) return true;     // supervisor sees everything else
   const rules = {
     dashboard: true,
     dailyTrackerSales: isSalesTeam(),
@@ -296,6 +344,7 @@ export function canViewModule(moduleId) {
     dailyReconcile: true,              // shared tool
     weeklyReportGen: true,             // shared tool
     forecastOrdersGen: true,           // shared tool
+    clientLinks: true,                 // marketplace URL directory — everyone signed in
     oneOnOne: false,                   // supervisor+admin only
     masterData: canViewMasterData(),   // everyone (view)
     auditLog: false,                   // supervisor+admin only
@@ -311,10 +360,12 @@ export function canEditOthers() {
 }
 
 /** Can the current user edit this specific record?
+ *  - Master: always (overrides admin read-only).
  *  - Supervisor: always.
  *  - Admin: NEVER (read-only).
  *  - User: only their own records. */
 export function canEditRecord(record) {
+  if (isMaster()) return true;         // master overrides everything
   if (isSupervisor()) return true;
   if (isAdmin()) return false;         // admin is read-only
   if (!record) return false;
@@ -388,7 +439,7 @@ export async function getStaffForTeam(team) {
 export async function upsertUserProfile({ email, name, role, department, password }) {
   if (!canManageUsers()) throw new Error("Permission denied");
   if (!email) throw new Error("Email required");
-  const acceptedRoles = ["admin", "supervisor", "user", "sales-admin", "ss-admin", "sales", "ss"];
+  const acceptedRoles = ["master", "admin", "supervisor", "user", "sales-admin", "ss-admin", "sales", "ss"];
   if (!acceptedRoles.includes(role)) {
     throw new Error("Invalid role");
   }
@@ -436,6 +487,7 @@ export async function deleteUserProfile(email) {
 // ============================================================
 export function roleLabel(role) {
   return {
+    "master":       "Master",
     "admin":        "Admin",
     "supervisor":   "Supervisor",
     "user":         "User",
@@ -449,6 +501,7 @@ export function roleLabel(role) {
 
 export function roleBadgeClass(role) {
   return {
+    "master":       "badge badge-master",
     "admin":        "badge badge-admin",
     "supervisor":   "badge badge-supervisor",
     "user":         "badge badge-user",

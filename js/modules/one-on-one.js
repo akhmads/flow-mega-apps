@@ -15,7 +15,7 @@
 // ============================================================
 
 import {
-  COL, addDocument, subscribeCollection, orderBy
+  COL, addDocument, subscribeCollection, orderBy, getDoc, doc
 } from "../firebase.js";
 import {
   $, esc, toast, friendlyDate, today, downloadXLSX
@@ -174,9 +174,6 @@ function renderShell() {
           <h2 style="margin:0">1-on-1 Summarizer</h2>
           <p style="color:var(--muted);margin:6px 0 0">Structured 1-on-1 sessions with your team. Rate workload, ask role-specific questions, generate an AI summary for management review.</p>
         </div>
-        <div class="right">
-          <button class="secondary" id="o1o_apiKeyBtn" title="Set your Anthropic API key for AI summaries">API Key</button>
-        </div>
       </div>
       <div class="o1oSteps">
         <div class="o1oStep active" data-stepnum="1">
@@ -272,7 +269,6 @@ function bindEvents() {
       if (n === 1 || state.member) goStep(n);
     });
   });
-  $("o1o_apiKeyBtn").onclick = openApiKeyDialog;
   $("o1o_copy").onclick = copySummary;
   $("o1o_regen").onclick = generateSummary;
   $("o1o_save").onclick = saveSession;
@@ -472,6 +468,22 @@ function renderQuestions() {
     }));
 }
 
+// ---------------- AI KEY RESOLUTION ----------------
+// Cached for the page session to avoid a Firestore read on every
+// regenerate. Cleared by reload.
+let _orgAiKeyCache = undefined;   // undefined = not fetched yet, null = fetched + empty
+async function resolveAiKey() {
+  if (_orgAiKeyCache === undefined) {
+    try {
+      const snap = await getDoc(doc("app_settings", "global"));
+      _orgAiKeyCache = (snap && snap.exists && snap.exists() && snap.data().aiApiKey) || null;
+    } catch (e) {
+      _orgAiKeyCache = null;
+    }
+  }
+  return _orgAiKeyCache || localStorage.getItem("flow.anthropic.apiKey") || null;
+}
+
 // ---------------- STEP 4 — SUMMARY ----------------
 async function generateSummary() {
   const m = state.member;
@@ -493,7 +505,12 @@ async function generateSummary() {
   summaryBox.className = "o1oSummaryBox loading";
   summaryBox.textContent = "Generating summary…";
 
-  const apiKey = localStorage.getItem("flow.anthropic.apiKey");
+  // Key resolution order:
+  //   1. Org-wide key from Firestore /app_settings/global.aiApiKey
+  //      (set once by master via Master Console — preferred)
+  //   2. Per-browser localStorage key (legacy fallback)
+  //   3. None → template-only summary
+  const apiKey = await resolveAiKey();
   const prompt = buildPrompt(m, todayStr);
 
   if (apiKey) {
@@ -512,7 +529,7 @@ async function generateSummary() {
           "anthropic-dangerous-direct-browser-access": "true"
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-6",
           max_tokens: 1500,
           messages: [{ role: "user", content: prompt }]
         }),
@@ -633,7 +650,7 @@ PERSONAL & WELLBEING${personalQA || "\n(tidak ada jawaban diisi)"}
 WORK${workQA || "\n(tidak ada jawaban diisi)"}
 
 ──────────────────────
-Note: This is a template-only summary. To get an AI-generated executive summary with recommendations and management flags, click "API Key" and add your Anthropic API key.`;
+Note: This is a template-only summary. Ask the master to set the org-wide Anthropic API key (Master Console → AI) to enable AI-generated executive summaries with recommendations and management flags.`;
 }
 
 // ---------------- ACTIONS ----------------
@@ -690,27 +707,5 @@ function newSession() {
   toast("Ready for new session", "");
 }
 
-// ---------------- API KEY DIALOG ----------------
-function openApiKeyDialog() {
-  const current = localStorage.getItem("flow.anthropic.apiKey") || "";
-  const input = prompt(
-    "Anthropic API Key\n\n" +
-    "Paste your API key to enable AI-generated summaries.\n" +
-    "Get one at: https://console.anthropic.com/settings/keys\n\n" +
-    "Stored only in this browser (localStorage). Leave empty to clear.",
-    current ? "•••••••••••••" + current.slice(-4) : ""
-  );
-  if (input === null) return;
-  if (input === "" || input === "•••••••••••••" + current.slice(-4)) {
-    if (input === "") {
-      localStorage.removeItem("flow.anthropic.apiKey");
-      toast("API key cleared", "");
-    }
-    return;
-  }
-  if (!input.startsWith("sk-")) {
-    return toast("Invalid key — should start with 'sk-'", "error");
-  }
-  localStorage.setItem("flow.anthropic.apiKey", input.trim());
-  toast("API key saved", "success");
-}
+// API Key dialog removed in v3.10 — keys are now centrally managed
+// by the master via Master Console → AI. See resolveAiKey() above.

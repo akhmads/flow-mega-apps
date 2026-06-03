@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // ============================================================
-// FLOW Mega Apps — Firestore Security Rules (v3.9.6)
+// FLOW Mega Apps — Firestore Security Rules (v3.10 — master role)
 //
 // DEPLOYMENT:
 //   firebase deploy --only firestore:rules
@@ -11,6 +11,7 @@ rules_version = '2';
 //   ┌─────────────┬───────────┬───────────────────┬────────┬────────┐
 //   │ Role        │ Read all  │ Create / Update   │ Delete │ /users │
 //   ├─────────────┼───────────┼───────────────────┼────────┼────────┤
+//   │ master      │   ✅ ALL  │ ✅ everything     │   ✅   │   ✅   │
 //   │ admin       │   ✅ ALL  │ ❌ (read-only)    │   ❌   │   ✅   │
 //   │ supervisor  │   ✅ ALL  │ ✅ everything     │   ✅   │   ✅   │
 //   │ user        │   ✅ ALL  │ only own records  │   ❌   │   ❌   │
@@ -42,6 +43,12 @@ service cloud.firestore {
 
     // ----- Helpers ---------------------------------------------------
 
+    // The hardcoded master email — must match MASTER_ACCOUNT.email
+    // in js/app.js. If you rotate the master, update BOTH files.
+    function MASTER_EMAIL() {
+      return 'allen@flowgistik.id';
+    }
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -52,12 +59,20 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.role;
     }
 
+    // Master — by stored role OR by being the hardcoded master email.
+    // The email-based check is what lets master self-bootstrap on first
+    // login before any /users doc exists.
+    function isMaster() {
+      return isSignedIn()
+        && (request.auth.token.email == MASTER_EMAIL() || userRole() == 'master');
+    }
+
     function isAdmin() {
-      return isSignedIn() && userRole() in ['admin', 'sales-admin', 'ss-admin'];
+      return isSignedIn() && (isMaster() || userRole() in ['admin', 'sales-admin', 'ss-admin']);
     }
 
     function isSupervisor() {
-      return isSignedIn() && userRole() in ['supervisor', 'sales', 'ss'];
+      return isSignedIn() && (isMaster() || userRole() in ['supervisor', 'sales', 'ss']);
     }
 
     function isLimitedUser() {
@@ -88,9 +103,28 @@ service cloud.firestore {
     match /users/{userEmail} {
       allow read:   if isSignedIn()
                      && (userEmail == request.auth.token.email || isAdmin() || isSupervisor());
-      allow create: if isAdmin() || isSupervisor();
-      allow update: if isAdmin() || isSupervisor();
-      allow delete: if isAdmin() || isSupervisor();
+      // Master self-bootstrap: on first Firebase Auth login, master
+      // creates their own /users doc with role:"master" before any
+      // existing admin/supervisor has touched the collection.
+      allow create: if isAdmin() || isSupervisor()
+                     || (userEmail == request.auth.token.email
+                         && userEmail == MASTER_EMAIL()
+                         && request.resource.data.role == 'master');
+      allow update: if isAdmin() || isSupervisor() || isMaster();
+      allow delete: if (isAdmin() || isSupervisor() || isMaster())
+                     && userEmail != MASTER_EMAIL();   // master can't be deleted from inside
+    }
+
+    // ----- /app_settings — org-wide settings (Master Console) -------
+    // Single doc /app_settings/global. Anyone signed in can READ
+    // (so banner/maintenance/AI-key reach every user), only master
+    // can WRITE. The AI key lives here too — readable by all logged-in
+    // users so the 1-on-1 Summarizer can use it.
+    match /app_settings/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isMaster();
+      allow update: if isMaster();
+      allow delete: if isMaster();
     }
 
     // ----- Audit log — append-only ----------------------------------
@@ -140,6 +174,7 @@ service cloud.firestore {
 
     match /daily_issues/{docId} {
       allow read: if isSignedIn();
+      // isSupervisor() returns true for master too, so master writes pass.
       allow create: if (isSupervisor() || (isLimitedUser() && createsAsSelf()))
                      && issueHasRequired();
       allow update: if (isSupervisor()

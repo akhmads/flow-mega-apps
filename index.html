@@ -2,7 +2,11 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#6337D8"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="FLOW"/>
 <title>FLOW Mega Apps</title>
 
 <!-- External libs (kept from preview__1_.html for backwards compat with legacy modules) -->
@@ -43,7 +47,13 @@
     <label class="pmLabel" data-i18n="login.email">Email</label>
     <input type="email" id="loginEmail" placeholder="name@flowgistik.id" autocomplete="username"/>
     <label class="pmLabel" data-i18n="login.password">Password</label>
-    <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"/>
+    <div class="pwField">
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"/>
+      <button type="button" id="pwToggleBtn" class="pwToggleBtn" aria-label="Show password" title="Show password">
+        <svg id="pwEyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg id="pwEyeOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-10-7-10-7a19.77 19.77 0 0 1 4.05-5.51"/><path d="M1 1l22 22"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 10 7 10 7a19.78 19.78 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/></svg>
+      </button>
+    </div>
     <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
       <input type="checkbox" id="rememberMe" style="width:auto;margin:0"/>
       <label for="rememberMe" data-i18n="login.remember" style="font-size:13px;color:var(--text-secondary);cursor:pointer;user-select:none">Remember me</label>
@@ -53,7 +63,8 @@
     </div>
     <p class="small" data-i18n="login.help" style="margin-top:14px">No account yet? Ask a supervisor to create one for you. Forgot your password? A supervisor can reset it from User Management.</p>
 
-    <!-- DEMO ACCOUNTS — visible in PREVIEW MODE only, hidden by app.js in production -->
+    <!-- DEMO ACCOUNTS — visible in PREVIEW MODE only. Hidden by app.js in production,
+         and also hidden if the master has flipped the "hide demo helper" toggle. -->
     <div id="demoHelper" style="margin-top:14px;padding:14px;background:#fef3c7;border-radius:10px;font-size:12px;color:#78350f;line-height:1.7;border:2px dashed #f59e0b">
       <b data-i18n="login.demoTitle">DEMO MODE — click any account to auto-fill:</b><br>
       <button type="button" class="demoLoginBtn" data-email="admin@demo" data-pwd="demo" style="display:block;width:100%;text-align:left;margin-top:6px;padding:8px 12px;background:#fff;border:1px solid #f59e0b;border-radius:6px;cursor:pointer;font-size:12px;color:#78350f">
@@ -103,6 +114,7 @@
       <div class="navGroup" data-i18n="group.ss">Sales Support</div>
       <button data-menu="dailyTrackerSS" data-i18n="nav.dailyTracker">Daily Tracker</button>
       <button data-menu="dailyIssue" data-i18n="nav.dailyIssue">Daily Issue Tracker</button>
+      <button data-menu="clientLinks" data-i18n="nav.clientLinks">Marketplace Links</button>
       <div class="navGroup" data-i18n="group.ops">Operations</div>
       <button data-menu="inboundMonitoring" data-i18n="nav.inboundMonitoring">Inbound Monitoring</button>
       <button data-menu="mpForecasting" data-i18n="nav.mpForecasting">MP Forecasting</button>
@@ -122,6 +134,8 @@
       <button data-menu="masterData" data-show-for-supervisor data-i18n="nav.masterData">Master Data</button>
       <button data-menu="auditLog" data-show-for-supervisor data-i18n="nav.auditLog">Activity Log</button>
       <button data-menu="users" data-show-for-supervisor data-i18n="nav.users">User Management</button>
+      <div class="navGroup" data-master-only data-i18n="group.master">Master</div>
+      <button data-menu="masterConsole" data-master-only data-i18n="nav.masterConsole">Master Console</button>
     </div>
     <div class="sidebarFooter">
       <div class="userBadge"><span id="userBadgeEmail">—</span></div>
@@ -1090,6 +1104,16 @@
 
     <section id="users" class="menu hidden">
       <div id="usersRoot"></div>
+    </section>
+
+    <!-- CLIENT MARKETPLACE LINKS — directory of all client marketplace URLs -->
+    <section id="clientLinks" class="menu hidden">
+      <div id="clientLinksRoot"></div>
+    </section>
+
+    <!-- MASTER CONSOLE — only visible to the hardcoded master account -->
+    <section id="masterConsole" class="menu hidden">
+      <div id="masterConsoleRoot"></div>
     </section>
   </main>
 </div>

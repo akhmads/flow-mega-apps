@@ -6,6 +6,20 @@
  * reconcileHost, weeklyReportHost) — see legacy-loader.js.
  * ============================================================ */
 
+/* Premium-ui scoped CSS variables. These are referenced throughout
+ * the file (linear-gradients, borders, shadows) but were previously
+ * undefined — causing those gradient backgrounds to evaluate to an
+ * invalid value, which falls back to the wrapper's white. Result:
+ * active tabs appearing as blank white pills with invisible white
+ * text. Defining them here keeps every existing rule intact. */
+.premium-ui-v3 {
+  --p-purple: #6d28d9;
+  --p-pink: #c026d3;
+  --p-border: rgba(107,70,255,.18);
+  --p-shadow: 0 12px 28px rgba(76,29,149,.18);
+  --p-shadow2: 0 6px 14px rgba(76,29,149,.10);
+}
+
 .premium-ui-v3 .app {display:flex;min-height:100vh;position:relative;z-index:1}
 
 .premium-ui-v3 .sidebar {
@@ -1791,7 +1805,11 @@ body.premium-ui-v3:after {display:none!important}
 
 .premium-ui-v3 .tabs button, .premium-ui-v3 .mergeTopTabs button, .premium-ui-v3 .transactionMainTabs button, .premium-ui-v3 .orderChildTabs button, .premium-ui-v3 .mergeChildTabs button, .premium-ui-v3 .pmDetailTabs button {min-width:unset!important;width:auto!important;flex:0 0 auto!important;border:0!important;border-radius:16px!important;padding:10px 14px!important;background:transparent!important;color:#5b21b6!important;box-shadow:none!important;font-size:13px!important;font-weight:800!important}
 
-.premium-ui-v3 .tabs button.active, .premium-ui-v3 .mergeTopTabs button.active, .premium-ui-v3 .transactionMainTabs button.active, .premium-ui-v3 .orderChildTabs button.active, .premium-ui-v3 .mergeChildTabs button.active, .premium-ui-v3 .pmDetailTabs button.active {background:linear-gradient(135deg,var(--p-purple),var(--p-pink))!important;color:#fff!important;box-shadow:0 10px 22px rgba(107,70,255,.22)!important}
+/* Active tab: soft purple tint + bold dark text. Seamless distinction
+   from inactive (transparent bg, lighter text) — text stays readable
+   in both states. Replaces the earlier gradient that rendered as a
+   blank white pill when CSS vars weren't resolved. */
+.premium-ui-v3 .tabs button.active, .premium-ui-v3 .mergeTopTabs button.active, .premium-ui-v3 .transactionMainTabs button.active, .premium-ui-v3 .orderChildTabs button.active, .premium-ui-v3 .mergeChildTabs button.active, .premium-ui-v3 .pmDetailTabs button.active {background:rgba(99,55,216,.12)!important;color:#4c1d95!important;font-weight:800!important;box-shadow:inset 0 0 0 1.5px rgba(99,55,216,.35)!important}
 
 .premium-ui-v3 input, .premium-ui-v3 select, .premium-ui-v3 textarea {border:1px solid rgba(107,70,255,.14)!important;border-radius:16px!important;background:#fff!important;color:#231942!important;padding:11px 12px!important;box-shadow:0 4px 12px rgba(42,27,88,.035),inset 0 1px 0 rgba(255,255,255,.9)!important}
 

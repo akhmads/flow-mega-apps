@@ -245,6 +245,7 @@ function renderDebugBody() {
         <button class="dbgGenBtn" data-gen="tasksSales" data-count="20">+20 Sales Tasks</button>
         <button class="dbgGenBtn" data-gen="tasksSS" data-count="20">+20 SS Tasks</button>
         <button class="dbgGenBtn" data-gen="issues" data-count="15">+15 Daily Issues</button>
+        <button class="dbgGenBtn" data-gen="marketplaceLinks" data-count="12">+12 Marketplace Links</button>
       </div>
     </div>` : "";
 
@@ -550,6 +551,24 @@ const SAMPLE_PEOPLE = ["Bryan", "Prayoga", "Yoga", "Farah", "Asih", "Fauzi", "Di
 const SAMPLE_DEPTS_FALLBACK = ["Sales", "Sales Support", "Operations", "Finance", "Tech", "HR", "Marketing"];
 const SAMPLE_CLIENTS_FALLBACK = ["PERO", "Kintakun", "SummerID", "Fieldit", "GAON", "Quattro"];
 const SAMPLE_CATS_FALLBACK = ["Wrong SKU shipped", "Missing item", "Damaged in transit", "Late delivery", "Wrong address", "Marketplace sync error"];
+const SAMPLE_MARKETPLACES_FALLBACK = ["Shopee", "TikTok Shop", "Tokopedia", "Lazada", "Blibli"];
+
+// URL templates per marketplace — slug = lowercase client name with spaces/dots removed
+const MARKETPLACE_URL_TEMPLATES = {
+  "Shopee":       (slug) => `https://shopee.co.id/${slug}official`,
+  "TikTok Shop":  (slug) => `https://shop.tiktok.com/@${slug}`,
+  "Tokopedia":    (slug) => `https://www.tokopedia.com/${slug}`,
+  "Lazada":       (slug) => `https://www.lazada.co.id/shop/${slug}`,
+  "Blibli":       (slug) => `https://www.blibli.com/merchant/${slug}`,
+  "Bukalapak":    (slug) => `https://www.bukalapak.com/u/${slug}`,
+  "JD.ID":        (slug) => `https://www.jd.id/store/${slug}`,
+  "Zalora":       (slug) => `https://www.zalora.co.id/${slug}`,
+  "Instagram":    (slug) => `https://www.instagram.com/${slug}`,
+  "WhatsApp":     (slug) => `https://wa.me/628123456789`,
+  "Website (own)":(slug) => `https://www.${slug}.co.id`,
+  "Other":        (slug) => `https://example.com/${slug}`
+};
+const SAMPLE_LABELS = ["Main shop", "Reseller account", "Flash sale store", "Wholesale", "Outlet", ""];
 
 const SAMPLE_TICKET_SUBJECTS = [
   "Need approval for Q4 budget",
@@ -617,15 +636,18 @@ async function runGenerator(kind, count) {
   const departments = (getMasterDataAll("departments").filter(d => !d.archived).map(d => d.name)) || [];
   const clients = (getMasterDataAll("clients").filter(c => !c.archived).map(c => c.name)) || [];
   const cats = (getMasterDataAll("issueCategories").filter(c => !c.archived).map(c => c.name)) || [];
+  const marketplaces = (getMasterDataAll("marketplaces").filter(m => !m.archived).map(m => m.name)) || [];
   const deptList = departments.length ? departments : SAMPLE_DEPTS_FALLBACK;
   const clientList = clients.length ? clients : SAMPLE_CLIENTS_FALLBACK;
   const catList = cats.length ? cats : SAMPLE_CATS_FALLBACK;
+  const mpList = marketplaces.length ? marketplaces : SAMPLE_MARKETPLACES_FALLBACK;
 
   const generators = {
     tickets: () => genTicket(deptList),
     tasksSales: () => ({ col: COL.TASKS_SALES, doc: genTask("sales") }),
     tasksSS: () => ({ col: COL.TASKS_SS, doc: genTask("ss") }),
-    issues: () => ({ col: COL.ISSUES, doc: genIssue(clientList, catList) })
+    issues: () => ({ col: COL.ISSUES, doc: genIssue(clientList, catList) }),
+    marketplaceLinks: () => ({ col: COL.MARKETPLACE_LINKS, doc: genMarketplaceLink(clientList, mpList) })
   };
 
   for (let i = 0; i < count; i++) {
@@ -714,6 +736,22 @@ function genIssue(clientList, catList) {
     longTermSolution: Math.random() > 0.7 ? "Process improvement TBD" : "",
     notes: "test-generator",
     status
+  };
+}
+
+function genMarketplaceLink(clientList, mpList) {
+  const clientName = pick(clientList);
+  const marketplace = pick(mpList);
+  const slug = clientName.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "");
+  const urlBuilder = MARKETPLACE_URL_TEMPLATES[marketplace] || ((s) => `https://example.com/${s}`);
+  const label = pick(SAMPLE_LABELS);
+  return {
+    clientName,
+    marketplace,
+    label,
+    url: urlBuilder(slug),
+    notes: Math.random() > 0.7 ? "Login credentials stored in 1Password" : "",
+    source: "test-generator"
   };
 }
 

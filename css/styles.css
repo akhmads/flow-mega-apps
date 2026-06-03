@@ -690,6 +690,7 @@ td.wrap, td.long{white-space:normal;max-width:340px}
    =========================================================== */
 .badge-admin{background:var(--primary);color:#fff;font-weight:600}
 .badge-supervisor{background:#fef3c7;color:#92400e}
+.badge-master{background:linear-gradient(135deg,#fbbf24,#000);color:#fff;font-weight:700;letter-spacing:.5px;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 
 /* ===========================================================
    v3.3 — 1-on-1 Summarizer
@@ -1081,4 +1082,219 @@ tr.sla-stale:hover > td{background:rgba(239,68,68,.13)}
   background:var(--bad);color:#fff;font-size:10px;font-weight:700;
   min-width:17px;height:17px;border-radius:9px;padding:0 4px;
   display:flex;align-items:center;justify-content:center;
+}
+
+
+/* ===========================================================
+   Login: password show/hide toggle (eye icon)
+   Centering uses top:0; bottom:0 + flex so it matches the input's
+   exact height regardless of padding/border inherited from globals.
+   =========================================================== */
+.pwField{position:relative}
+.pwField input{padding-right:42px;width:100%;margin:0}
+.pwToggleBtn{
+  position:absolute;right:6px;top:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:transparent;border:0;cursor:pointer;padding:0 8px;
+  color:var(--muted);border-radius:6px;
+  transition:background .15s,color .15s;
+}
+.pwToggleBtn:hover{background:rgba(124,58,237,.08);color:var(--primary)}
+.pwToggleBtn svg{width:18px;height:18px;display:block}
+
+/* ===========================================================
+   Master Console
+   =========================================================== */
+.mcHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.mcVer{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);background:#f8fafc;padding:6px 10px;border-radius:6px;border:1px solid var(--border)}
+.mcGrid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:6px}
+.mcTile{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px}
+.mcLabel{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.mcBig{font-size:18px;font-weight:700;margin:6px 0}
+.mcBtnRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.mcRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.mcRow > input,.mcRow > select{flex:1;min-width:180px}
+.mcSection{margin-top:18px;padding-top:18px;border-top:1px dashed var(--border)}
+.mcSection:first-of-type{margin-top:6px;padding-top:0;border-top:0}
+.mcSection h3{margin:0 0 4px;font-size:15px}
+.mcStatus{margin-top:8px;font-style:italic}
+.mcFeatureGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.mcFeatureRow{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px}
+.mcSwitch{position:relative;display:inline-block;width:42px;height:22px;cursor:pointer}
+.mcSwitch input{opacity:0;width:0;height:0}
+.mcSwitch span{position:absolute;inset:0;background:#cbd5e1;border-radius:999px;transition:.18s}
+.mcSwitch span:before{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:.18s}
+.mcSwitch input:checked + span{background:var(--primary)}
+.mcSwitch input:checked + span:before{transform:translateX(20px)}
+.mcAuditFeed{max-height:380px;overflow:auto;border:1px solid var(--border);border-radius:8px}
+.mcAuditRow{display:grid;grid-template-columns:160px 200px 1fr;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px}
+.mcAuditRow:last-child{border-bottom:0}
+.mcAuditWhen{color:var(--muted);font-family:"JetBrains Mono",monospace}
+.mcAuditWho{font-weight:600}
+.mcAuditWhat{color:var(--text);word-break:break-word}
+@media (max-width:640px){
+  .mcAuditRow{grid-template-columns:1fr;gap:2px}
+}
+
+/* ===========================================================
+   Client Marketplace Links — card grid
+   =========================================================== */
+.cl-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:12px;margin-top:14px;
+}
+.cl-card{
+  background:#fff;border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;display:flex;flex-direction:column;gap:8px;
+  transition:box-shadow .15s, border-color .15s;
+}
+.cl-card:hover{box-shadow:var(--card-shadow-hover);border-color:var(--primary-light)}
+.cl-card-head{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:8px;
+}
+.cl-client{
+  font-weight:700;color:var(--text);font-size:14px;
+}
+.cl-mp{
+  display:inline-block;margin-left:6px;padding:2px 8px;
+  background:#ede9fe;color:#5b21b6;border-radius:999px;
+  font-size:11px;font-weight:600;
+}
+.cl-card-actions{display:flex;gap:4px}
+.cl-card-actions .iconBtn{padding:4px 8px;font-size:13px}
+.cl-card-actions .iconBtn.danger:hover{background:#fee2e2;color:#991b1b}
+.cl-label{
+  font-size:13px;color:var(--text-secondary);font-style:italic;
+}
+.cl-url{
+  font-family:'JetBrains Mono','Consolas',monospace;
+  font-size:12px;color:var(--primary);
+  word-break:break-all;text-decoration:none;
+  background:#f8fafc;padding:6px 8px;border-radius:6px;
+  border:1px solid var(--border-light);
+}
+.cl-url:hover{background:#f1f5f9;text-decoration:underline}
+.cl-notes{
+  font-size:12px;color:var(--muted);padding:4px 0;
+  border-top:1px dashed var(--border);padding-top:8px;
+}
+.cl-foot{
+  display:flex;gap:6px;margin-top:auto;padding-top:4px;
+}
+.cl-foot button,.cl-foot a{flex:1;text-align:center;font-size:12px;padding:6px 10px}
+.cl-openBtn{
+  text-decoration:none;display:inline-block;background:var(--primary);
+  color:#fff;border-radius:var(--radius-sm);font-weight:600;
+}
+.cl-openBtn:hover{background:var(--primary-hover)}
+@media (max-width:520px){
+  .cl-grid{grid-template-columns:1fr}
+}
+
+/* ===========================================================
+   v3.10 — Mobile polish (additive, runs at end so it wins)
+   Touch every page/module added since the original mobile pass.
+   =========================================================== */
+
+/* ---------- Phones (≤640px) ---------- */
+@media (max-width:640px){
+  /* Top bar: title + actions stack onto two clear rows; search/notif/lang
+     stay inline but wrap if needed. Less cramped than the old single row. */
+  .top{flex-direction:column;align-items:stretch;gap:10px}
+  .topActions{justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .globalSearch{flex:1 1 100%;order:3}
+  .globalSearch input{width:100%}
+  .langToggle{flex-shrink:0}
+  .title h1{font-size:18px;line-height:1.2}
+  .title p{font-size:12px}
+
+  /* Demo helper login box: buttons full-width for easy tapping */
+  #demoHelper .demoLoginBtn{font-size:11px;padding:10px 12px}
+
+  /* Login: password eye toggle position stays right but smaller spacing */
+  .pwField input{padding-right:38px}
+  .pwToggleBtn{right:4px;padding:0 6px}
+
+  /* Master Console: two-column tile grid collapses to single column */
+  .mcGrid2{grid-template-columns:1fr;gap:10px}
+  .mcTile{padding:12px}
+  .mcBig{font-size:16px}
+  .mcRow{flex-direction:column;align-items:stretch;gap:6px}
+  .mcRow > input,.mcRow > select,.mcRow > button{width:100%;min-width:0}
+  .mcBtnRow{flex-direction:column;align-items:stretch;gap:6px}
+  .mcBtnRow > button{width:100%}
+  .mcFeatureGrid{grid-template-columns:1fr;gap:8px}
+  .mcFeatureRow{padding:10px}
+  .mcAuditRow{grid-template-columns:1fr;gap:4px;padding:10px 12px}
+  .mcAuditWhen{font-size:11px}
+  .mcVer{align-self:flex-start}
+  .mcHeader{flex-direction:column;align-items:stretch}
+
+  /* Marketplace Links: cards already stack; tighten the foot row */
+  .cl-grid{gap:10px}
+  .cl-card{padding:12px}
+  .cl-foot{flex-direction:column;gap:6px}
+  .cl-foot button,.cl-foot a{width:100%}
+  .cl-url{font-size:11px;padding:8px 10px}
+  .cl-client{font-size:13px}
+
+  /* Tables anywhere: force horizontal scroll on tiny screens with a
+     soft shadow hint on the right edge so users notice they can swipe */
+  .tableWrap{overflow-x:auto;-webkit-overflow-scrolling:touch;
+    background:
+      linear-gradient(90deg,#fff 30%,transparent),
+      linear-gradient(90deg,transparent,#fff 70%) 100% 0,
+      radial-gradient(farthest-side at 0 50%,rgba(0,0,0,.12),transparent),
+      radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.12),transparent) 100% 0;
+    background-repeat:no-repeat;
+    background-size:30px 100%,30px 100%,12px 100%,12px 100%;
+    background-attachment:local,local,scroll,scroll;
+  }
+  table{min-width:480px}    /* lets horizontal scroll engage */
+
+  /* Modal X button bigger tap target */
+  .modalClose{font-size:24px;padding:6px 12px;min-width:44px;min-height:44px}
+
+  /* Master Data tabs row wraps cleanly */
+  .tabs{flex-wrap:wrap;gap:6px}
+
+  /* Reset password reveal: code monospace doesn't overflow */
+  #usrPwdRevealValue{font-size:14px;word-break:break-all}
+
+  /* User Management table action buttons stack */
+  #usrTable .iconBtn{display:block;width:100%;margin:2px 0}
+
+  /* Master role badge stays compact */
+  .badge-master{font-size:9px;padding:3px 6px}
+
+  /* Premium-ui (legacy modules) — make tabs wrap and child tabs stack */
+  .premium-ui-v3 .tabs button,
+  .premium-ui-v3 .transactionMainTabs button,
+  .premium-ui-v3 .orderChildTabs button,
+  .premium-ui-v3 .mergeChildTabs button{
+    font-size:12px!important;padding:8px 10px!important;flex:1 1 auto!important;
+  }
+  .premium-ui-v3 .grid{grid-template-columns:1fr!important;gap:12px!important}
+  .premium-ui-v3 .taskStats{grid-template-columns:1fr 1fr!important}
+}
+
+/* ---------- Very small phones (≤400px) ---------- */
+@media (max-width:400px){
+  .main{padding:12px 10px}
+  .kpis{grid-template-columns:1fr;gap:8px}
+  .execHero{grid-template-columns:1fr;gap:6px}
+  .execGrid{grid-template-columns:1fr 1fr}
+  .filterGrid{grid-template-columns:1fr}
+  .premium-ui-v3 .taskStats{grid-template-columns:1fr!important}
+  /* Top bar pill: hide today date pill at very small width to save room */
+  #todayPill{display:none}
+}
+
+/* ---------- iOS notch safe-area (handles iPhone X+ rounded corners) ---------- */
+@supports (padding:max(0px)){
+  .sidebar{padding-left:max(16px,env(safe-area-inset-left));padding-bottom:max(16px,env(safe-area-inset-bottom))}
+  .main{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right));padding-bottom:max(16px,env(safe-area-inset-bottom))}
+  .mobileTopBar{padding-top:max(8px,env(safe-area-inset-top))}
+  /* Maintenance lockscreen also respects safe area */
+  #maintLock{padding-top:max(24px,env(safe-area-inset-top))}
 }
