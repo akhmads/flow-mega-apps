@@ -51,11 +51,11 @@ function renderShell() {
     <div class="card">
       <h2>How it works (production)</h2>
       <div class="output" style="font-size:13px;line-height:1.6">
-1⃣  <b>Create the Firebase Auth account first.</b> Go to Firebase Console → Authentication → Users → Add user. Set email + temporary password. Share the password with the staff member.
+1⃣  <b>Click "+ Add User".</b> Fill in email, name, role, department, and a starting password. The login account is created in Firebase Auth automatically — no Console steps required.
 <br><br>
-2⃣  <b>Then come back here and assign their role.</b> Use the same email. The role takes effect on their next login.
+2⃣  <b>Share the password securely</b> with the new user. They can change it any time. Supervisors can also reset it from here.
 <br><br>
-3⃣  <b>To remove access:</b> delete their entry here AND disable their Auth account in Firebase Console.
+3⃣  <b>To remove access:</b> delete their entry here. (Their Firebase Auth login still exists — disable it in Firebase Console if you want to fully revoke.)
       </div>
     </div>` : `
     <div class="card" style="background:#fdf4ff;border-left:4px solid #7c3aed">
@@ -124,10 +124,10 @@ function renderShell() {
             <input type="hidden" id="usr_dept"/>
           </div>
           <div class="field" id="usr_password_row" style="grid-column:1 / -1">
-            <label>Password ${isFirebaseConfigured ? "(production: set in Firebase Console)" : "*"}</label>
-            <input type="text" id="usr_password" placeholder="${isFirebaseConfigured ? "Not used in production" : "Pick a password for them"}"${isFirebaseConfigured ? " disabled" : ""}/>
+            <label>Password *</label>
+            <input type="text" id="usr_password" placeholder="At least 6 characters"/>
             <p class="small" style="margin:4px 0 0">${isFirebaseConfigured
-              ? "In production, passwords live in Firebase Authentication and must be created/reset in the Firebase Console."
+              ? "Set the login password here — it will create the Firebase Auth account automatically. Share securely with the user; they can change it later."
               : "Share this password securely with the user. They can change it later (or you can reset it from this page)."}</p>
           </div>
         </div>
@@ -344,8 +344,9 @@ async function saveUser() {
   if (!email.includes("@")) return toast("Invalid email", "error");
   if (!name) return toast("Display name required", "error");
   if (!department) return toast("Department required — pick from the dropdown", "error");
-  // Password required on CREATE in preview mode
-  if (isCreate && !isFirebaseConfigured && (!password || password.length < 6)) {
+  // Password required on CREATE (both preview and production — production
+  // now creates the Firebase Auth account from this UI).
+  if (isCreate && (!password || password.length < 6)) {
     return toast("Password required (at least 6 characters)", "error");
   }
 

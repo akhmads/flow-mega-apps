@@ -15,7 +15,7 @@
 // ============================================================
 
 import {
-  auth, db, COL, setWriteGuard,
+  auth, db, COL, setWriteGuard, isFirebaseConfigured, createAuthUser,
   doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, serverTimestamp
 } from "./firebase.js";
 
@@ -443,6 +443,39 @@ export async function upsertUserProfile({ email, name, role, department, passwor
   if (!acceptedRoles.includes(role)) {
     throw new Error("Invalid role");
   }
+
+  // Detect CREATE vs UPDATE — if no /users doc exists for this email yet,
+  // and we're in production with a password, also create the Firebase Auth
+  // account so the user can actually log in (no separate Console step needed).
+  let isCreate = false;
+  try {
+    const existing = await getDoc(doc(COL.USERS, email));
+    isCreate = !existing.exists();
+  } catch (e) {
+    // Fall back to "treat as create" if the read fails — Auth creation
+    // is idempotent-friendly: if email exists Firebase throws and we surface that.
+    isCreate = true;
+  }
+
+  if (isCreate && isFirebaseConfigured && password && password.trim()) {
+    try {
+      await createAuthUser(email, password.trim());
+    } catch (e) {
+      // Firebase Auth errors: surface a friendly message.
+      const code = e?.code || "";
+      if (code === "auth/email-already-in-use") {
+        throw new Error("This email already has a login account in Firebase Auth. You can still save the role profile — just leave the password field blank.");
+      }
+      if (code === "auth/weak-password") {
+        throw new Error("Password too weak. Use at least 6 characters.");
+      }
+      if (code === "auth/invalid-email") {
+        throw new Error("Invalid email format.");
+      }
+      throw new Error("Could not create login account: " + (e.message || code));
+    }
+  }
+
   const profile = {
     email,
     name: name || email.split("@")[0],
@@ -452,7 +485,7 @@ export async function upsertUserProfile({ email, name, role, department, passwor
     updatedBy: currentUser?.email || "system"
   };
   // Only stamp the preview password when one is provided (preview mode only)
-  if (password && password.trim()) {
+  if (!isFirebaseConfigured && password && password.trim()) {
     profile.previewPassword = password.trim();
   }
   await setDoc(doc(COL.USERS, email), profile, { merge: true });

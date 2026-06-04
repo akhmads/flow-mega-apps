@@ -22,10 +22,11 @@
 //     firebase deploy --only firestore:rules
 // ============================================================
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword,
-  signOut, sendPasswordResetEmail
+  signOut, sendPasswordResetEmail,
+  createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import * as fsReal from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import * as fsPreview from "./preview-store.js";
@@ -141,6 +142,37 @@ export const Timestamp        = fs.Timestamp;
 // Auth helpers — only meaningful in real mode; preview uses demo
 // accounts in app.js without ever touching these.
 export { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail };
+
+// ============================================================
+// CREATE AUTH USER — uses a SECONDARY Firebase app instance so
+// the currently-signed-in user (master/supervisor) stays signed in
+// while we register a new user. This is the standard pattern for
+// in-app user creation when there's no backend.
+//
+// Returns nothing on success. Throws on failure (caller should
+// catch and show a toast). Skips silently in preview mode.
+// ============================================================
+export async function createAuthUser(email, password) {
+  if (!isFirebaseConfigured) {
+    // Preview mode — caller handles preview password via the role doc.
+    return;
+  }
+  if (!email || !password) {
+    throw new Error("Email and password required");
+  }
+  const tempName = "user-create-" + Date.now();
+  let tempApp = null;
+  try {
+    tempApp = initializeApp(firebaseConfig, tempName);
+    const tempAuth = getAuth(tempApp);
+    await createUserWithEmailAndPassword(tempAuth, email, password);
+  } finally {
+    // Always clean up the secondary app, even on failure
+    if (tempApp) {
+      try { await deleteApp(tempApp); } catch (e) { /* ignore */ }
+    }
+  }
+}
 
 // ============================================================
 // CRUD HELPERS — thin wrappers used everywhere

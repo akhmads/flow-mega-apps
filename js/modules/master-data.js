@@ -619,7 +619,7 @@ function renderMarketplacesPane() {
   $("mdContent").innerHTML = `
     <div class="card">
       <h2>Marketplaces</h2>
-      <p class="small" style="color:var(--muted)">Used by the Client Marketplace Links module. Add new platforms (e.g. Lazmall, TikTok Live) so SS can pick them when saving a link.</p>
+      <p class="small" style="color:var(--muted)">Used by the Marketplace Hub. Add new platforms (e.g. Lazmall, TikTok Live) so SS can pick them when adding a store.</p>
       ${editable ? `
         <div class="mdAddRow">
           <input type="text" id="md_mpInput" placeholder="e.g. Lazmall"/>

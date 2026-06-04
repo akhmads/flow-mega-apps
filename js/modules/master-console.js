@@ -52,7 +52,7 @@ const SETTINGS_DOC = "global";
 // always be reachable (the console to undo the hide, the dashboard
 // because it's the landing page).
 const TOGGLEABLE_MODULES = [
-  { id: "clientLinks",        label: "Marketplace Links",            group: "Sales Support" },
+  { id: "clientLinks",        label: "Marketplace Hub",              group: "Sales Support" },
   { id: "dailyIssue",         label: "Daily Issue Tracker",          group: "Sales Support" },
   { id: "dailyTrackerSales",  label: "Daily Tracker — Sales",        group: "Sales" },
   { id: "dailyTrackerSS",     label: "Daily Tracker — Sales Support",group: "Sales Support" },
@@ -285,9 +285,27 @@ function bindEvents() {
   $("mcModeDemo").onclick = () => setMode("demo");
   $("mcModeAuto").onclick = () => setMode(null);
 
-  // B: Hide demo helper
-  $("mcHideDemo").onclick = () => { localStorage.setItem("flow.hideDemoHelper", "1"); toast("Demo box hidden on next login screen", "success"); };
-  $("mcShowDemo").onclick = () => { localStorage.removeItem("flow.hideDemoHelper"); toast("Demo box restored", "success"); };
+  // B: Hide demo helper — hides BOTH the yellow login-screen helper
+  // AND the purple "Preview / Demo Mode" banner on the dashboard,
+  // immediately + persisted across reloads.
+  $("mcHideDemo").onclick = () => {
+    localStorage.setItem("flow.hideDemoHelper", "1");
+    const helper = document.getElementById("demoHelper");
+    if (helper) helper.style.display = "none";
+    const banner = document.getElementById("previewBanner");
+    if (banner) banner.classList.add("hidden");
+    toast("Demo box hidden everywhere", "success");
+  };
+  $("mcShowDemo").onclick = () => {
+    localStorage.removeItem("flow.hideDemoHelper");
+    const helper = document.getElementById("demoHelper");
+    if (helper) helper.style.display = "";
+    // Only re-show the dashboard banner if we're actually in preview mode
+    // (no Firebase). In production the banner has no business appearing.
+    const banner = document.getElementById("previewBanner");
+    if (banner && !window.__flowIsProductionMode) banner.classList.remove("hidden");
+    toast("Demo box restored", "success");
+  };
 
   // C: Maintenance
   $("mcMaintOn").onclick = () => setSetting({

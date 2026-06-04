@@ -245,7 +245,7 @@ function renderDebugBody() {
         <button class="dbgGenBtn" data-gen="tasksSales" data-count="20">+20 Sales Tasks</button>
         <button class="dbgGenBtn" data-gen="tasksSS" data-count="20">+20 SS Tasks</button>
         <button class="dbgGenBtn" data-gen="issues" data-count="15">+15 Daily Issues</button>
-        <button class="dbgGenBtn" data-gen="marketplaceLinks" data-count="12">+12 Marketplace Links</button>
+        <button class="dbgGenBtn" data-gen="marketplaceLinks" data-count="12">+12 Hub Stores</button>
       </div>
     </div>` : "";
 

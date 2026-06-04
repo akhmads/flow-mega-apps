@@ -43,6 +43,9 @@ const PREVIEW_MODE = _params.has("prod") ? false
                    : _modeOverride === "demo" ? true
                    : _modeOverride === "prod" ? false
                    : !isFirebaseConfigured;
+// Expose to other modules (e.g. master-console) so they can decide
+// whether the dashboard's preview banner should ever be re-shown.
+if (typeof window !== "undefined") window.__flowIsProductionMode = !PREVIEW_MODE;
 
 // ============================================================
 // MASTER ACCOUNT — single hardcoded account with full control.
@@ -130,7 +133,7 @@ const PAGES = {
   auditLog: { title: "Activity Log", sub: "Audit trail — who changed what, and when", init: initAuditLog },
   oneOnOne: { title: "1-on-1 Summarizer", sub: "Run structured 1-on-1s · AI summary", init: initOneOnOne },
   users: { title: "User Management", sub: "Manage team accounts and roles", init: initUsers },
-  clientLinks: { title: "Client Marketplace Links", sub: "Quick access to every client's marketplace URLs", init: initClientLinks },
+  clientLinks: { title: "Marketplace Hub", sub: "Workspace akses seller center · pilih marketplace → pilih toko → connect", init: initClientLinks },
   masterConsole: { title: "Master Console", sub: "Master-only controls · mode toggle, broadcast, kill switches", init: initMasterConsole }
 };
 
@@ -556,10 +559,15 @@ function bootApp(email, role, name, department) {
   bootstrapMasterData();
   mountDebugPanel();
   mountReportButton();
-  // Show the preview banner only in preview mode + wire the wipe button
-  if (PREVIEW_MODE) {
+  // Show the preview banner only in preview mode AND when the master
+  // hasn't asked to hide demo UI (Master Console → Hide Box). Wire the
+  // wipe button regardless so the banner works if later un-hidden.
+  const _hideDemoUI = (() => { try { return localStorage.getItem("flow.hideDemoHelper") === "1"; } catch (e) { return false; } })();
+  if (PREVIEW_MODE && !_hideDemoUI) {
     const banner = $("previewBanner");
     if (banner) banner.classList.remove("hidden");
+  }
+  if (PREVIEW_MODE) {
     const wipe = $("previewWipeBtn");
     if (wipe && !wipe._wired) {
       wipe._wired = true;

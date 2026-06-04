@@ -1,10 +1,9 @@
 {
-  "apiKey": "AIzaSyDXX-NeMN5I_dbVMD_vzGSrxFz_ykc3VI4",
-  "authDomain": "flow-fe96c.firebaseapp.com",
-  "projectId": "flow-fe96c",
-  "storageBucket": "flow-fe96c.firebasestorage.app",
-  "messagingSenderId": "55304562171",
-  "appId": "1:55304562171:web:b3bfca9479b85fac27975e",
-  "measurementId": "G-C9Y5YP73ML",
+  "apiKey": "AIzaSyBwNqNeax0vHNAR91_hMqIh-odjmikZ34o",
+  "authDomain": "flow-mega-apps.firebaseapp.com",
+  "projectId": "flow-mega-apps",
+  "storageBucket": "flow-mega-apps.firebasestorage.app",
+  "messagingSenderId": "420984088167",
+  "appId": "1:420984088167:web:a1144161c7026dba5856c2",
   "firestoreDatabaseId": ""
 }
