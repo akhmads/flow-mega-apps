@@ -6,11 +6,11 @@
 //   1. Pick team member (from real users in the system)
 //   2. Rate 5 dimensions on 1-5 scale
 //   3. Answer department-specific personal + work questions
-//   4. Generate AI summary (via Anthropic API) or structured fallback
+//   4. Generate AI summary (via Gemini API) or structured fallback
 //
 // Sessions saved to Firestore (collection: one_on_ones) for history.
-// AI summary uses the Anthropic API if the user has set their key
-// in localStorage (`flow.anthropic.apiKey`); otherwise generates a
+// AI summary uses the Gemini API if the user has set their key
+// in localStorage (`flow.gemini.apiKey`); otherwise generates a
 // clean structured report client-side.
 // ============================================================
 
@@ -124,7 +124,7 @@ let currentStep = 1;
 // Signature of the (member + ratings + answers) the cached summary was
 // built from. If inputs change, we regenerate; if step 4 is revisited
 // with unchanged inputs, we reuse the cached summary instead of burning
-// another Anthropic API call.
+// another Gemini API call.
 let _summarySig = null;
 function _currentInputSig() {
   return JSON.stringify({
@@ -336,7 +336,7 @@ function goStep(n) {
   if (n === 4) {
     // Only regenerate if inputs changed since the last cached summary.
     // Going back to step 3, tweaking nothing, and forward to step 4
-    // used to fire a fresh Anthropic call every time — wasted tokens.
+    // used to fire a fresh Gemini call every time — wasted tokens.
     const sig = _currentInputSig();
     if (sig !== _summarySig || !state.lastSummary) {
       _summarySig = sig;
@@ -481,7 +481,7 @@ async function resolveAiKey() {
       _orgAiKeyCache = null;
     }
   }
-  return _orgAiKeyCache || localStorage.getItem("flow.anthropic.apiKey") || null;
+  return _orgAiKeyCache || localStorage.getItem("flow.gemini.apiKey") || null;
 }
 
 // ---------------- STEP 4 — SUMMARY ----------------
@@ -514,31 +514,28 @@ async function generateSummary() {
   const prompt = buildPrompt(m, todayStr);
 
   if (apiKey) {
-    // 30s ceiling so a hung Anthropic call doesn't leave the UI stuck
+    // 30s ceiling so a hung Gemini call doesn't leave the UI stuck
     // on "Generating summary…" forever — we fall through to the
     // template fallback instead.
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true"
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1500,
-          messages: [{ role: "user", content: prompt }]
-        }),
-        signal: controller.signal
-      });
+      const res = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + encodeURIComponent(apiKey),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 1500 }
+          }),
+          signal: controller.signal
+        }
+      );
       clearTimeout(timeoutId);
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);
-      const text = data.content?.map(b => b.text || "").join("") || "(empty response)";
+      const text = data.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("") || "(empty response)";
       summaryBox.className = "o1oSummaryBox";
       summaryBox.textContent = text;
       state.lastSummary = text;
@@ -650,7 +647,7 @@ PERSONAL & WELLBEING${personalQA || "\n(tidak ada jawaban diisi)"}
 WORK${workQA || "\n(tidak ada jawaban diisi)"}
 
 ──────────────────────
-Note: This is a template-only summary. Ask the master to set the org-wide Anthropic API key (Master Console → AI) to enable AI-generated executive summaries with recommendations and management flags.`;
+Note: This is a template-only summary. Ask the master to set the org-wide Gemini API key (Master Console → AI) to enable AI-generated executive summaries with recommendations and management flags.`;
 }
 
 // ---------------- ACTIONS ----------------

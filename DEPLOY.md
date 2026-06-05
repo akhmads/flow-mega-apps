@@ -91,9 +91,10 @@ Copy-Item firebase-applet-config.prod.json firebase-applet-config.json -Force
       The v3.10 rules add the `master` role + `/app_settings/global` collection.
       Without this deploy, the Master Console will hit permission-denied when
       it tries to save settings.
-- [ ] **(Optional) Set the org-wide Anthropic API key** — log in as master →
-      Master Console → AI → paste your `sk-ant-…` key → Save. Every supervisor's
-      1-on-1 Summarizer will use it automatically. Skip if you're not using AI
+- [ ] **(Optional) Set the org-wide Gemini API key** — log in as master →
+      Master Console → AI → paste your `AIza…` or `AQ.…` key → Save. Get a free
+      key at https://aistudio.google.com/apikey. Every supervisor's 1-on-1
+      Summarizer will use it automatically. Skip if you're not using AI
       summaries yet.
 - [ ] **Onboard the team** — log in as the supervisor, then for each person:
       add their Auth account in the Firebase Console, and add their email +

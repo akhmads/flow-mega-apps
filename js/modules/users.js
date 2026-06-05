@@ -47,17 +47,7 @@ export function initUsers() {
 }
 
 function renderShell() {
-  const productionNotice = isFirebaseConfigured ? `
-    <div class="card">
-      <h2>How it works (production)</h2>
-      <div class="output" style="font-size:13px;line-height:1.6">
-1⃣  <b>Click "+ Add User".</b> Fill in email, name, role, department, and a starting password. The login account is created in Firebase Auth automatically — no Console steps required.
-<br><br>
-2⃣  <b>Share the password securely</b> with the new user. They can change it any time. Supervisors can also reset it from here.
-<br><br>
-3⃣  <b>To remove access:</b> delete their entry here. (Their Firebase Auth login still exists — disable it in Firebase Console if you want to fully revoke.)
-      </div>
-    </div>` : `
+  const productionNotice = isFirebaseConfigured ? `` : `
     <div class="card" style="background:#fdf4ff;border-left:4px solid #7c3aed">
       <h2 style="margin:0 0 6px">Preview Mode — self-contained sandbox</h2>
       <p class="small" style="margin:0">You can create accounts here with email + password, and they can log in immediately. Data is stored in your browser (localStorage), so it persists across reloads but only on this device. In production this same UI assigns roles in Firebase.</p>

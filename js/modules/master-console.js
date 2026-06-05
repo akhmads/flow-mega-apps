@@ -13,7 +13,7 @@
 //                 (org-wide, persisted to Firestore /app_settings/global)
 //   • Power     — impersonate any user (per-browser session)
 //   • Features  — kill switch for any feature flag (org-wide override)
-//   • AI        — org-wide Anthropic API key for 1-on-1 summarizer
+//   • AI        — org-wide Gemini API key for 1-on-1 summarizer
 //   • Users     — promote/demote anyone to any role (incl. master)
 //   • Data      — export current store as JSON (backup)
 //   • Audit     — tail of recent logins + activity entries
@@ -31,7 +31,7 @@
 //     broadcastSeverity        "info" | "warn" | "danger"
 //     forceRefreshAt           number (Date.now()) — clients reload if
 //                              their session predates this stamp
-//     aiApiKey                 string (Anthropic key, shared)
+//     aiApiKey                 string (Gemini key, shared)
 //     updatedAt / updatedBy    standard audit fields
 // ============================================================
 
@@ -230,10 +230,10 @@ function renderShell() {
 
     <!-- I: AI key -->
     <div class="card">
-      <h2 style="margin:0 0 10px">Org-wide AI Key (Anthropic)</h2>
-      <p class="small" style="color:var(--muted);margin:0 0 10px">Set once here — every supervisor's 1-on-1 Summarizer uses it automatically. Stored in Firestore, never shown again after save.</p>
+      <h2 style="margin:0 0 10px">Org-wide AI Key (Gemini)</h2>
+      <p class="small" style="color:var(--muted);margin:0 0 10px">Set once here — every supervisor's 1-on-1 Summarizer uses it automatically. Stored in Firestore, never shown again after save. Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>.</p>
       <div class="mcRow">
-        <input type="password" id="mcAiKey" placeholder="sk-ant-…" autocomplete="off" />
+        <input type="password" id="mcAiKey" placeholder="AIza… or AQ.…" autocomplete="off" />
         <button class="primary" id="mcAiKeySave">Save Key</button>
         <button class="secondary" id="mcAiKeyClear">Clear</button>
       </div>
@@ -363,7 +363,7 @@ function bindEvents() {
   // I: AI key
   $("mcAiKeySave").onclick = () => {
     const key = $("mcAiKey").value.trim();
-    if (!key.startsWith("sk-")) return toast("Key should start with sk-", "error");
+    if (!key.startsWith("AIza") && !key.startsWith("AQ.")) return toast("Gemini key should start with AIza… or AQ.…", "error");
     setSetting({ aiApiKey: key })
       .then(() => { toast("AI key saved org-wide", "success"); $("mcAiKey").value = ""; loadAndRenderSettings(); });
   };
