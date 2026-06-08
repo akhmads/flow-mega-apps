@@ -169,12 +169,6 @@ async function loadMembers() {
 function renderShell() {
   return `
     <div class="card">
-      <div class="pmHeaderActions">
-        <div class="left">
-          <h2 style="margin:0">1-on-1 Summarizer</h2>
-          <p style="color:var(--muted);margin:6px 0 0">Structured 1-on-1 sessions with your team. Rate workload, ask role-specific questions, generate an AI summary for management review.</p>
-        </div>
-      </div>
       <div class="o1oSteps">
         <div class="o1oStep active" data-stepnum="1">
           <span class="o1oStepNum">1</span>

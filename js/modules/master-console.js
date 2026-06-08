@@ -43,6 +43,7 @@ import {
   COL, doc, getDoc, setDoc, getDocs, collection, query, orderBy, limit, serverTimestamp
 } from "../firebase.js";
 import { FEATURES, FEATURE_DEFAULTS, APP_VERSION, BUILD_DATE } from "../features.js";
+import { snapshotNavLayout, applySidebarLayout } from "./sidebar-layout.js";
 
 const SETTINGS_COL = "app_settings";
 const SETTINGS_DOC = "global";
@@ -226,6 +227,23 @@ function renderShell() {
         <button class="secondary" id="mcModulesShowAll">Show All</button>
       </div>
       <div class="small mcStatus" id="mcModulesStatus">—</div>
+    </div>
+
+    <!-- Sidebar Editor — drag to reorder, click to rename, move between groups -->
+    <div class="card">
+      <h2 style="margin:0 0 10px">📐 Sidebar Editor (Org-wide)</h2>
+      <p class="small" style="color:var(--muted);margin:0 0 10px">Drag the ⠿ handles to reorder items or whole groups. Click any label to rename it. Drop an item under a different group label to move it. Saves to every user.</p>
+      <div class="mcBtnRow" style="margin-bottom:10px">
+        <button class="secondary" id="mcSidebarAddGroup">+ New Department (Group)</button>
+        <button class="secondary" id="mcSidebarAddTracker">+ Daily Tracker for Dept</button>
+      </div>
+      <div id="mcSidebarList" class="mcSidebarList"></div>
+      <div class="mcBtnRow" style="margin-top:12px">
+        <button class="primary"   id="mcSidebarSave">Save &amp; Apply Org-wide</button>
+        <button class="secondary" id="mcSidebarReset">Reset to Defaults</button>
+        <button class="secondary" id="mcSidebarRevert">Revert Unsaved</button>
+      </div>
+      <div class="small mcStatus" id="mcSidebarStatus">—</div>
     </div>
 
     <!-- I: AI key -->
@@ -417,6 +435,14 @@ function bindEvents() {
       toast("Save failed: " + e.message, "error");
     }
   };
+
+  // Sidebar Editor
+  initSidebarEditor();
+  $("mcSidebarSave").onclick = saveSidebarLayout;
+  $("mcSidebarReset").onclick = resetSidebarLayout;
+  $("mcSidebarRevert").onclick = () => { initSidebarEditor(true); };
+  $("mcSidebarAddGroup").onclick = addNewSidebarGroup;
+  $("mcSidebarAddTracker").onclick = addNewSidebarTracker;
 }
 
 // ============================================================
@@ -675,4 +701,195 @@ async function renderAuditFeed() {
   } catch (e) {
     wrap.innerHTML = `<span class="small" style="color:#dc2626">Audit load failed: ${esc(e.message)}</span>`;
   }
+}
+
+// ============================================================
+// SIDEBAR EDITOR
+//
+// Working layout (`_workingLayout`) is what the master is currently
+// editing in the UI. Save flushes it to /app_settings/global.sidebar
+// (which triggers applySidebarLayout for every signed-in user via
+// the existing onSnapshot in app.js).
+// ============================================================
+let _workingLayout = null;          // [{kind, id, label}]
+let _draggingRow = null;            // currently-dragged row element
+
+function initSidebarEditor(forceFromLive = false) {
+  // Try the cached/saved layout first; fall back to the live nav order.
+  if (forceFromLive) {
+    _workingLayout = snapshotNavLayout();
+  } else {
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem("flow.sidebarLayout") || "null"); } catch (e) {}
+    _workingLayout = (Array.isArray(cached) && cached.length) ? cached : snapshotNavLayout();
+  }
+  renderSidebarEditor();
+  $("mcSidebarStatus").textContent = `${_workingLayout.length} entries · drag ⠿ to reorder · click label to rename`;
+}
+
+function renderSidebarEditor() {
+  const wrap = $("mcSidebarList");
+  if (!wrap) return;
+  wrap.innerHTML = _workingLayout.map((entry, i) => {
+    const isGroup   = entry.kind === "group";
+    const isTracker = entry.kind === "tracker";
+    const rowClass  = isGroup ? "mcSideGroup" : "mcSideItem";
+    const kindLabel = isGroup ? "GROUP" : isTracker ? "TRACKER" : "ITEM";
+    const removable = isGroup || isTracker;  // built-in items can't be removed
+    const removeBtn = removable
+      ? `<button class="mcSideRemove" type="button" data-idx="${i}" title="Remove">×</button>`
+      : "";
+    return `
+      <div class="mcSideRow ${rowClass}" draggable="true" data-idx="${i}">
+        <span class="mcSideHandle" title="Drag to reorder">⠿</span>
+        <span class="mcSideKind">${kindLabel}</span>
+        <span class="mcSideLabel" contenteditable="true"
+              data-idx="${i}" title="Click to rename · Enter to confirm">${esc(entry.label)}</span>
+        <span class="mcSideId">${esc(entry.id)}</span>
+        ${removeBtn}
+      </div>
+    `;
+  }).join("");
+
+  // Remove buttons (only on groups and trackers)
+  wrap.querySelectorAll(".mcSideRemove").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = +btn.dataset.idx;
+      _workingLayout.splice(idx, 1);
+      renderSidebarEditor();
+    });
+  });
+
+  // Inline rename
+  wrap.querySelectorAll(".mcSideLabel").forEach(el => {
+    el.addEventListener("blur", () => commitRename(el));
+    el.addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); el.blur(); }
+      if (e.key === "Escape") {
+        const idx = +el.dataset.idx;
+        el.textContent = _workingLayout[idx]?.label || "";
+        el.blur();
+      }
+    });
+  });
+
+  // Drag and drop — reorder + move between groups in one mechanic.
+  wrap.querySelectorAll(".mcSideRow").forEach(row => {
+    row.addEventListener("dragstart", e => {
+      _draggingRow = row;
+      row.classList.add("mcSideDragging");
+      e.dataTransfer.effectAllowed = "move";
+      try { e.dataTransfer.setData("text/plain", row.dataset.idx); } catch (_) {}
+    });
+    row.addEventListener("dragend", () => {
+      row.classList.remove("mcSideDragging");
+      _draggingRow = null;
+      wrap.querySelectorAll(".mcSideRow").forEach(r => r.classList.remove("mcSideDropAbove", "mcSideDropBelow"));
+    });
+    row.addEventListener("dragover", e => {
+      if (!_draggingRow || _draggingRow === row) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const r = row.getBoundingClientRect();
+      const above = e.clientY < r.top + r.height / 2;
+      row.classList.toggle("mcSideDropAbove", above);
+      row.classList.toggle("mcSideDropBelow", !above);
+    });
+    row.addEventListener("dragleave", () => {
+      row.classList.remove("mcSideDropAbove", "mcSideDropBelow");
+    });
+    row.addEventListener("drop", e => {
+      if (!_draggingRow || _draggingRow === row) return;
+      e.preventDefault();
+      const fromIdx = +_draggingRow.dataset.idx;
+      let toIdx = +row.dataset.idx;
+      const r = row.getBoundingClientRect();
+      const above = e.clientY < r.top + r.height / 2;
+      const moved = _workingLayout.splice(fromIdx, 1)[0];
+      if (fromIdx < toIdx) toIdx--;                         // index shifts after splice
+      if (!above) toIdx++;                                  // drop below
+      _workingLayout.splice(toIdx, 0, moved);
+      renderSidebarEditor();
+    });
+  });
+}
+
+function commitRename(el) {
+  const idx = +el.dataset.idx;
+  const newLabel = (el.textContent || "").trim();
+  if (!newLabel) {
+    // Don't allow an empty label — restore previous.
+    el.textContent = _workingLayout[idx]?.label || "";
+    return;
+  }
+  if (_workingLayout[idx] && _workingLayout[idx].label !== newLabel) {
+    _workingLayout[idx].label = newLabel;
+  }
+}
+
+async function saveSidebarLayout() {
+  if (!Array.isArray(_workingLayout) || !_workingLayout.length) {
+    return toast("Nothing to save", "error");
+  }
+  try {
+    await setSetting({ sidebar: _workingLayout });
+    // Apply locally too so the master sees the new layout immediately
+    // (the org-wide snapshot will arrive a beat later and re-apply).
+    try { applySidebarLayout(_workingLayout); } catch (_) {}
+    toast(`Saved · ${_workingLayout.length} entries applied org-wide`, "success");
+    $("mcSidebarStatus").textContent = `✓ Last saved ${new Date().toLocaleTimeString()} — applied to every user`;
+  } catch (e) {
+    toast("Save failed: " + e.message, "error");
+  }
+}
+
+async function resetSidebarLayout() {
+  if (!confirm("Reset the sidebar to defaults for everyone? Custom labels and order will be lost.")) return;
+  try {
+    await setSetting({ sidebar: [] });            // empty array = clear override
+    try { localStorage.removeItem("flow.sidebarLayout"); } catch (_) {}
+    toast("Sidebar reset to defaults org-wide. Reload to see the default order.", "success");
+    $("mcSidebarStatus").textContent = "Reset to defaults — reload to fully restore default labels.";
+    initSidebarEditor(true);
+  } catch (e) {
+    toast("Reset failed: " + e.message, "error");
+  }
+}
+
+// Add a brand-new department (group) at the end of the sidebar.
+// Master can immediately drag it where they want and rename it inline.
+function addNewSidebarGroup() {
+  const id = "custom-" + Math.random().toString(36).slice(2, 8);
+  _workingLayout.push({ kind: "group", id, label: "New Department" });
+  renderSidebarEditor();
+  // Auto-focus the new label so master can rename it right away
+  setTimeout(() => {
+    const rows = document.querySelectorAll("#mcSidebarList .mcSideLabel");
+    const last = rows[rows.length - 1];
+    if (last) { last.focus(); document.getSelection().selectAllChildren(last); }
+  }, 30);
+}
+
+// Add a Daily Tracker for a custom department. Prompts for the dept
+// name, slugifies it for the menu id (e.g. "Finance" → "finance"), and
+// inserts an entry that materialises as a tracker page on every client.
+// Tasks live in their own Firestore collection: daily_tasks_<slug>.
+function addNewSidebarTracker() {
+  const deptName = (prompt("Department name for this Daily Tracker (e.g. Finance, Legal)") || "").trim();
+  if (!deptName) return;
+  const slug = deptName.toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  if (!slug) return toast("Couldn't derive a key from that name", "error");
+  const menuId = "tracker:" + slug;
+  // Avoid dupes
+  if (_workingLayout.some(e => e.id === menuId)) {
+    return toast(`A tracker for "${deptName}" is already in the layout`, "error");
+  }
+  _workingLayout.push({
+    kind: "tracker",
+    id: menuId,
+    label: `Daily Tracker — ${deptName}`
+  });
+  renderSidebarEditor();
+  toast(`Added · drag it under the "${deptName}" group, then Save`, "success");
 }

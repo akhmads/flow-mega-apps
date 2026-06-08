@@ -87,7 +87,7 @@ import {
 } from "./roles.js";
 import { initDashboard } from "./modules/dashboard.js";
 import { initIssues, consumeIssuesNavAction } from "./modules/daily-issue.js";
-import { initSalesTracker, initSSTracker, initGATracker } from "./modules/daily-tracker.js";
+import { initSalesTracker, initSSTracker, initGATracker, initCustomDeptTracker } from "./modules/daily-tracker.js";
 import { initInboundMonitoring } from "./modules/inbound-monitoring.js";
 import { initMPForecasting } from "./modules/mp-forecasting.js";
 import { initWeeklyReport } from "./modules/weekly-report.js";
@@ -101,6 +101,7 @@ import { initOneOnOne } from "./modules/one-on-one.js";
 import { initMasterConsole } from "./modules/master-console.js";
 import { initClientLinks } from "./modules/client-links.js";
 import { initCommandCenter } from "./modules/command-center.js";
+import { applySidebarLayout } from "./modules/sidebar-layout.js";
 import { mountDebugPanel, mountReportButton, logBreadcrumb } from "./debug-panel.js";
 import { initMerger, initOrderProcessing, initDailyReconcile, initWeeklyReportGen, initForecastOrdersGen } from "./legacy/legacy-loader.js";
 import { initGlobalSearch } from "./modules/global-search.js";
@@ -270,6 +271,9 @@ function bindNav() {
   // legacy-global.js already exposes window.showSub; nothing to wire here.
 }
 
+// Exposed on window so dynamically-created nav buttons (sidebar-layout's
+// synthesised tracker/external buttons) can call back into the router.
+window.__flowSwitchPage = switchPage;
 function switchPage(menuId, clickedBtn) {
   if (!canViewModule(menuId)) {
     toast("You don't have access to this section", "error");
@@ -281,15 +285,39 @@ function switchPage(menuId, clickedBtn) {
     const b = document.querySelector(`.nav button[data-menu="${menuId}"]`);
     if (b) b.classList.add("active");
   }
+  // Dynamic custom-dept tracker: master-added entries use menu IDs of the
+  // form "tracker:<deptKey>". Lazily build the section + page handler on
+  // first navigation so a brand-new dept tracker works without a reload.
+  if (menuId.startsWith("tracker:") && !PAGES[menuId]) {
+    const deptKey = menuId.slice("tracker:".length);
+    // Pull the human label from the nav button text so the modal can show it
+    const navBtn = document.querySelector(`.nav button[data-menu="${menuId}"]`);
+    const deptLabel = (navBtn?.textContent || deptKey).trim()
+      .replace(/^Daily Tracker[\s—-]*/i, "");      // strip the prefix the master typed
+    PAGES[menuId] = {
+      title: navBtn?.textContent?.trim() || `Daily Tracker — ${deptLabel}`,
+      sub: `Daily tasks for ${deptLabel}`,
+      init: () => initCustomDeptTracker(deptKey, deptLabel || deptKey)
+    };
+  }
   document.querySelectorAll(".menu").forEach(s => s.classList.add("hidden"));
-  const target = $(menuId);
+  let target = $(menuId);
+  // For dynamic custom-dept trackers, the section is created lazily by
+  // init() — after it runs, re-query and show.
+  const showAfterInit = !target && menuId.startsWith("tracker:");
   if (target) target.classList.remove("hidden");
   const page = PAGES[menuId];
   if (page) {
     _currentMenu = menuId;
-    $("pageTitle").textContent = t(`page.${menuId}.title`);
-    $("pageSubtitle").textContent = t(`page.${menuId}.sub`);
-    logBreadcrumb("Page → " + t(`page.${menuId}.title`));
+    // For dynamic pages (custom-dept trackers, future plugin pages) the
+    // i18n key won't exist, so prefer the PAGES entry's title/sub.
+    const i18nTitle = t(`page.${menuId}.title`);
+    const i18nSub   = t(`page.${menuId}.sub`);
+    const titleText = (i18nTitle === `page.${menuId}.title`) ? page.title : i18nTitle;
+    const subText   = (i18nSub   === `page.${menuId}.sub`)   ? page.sub   : i18nSub;
+    $("pageTitle").textContent = titleText;
+    $("pageSubtitle").textContent = subText;
+    logBreadcrumb("Page → " + titleText);
     if (!inited[menuId]) {
       try {
         page.init();
@@ -298,6 +326,12 @@ function switchPage(menuId, clickedBtn) {
         console.error(`Failed to init ${menuId}:`, e);
         toast(`Failed to load ${page.title}`, "error");
       }
+    }
+    // Dynamic sections (custom-dept trackers) only exist in the DOM
+    // after init() runs. Re-query and unhide.
+    if (showAfterInit) {
+      target = $(menuId);
+      if (target) target.classList.remove("hidden");
     }
     // Fire on EVERY navigation, not just the first. Lets modules
     // honor `window.__pendingNavAction` (set by the dashboard when
@@ -489,6 +523,19 @@ function applyMasterSettings(s) {
   const disabled = Array.isArray(s.disabledModules) ? s.disabledModules : [];
   window.__flowDisabledModules = disabled;
   try { localStorage.setItem("flow.disabledModules", JSON.stringify(disabled)); } catch (e) {}
+
+  // Sidebar layout — master-curated nav order, group, and labels.
+  // Applied before role-visibility so the role gate runs on the final DOM.
+  // Cached in localStorage so the first paint after reload uses the saved
+  // layout without waiting for Firestore.
+  if (Array.isArray(s.sidebar) && s.sidebar.length) {
+    try { localStorage.setItem("flow.sidebarLayout", JSON.stringify(s.sidebar)); } catch (e) {}
+    try { applySidebarLayout(s.sidebar); } catch (e) { console.warn("[Sidebar] apply failed:", e); }
+  } else if (s.sidebar === null || (Array.isArray(s.sidebar) && !s.sidebar.length)) {
+    // Master explicitly reset to defaults — clear the cache.
+    try { localStorage.removeItem("flow.sidebarLayout"); } catch (e) {}
+  }
+
   // Re-apply nav visibility live (no reload needed)
   try { applyRoleVisibility(); } catch (e) { /* bootApp not done yet */ }
 }
@@ -555,6 +602,17 @@ function bootApp(email, role, name, department) {
     const ab = document.querySelector('.nav button[data-menu="auditLog"]');
     if (ab) ab.remove();
   }
+  // Apply the cached sidebar layout (if any) BEFORE role-visibility so
+  // the role gate sees the master-curated DOM order. Firestore arrives
+  // shortly after and refreshes this via applyMasterSettings.
+  try {
+    const raw = localStorage.getItem("flow.sidebarLayout");
+    if (raw) {
+      const cached = JSON.parse(raw);
+      if (Array.isArray(cached) && cached.length) applySidebarLayout(cached);
+    }
+  } catch (e) { /* ignore */ }
+
   applyRoleVisibility();
   bindNav();
   // Global search — optional (toggle in features.js).

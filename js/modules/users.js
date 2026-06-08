@@ -54,23 +54,16 @@ function renderShell() {
     </div>`;
 
   return `
+    ${productionNotice}
+
     <div class="card">
       <div class="pmHeaderActions">
-        <div class="left">
-          <h2 style="margin:0">User Management</h2>
-          <p style="color:var(--muted);margin:6px 0 0">Create accounts, assign roles, reset passwords. Admins + Supervisors.</p>
-        </div>
+        <div class="left"><h2 style="margin:0">Team Members</h2></div>
         <div class="right">
           <button class="primary" id="usrAddBtn">+ Add User</button>
         </div>
       </div>
-    </div>
-
-    ${productionNotice}
-
-    <div class="card">
-      <h2>Team Members</h2>
-      <div class="usrFilters">
+      <div class="usrFilters" style="margin-top:14px">
         <input type="search" id="usrFilterSearch" placeholder="Search by name or email…"/>
         <select id="usrFilterRole">
           <option value="">All Roles</option>

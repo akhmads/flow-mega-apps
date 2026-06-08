@@ -2087,3 +2087,63 @@ grid-template-columns:1fr!important}.premium-ui-v3 .title h1 {font-size:23px!imp
 @keyframes ccPulse{from{opacity:.55}to{opacity:1}}
 .cc-drag-dept{opacity:.65;margin-right:2px;padding:2px 4px;border-radius:4px}
 .cc-drag-dept:hover{background:rgba(99,55,216,.08)}
+
+/* When the .left half is empty (descriptions removed), don't waste it.
+   Hiding it leaves .right as the sole flex child — which naturally
+   sits at flex-start, so the action buttons slide to the left edge.
+   Works without :has(); broad browser support. */
+.pmHeaderActions > .left:empty{display:none}
+
+/* ================== SIDEBAR EDITOR (Master Console) ================== */
+.mcSidebarList{
+  display:flex;flex-direction:column;gap:4px;max-height:520px;overflow-y:auto;
+  padding:6px;background:var(--bg);border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+}
+.mcSideRow{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;background:#fff;border:1px solid var(--border);
+  border-radius:6px;font-size:13px;cursor:default;
+  transition:border-color .12s,background .12s;
+}
+.mcSideRow.mcSideGroup{
+  background:rgba(99,55,216,.06);font-weight:700;
+  text-transform:uppercase;letter-spacing:.06em;font-size:11px;
+  color:var(--primary);border-color:rgba(99,55,216,.2);
+}
+.mcSideRow.mcSideItem{padding-left:32px}
+.mcSideHandle{
+  cursor:grab;color:var(--muted);font-size:14px;
+  padding:2px 6px;border-radius:4px;user-select:none;
+}
+.mcSideHandle:hover{background:rgba(99,55,216,.08);color:var(--primary)}
+.mcSideHandle:active{cursor:grabbing}
+.mcSideKind{
+  font-size:9px;font-weight:700;color:var(--muted);
+  background:var(--bg);padding:2px 6px;border-radius:3px;
+  letter-spacing:.06em;flex-shrink:0;
+}
+.mcSideGroup .mcSideKind{background:rgba(99,55,216,.15);color:var(--primary)}
+.mcSideLabel{
+  flex:1;min-width:0;padding:2px 6px;border-radius:4px;
+  outline:none;cursor:text;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.mcSideLabel:focus{background:rgba(99,55,216,.08);box-shadow:0 0 0 2px rgba(99,55,216,.2)}
+.mcSideLabel:hover{background:rgba(99,55,216,.04)}
+.mcSideId{
+  font-family:'JetBrains Mono','SF Mono',Consolas,monospace;
+  font-size:10px;color:var(--muted);background:var(--bg);
+  padding:2px 6px;border-radius:3px;flex-shrink:0;
+}
+.mcSideRow.mcSideDragging{opacity:.4}
+.mcSideRow.mcSideDropAbove{border-top:2px solid var(--primary);margin-top:-2px}
+.mcSideRow.mcSideDropBelow{border-bottom:2px solid var(--primary);margin-bottom:-2px}
+.mcSideRemove{
+  background:none;border:1px solid transparent;color:var(--muted);
+  font-size:16px;font-weight:700;line-height:1;
+  width:22px;height:22px;border-radius:5px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding:0;
+  transition:all .12s;
+}
+.mcSideRemove:hover{background:#fee2e2;color:#dc2626;border-color:#fca5a5}

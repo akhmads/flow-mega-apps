@@ -442,10 +442,7 @@ function renderShell() {
     <div id="pmListView">
       <div class="card">
         <div class="pmHeaderActions">
-          <div class="left">
-            <h2 style="margin:0">All Projections</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Client onboarding projects. Each tracks 35 timeline tasks across Sales & Sales Support.</p>
-          </div>
+          <div class="left"></div>
           <div class="right">
             <button class="primary" id="pmNewBtn">+ New Project</button>
             <button class="secondary" id="pmExportAllBtn">Export All</button>

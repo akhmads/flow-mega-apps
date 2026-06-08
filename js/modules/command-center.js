@@ -194,13 +194,7 @@ function renderShell() {
   return `
     <div class="card cc-header-card">
       <div class="pmHeaderActions">
-        <div class="left">
-          <h2 style="margin:0">${esc(t("cc.title"))}</h2>
-          <p style="color:var(--muted);margin:6px 0 0">
-            ${t("cc.intro")}
-            ${canManageDept() ? t("cc.intro.editable") : t("cc.intro.limited")}
-          </p>
-        </div>
+        <div class="left"></div>
         <div class="right">
           <input type="search" id="ccSearch" placeholder="${esc(t("cc.search"))}" class="cc-search"/>
           ${canAddApp()  ? `<button class="primary"  id="ccAddAppBtn">${esc(t("cc.addApp"))}</button>` : ""}

@@ -496,12 +496,7 @@ function renderShell() {
   const readOnly = !canEditMasterData();
   return `
     <div class="card">
-      <div class="pmHeaderActions">
-        <div class="left">
-          <h2 style="margin:0">Master Data ${readOnly ? '<span class="badge badge-on-hold" style="margin-left:8px">View-Only</span>' : ''}</h2>
-          <p style="color:var(--muted);margin:6px 0 0">Single source of truth for Departments, Clients, and Issue Categories.${readOnly ? ' You can browse but cannot edit — ask an Admin or Supervisor to make changes.' : ' Standardizing these stops typos and keeps reports clean.'}</p>
-        </div>
-      </div>
+      ${readOnly ? `<div style="margin-bottom:10px"><span class="badge badge-on-hold">View-Only — ask an Admin or Supervisor to edit</span></div>` : ''}
       <div class="tabs" id="mdTabs">
         <button class="active" data-mdtab="departments">Departments</button>
         <button data-mdtab="clients">Clients</button>

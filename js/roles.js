@@ -332,6 +332,16 @@ export function canViewModule(moduleId) {
 
   if (isAdmin()) return true;          // admin sees everything else
   if (isSupervisor()) return true;     // supervisor sees everything else
+  // Custom department trackers (added via Master Console → Sidebar Editor):
+  // visible to users whose own department matches the tracker's dept key.
+  if (typeof moduleId === "string" && moduleId.startsWith("tracker:")) {
+    const wantDept = moduleId.slice("tracker:".length).toLowerCase();
+    const myDept = (currentProfile?.department || "").toLowerCase();
+    // Match either by slug (kebab/snake) or the dept's full name
+    return myDept === wantDept
+        || myDept.replace(/\s+/g, "-") === wantDept
+        || myDept.replace(/\s+/g, "_") === wantDept;
+  }
   const rules = {
     dashboard: true,
     dailyTrackerSales: isSalesTeam(),
@@ -425,6 +435,13 @@ export async function getStaffForTeam(team) {
   if (team === "ga") {
     return all.filter(u =>
       (u.department || "").toLowerCase() === "general affairs");
+  }
+  // Fallback: case-insensitive match against the user's department field.
+  // Used by custom-dept Daily Tracker — passes the dept label/name (e.g.
+  // "Finance", "Legal") and gets back users assigned to that department.
+  if (team && typeof team === "string") {
+    const want = team.toLowerCase();
+    return all.filter(u => (u.department || "").toLowerCase() === want);
   }
   return all;
 }

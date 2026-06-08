@@ -61,10 +61,7 @@ function renderShell() {
   return `
     <div class="card">
       <div class="pmHeaderActions">
-        <div class="left">
-          <h2 style="margin:0">Activity Log</h2>
-          <p style="color:var(--muted);margin:6px 0 0">Every create, update and delete across the app — who did what, and when.</p>
-        </div>
+        <div class="left"></div>
         <div class="right">
           <button class="secondary" id="auditExportBtn">Export Excel</button>
         </div>
