@@ -129,7 +129,8 @@
       <button data-menu="dailyReconcile" data-i18n="nav.dailyReconcile">Daily Reconcile</button>
       <button data-menu="weeklyReportGen" data-i18n="nav.weeklyReportGen">Weekly Report Generator</button>
       <button data-menu="forecastOrdersGen" data-i18n="nav.forecastOrdersGen">Forecast Orders Generator</button>
-      <div class="navGroup" data-show-for-supervisor data-i18n="group.management">Management</div>
+      <div class="navGroup" data-i18n="group.management">Management</div>
+      <button data-menu="commandCenter" data-i18n="nav.commandCenter">Command Center</button>
       <button data-menu="oneOnOne" data-show-for-supervisor data-i18n="nav.oneOnOne">1-on-1 Summarizer</button>
       <button data-menu="masterData" data-show-for-supervisor data-i18n="nav.masterData">Master Data</button>
       <button data-menu="auditLog" data-show-for-supervisor data-i18n="nav.auditLog">Activity Log</button>
@@ -191,12 +192,12 @@
       <div id="previewBanner" class="card hidden" style="background:linear-gradient(135deg,#fdf4ff,#ede9fe);border-left:4px solid #7c3aed">
         <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
           <div style="flex:1;min-width:240px">
-            <h2 style="margin:0 0 4px;color:#5b21b6">Preview / Demo Mode</h2>
-            <p class="small" style="margin:0;line-height:1.6">
+            <h2 style="margin:0 0 4px;color:#5b21b6" data-i18n="dash.preview.title">Preview / Demo Mode</h2>
+            <p class="small" style="margin:0;line-height:1.6" data-i18n-html="dash.preview.body">
               You're running the app without Firebase. <b>Every feature works</b> — create issues, tickets, users, etc. Data is saved to your browser's localStorage and survives page reloads. Click <b>+ buttons</b> on any page to add data; supervisors can also create new login accounts under <b>User Management</b>. To wipe all demo data and start fresh, open browser DevTools console and run <code>localStorage.clear()</code> then refresh.
             </p>
           </div>
-          <button class="secondary" id="previewWipeBtn">Wipe demo data</button>
+          <button class="secondary" id="previewWipeBtn" data-i18n="dash.preview.wipe">Wipe demo data</button>
         </div>
       </div>
 
@@ -209,8 +210,8 @@
       <div class="card">
         <div class="pmHeaderActions">
           <div class="left">
-            <h2 style="margin:0">My Action Items</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Tickets assigned to you + your open tasks. Acknowledge or resolve right from here.</p>
+            <h2 style="margin:0" data-i18n="dash.action.title">My Action Items</h2>
+            <p style="color:var(--muted);margin:6px 0 0" data-i18n="dash.action.sub">Tickets assigned to you + your open tasks. Acknowledge or resolve right from here.</p>
           </div>
         </div>
         <div id="myActionItems" style="margin-top:14px"></div>
@@ -219,24 +220,24 @@
       <div class="card">
         <div class="pmHeaderActions">
           <div class="left">
-            <h2 style="margin:0">Overview</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Live KPIs for your department. Filter by date range.</p>
+            <h2 style="margin:0" data-i18n="dash.section.overview">Overview</h2>
+            <p style="color:var(--muted);margin:6px 0 0" data-i18n="dash.section.overviewSub">Live KPIs for your department. Filter by date range.</p>
           </div>
         </div>
         <div class="filterGrid" style="margin-top:14px">
-          <div><label class="pmLabel">Date Range</label>
+          <div><label class="pmLabel" data-i18n="dash.label.dateRange">Date Range</label>
             <select id="dashRange">
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="thisWeek" selected>This Week</option>
-              <option value="thisMonth">This Month</option>
-              <option value="last30">Last 30 Days</option>
-              <option value="custom">Custom</option>
+              <option value="all" data-i18n="dash.range.all">All Time</option>
+              <option value="today" data-i18n="dash.range.today">Today</option>
+              <option value="yesterday" data-i18n="dash.range.yesterday">Yesterday</option>
+              <option value="thisWeek" selected data-i18n="dash.range.thisWeek">This Week</option>
+              <option value="thisMonth" data-i18n="dash.range.thisMonth">This Month</option>
+              <option value="last30" data-i18n="dash.range.last30">Last 30 Days</option>
+              <option value="custom" data-i18n="dash.range.custom">Custom</option>
             </select>
           </div>
-          <div><label class="pmLabel">From</label><input type="date" id="dashFrom"/></div>
-          <div><label class="pmLabel">To</label><input type="date" id="dashTo"/></div>
+          <div><label class="pmLabel" data-i18n="dash.label.from">From</label><input type="date" id="dashFrom"/></div>
+          <div><label class="pmLabel" data-i18n="dash.label.to">To</label><input type="date" id="dashTo"/></div>
         </div>
       </div>
       <!-- KPI tiles + panels are rendered by dashboard.js, tailored to the
@@ -251,8 +252,6 @@
         <div class="pmHeaderActions">
           <div class="left">
             <span class="pmPill">Sales Support — Daily Issue</span>
-            <h2 style="margin:6px 0 0">Daily Issue Tracker</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Root-cause analysis log. Track complaint, site, root cause, short/long term solution.</p>
           </div>
           <div class="right">
             <button class="primary" id="issueAddBtn">+ New Issue</button>
@@ -432,10 +431,7 @@
     <section id="dailyTrackerSales" class="menu hidden">
       <div class="card">
         <div class="pmHeaderActions">
-          <div class="left">
-            <h2>Daily Tracker — Sales Team</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Track daily tasks for Bryan, Dimas, Gratia, and other sales reps.</p>
-          </div>
+          <div class="left"></div>
           <div class="right">
             <button class="primary trkPrimaryBtn" data-team="sales" id="trkSalesAddBtn">+ New Task</button>
             <button class="secondary" id="trkSalesExportBtn">Export Excel</button>
@@ -491,10 +487,7 @@
     <section id="dailyTrackerSS" class="menu hidden">
       <div class="card">
         <div class="pmHeaderActions">
-          <div class="left">
-            <h2>Daily Tracker — Sales Support</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Track tasks for Yoga, Farah, Asih, Fauzi, and other SS reps. Tagged Daily / Projection / Improvement.</p>
-          </div>
+          <div class="left"></div>
           <div class="right">
             <button class="primary" id="trkSSAddBtn">+ New Task</button>
             <button class="secondary" id="trkSSExportBtn">Export Excel</button>
@@ -551,10 +544,7 @@
     <section id="inboundMonitoring" class="menu hidden">
       <div class="card">
         <div class="pmHeaderActions">
-          <div class="left">
-            <h2>Inbound Monitoring</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Track vehicle arrivals, unloading, GRN processing, and inbound discrepancies.</p>
-          </div>
+          <div class="left"></div>
           <div class="right">
             <button class="primary" id="ibAddBtn">+ New Entry</button>
             <button class="secondary" id="ibExportBtn">Export Excel</button>
@@ -667,10 +657,7 @@
     <section id="mpForecasting" class="menu hidden">
       <div class="card">
         <div class="pmHeaderActions">
-          <div class="left">
-            <h2>MP Forecasting</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Manpower forecast planning, roster scheduling, and attendance gap analysis.</p>
-          </div>
+          <div class="left"></div>
           <div class="right">
             <button class="secondary" id="mpImportBtn">Import Excel</button>
             <button class="secondary" id="mpExportBtn">Export Excel</button>
@@ -803,10 +790,7 @@
     <section id="dailyTrackerGA" class="menu hidden">
       <div class="card">
         <div class="pmHeaderActions">
-          <div class="left">
-            <h2>Daily Tracker — General Affairs</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Track daily tasks and requests for the General Affairs team.</p>
-          </div>
+          <div class="left"></div>
           <div class="right">
             <button class="primary trkPrimaryBtn" data-team="ga" id="trkGAAddBtn">+ New Task</button>
             <button class="secondary" id="trkGAExportBtn">Export Excel</button>
@@ -864,8 +848,6 @@
         <div class="pmHeaderActions">
           <div class="left">
             <span class="pmPill">Department-wide</span>
-            <h2 style="margin:6px 0 0">Internal Tickets</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Internal-use only. Cross-team tickets between Sales, SS, Ops, Tech, Finance, etc. Not for external client tickets.</p>
           </div>
           <div class="right">
             <button class="primary" id="ticketAddBtn">+ New Ticket</button>
@@ -912,10 +894,7 @@
     <section id="revenueCalc" class="menu hidden">
       <div class="card">
         <div class="pmHeaderActions">
-          <div class="left">
-            <h2>Revenue Calculator</h2>
-            <p style="color:var(--muted);margin:6px 0 0">Calculate monthly revenue per client. Saves scenarios to Firestore.</p>
-          </div>
+          <div class="left"></div>
           <div class="right">
             <button class="secondary" id="revResetBtn">Reset</button>
             <button class="secondary" id="revSaveBtn">Save Scenario</button>
@@ -1100,6 +1079,11 @@
 
     <section id="auditLog" class="menu hidden">
       <div id="auditLogRoot"></div>
+    </section>
+
+    <!-- COMMAND CENTER — team-shared app launcher under Management -->
+    <section id="commandCenter" class="menu hidden">
+      <div id="commandCenterRoot"></div>
     </section>
 
     <section id="users" class="menu hidden">

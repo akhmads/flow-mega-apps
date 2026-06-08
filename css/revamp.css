@@ -1956,3 +1956,134 @@ grid-template-columns:1fr!important}.premium-ui-v3 .title h1 {font-size:23px!imp
 }
 @media(max-width:620px){
   #forecastOrdersGenerator .taskStats{grid-template-columns:1fr!important}
+}
+
+/* ================== COMMAND CENTER ================== */
+.cc-header-card .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cc-search{
+  padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-family:inherit;font-size:13px;min-width:200px;
+}
+.cc-search:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,55,216,.1)}
+.cc-board{display:flex;flex-direction:column;gap:18px;margin-top:12px}
+.cc-section{
+  background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:16px 18px;box-shadow:0 1px 2px rgba(19,6,28,.04);
+}
+.cc-section-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.cc-section-title{
+  display:flex;align-items:center;gap:8px;
+  font-family:'Reddit Sans',system-ui,sans-serif;font-weight:700;font-size:14px;
+  color:var(--text);text-transform:uppercase;letter-spacing:.05em;
+}
+.cc-section-badge{
+  background:var(--primary);color:#fff;font-weight:600;font-size:11px;
+  border-radius:999px;padding:1px 9px;letter-spacing:0;
+}
+.cc-section-actions{display:flex;gap:6px;align-items:center}
+.cc-mini{
+  background:rgba(99,55,216,.08);color:var(--primary);
+  border:1px solid rgba(99,55,216,.2);
+  font-size:12px;font-weight:600;font-family:inherit;
+  padding:5px 10px;border-radius:999px;cursor:pointer;
+  transition:background .15s,border-color .15s;
+}
+.cc-mini:hover{background:rgba(99,55,216,.15);border-color:var(--primary)}
+.cc-mini-ghost{background:transparent;color:var(--muted);border-color:var(--border);padding:5px 9px}
+.cc-mini-ghost:hover{color:var(--primary);background:rgba(99,55,216,.06)}
+.cc-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:10px;
+}
+.cc-empty{
+  grid-column:1/-1;text-align:center;padding:18px;font-size:12px;
+  color:var(--muted);border:1.5px dashed var(--border);border-radius:var(--radius-sm);
+}
+.cc-card{
+  position:relative;display:flex;align-items:center;gap:12px;
+  background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:12px 14px;text-decoration:none;color:var(--text);
+  transition:transform .15s,box-shadow .15s,border-color .15s;
+}
+.cc-card:hover{
+  transform:translateY(-2px);border-color:var(--primary);
+  box-shadow:0 6px 18px rgba(99,55,216,.15);
+}
+.cc-card-icon{
+  width:38px;height:38px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:18px;font-family:'Reddit Sans',system-ui,sans-serif;
+}
+.cc-card-body{min-width:0;flex:1}
+.cc-card-name{
+  font-family:'Reddit Sans',system-ui,sans-serif;font-weight:600;font-size:13px;
+  color:var(--text);line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.cc-card-desc{font-size:11px;color:var(--muted);line-height:1.4;margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cc-card-edit{
+  position:absolute;top:6px;right:6px;width:22px;height:22px;
+  background:rgba(255,255,255,.85);border:1px solid var(--border);
+  color:var(--muted);border-radius:6px;font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;opacity:0;transition:opacity .15s,color .15s,background .15s;
+}
+.cc-card:hover .cc-card-edit{opacity:1}
+.cc-card-edit:hover{color:var(--primary);background:#fff}
+
+/* App-modal icon picker */
+.cc-icon-row{display:flex;gap:8px;align-items:center}
+.cc-icon-preview{
+  width:42px;height:42px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:20px;background:var(--primary);
+  font-family:'Reddit Sans',system-ui,sans-serif;
+}
+.cc-icon-row input{flex:1}
+.cc-swatches{display:flex;gap:6px;flex-wrap:wrap}
+.cc-swatch{
+  width:24px;height:24px;border-radius:6px;cursor:pointer;
+  border:2px solid transparent;padding:0;transition:transform .12s;
+}
+.cc-swatch:hover{transform:scale(1.15)}
+.cc-swatch.selected{border-color:var(--text)}
+
+@media(max-width:620px){
+  .cc-header-card .right{width:100%;flex-direction:column;align-items:stretch}
+  .cc-search{min-width:0;width:100%}
+  .cc-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+}
+
+/* ---------- Command Center · drag & drop ---------- */
+.cc-drag{
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:14px;line-height:1;color:var(--muted);
+  cursor:grab;user-select:none;opacity:.5;transition:opacity .15s,color .15s;
+}
+.cc-drag:hover{opacity:1;color:var(--primary)}
+.cc-drag:active{cursor:grabbing}
+.cc-drag-app{
+  position:absolute;top:6px;left:6px;
+  width:22px;height:22px;border-radius:6px;
+  background:rgba(255,255,255,.85);border:1px solid var(--border);
+  opacity:0;
+}
+.cc-card:hover .cc-drag-app{opacity:.85}
+.cc-card.cc-dragging{opacity:.35;transform:scale(.96)}
+.cc-section.cc-dragging-dept{opacity:.4}
+/* Indicator: a thin primary-coloured line that slides between cards */
+.cc-drop-ind{
+  align-self:stretch;min-height:80px;width:3px;
+  background:var(--primary);border-radius:2px;
+  box-shadow:0 0 0 3px rgba(99,55,216,.18);
+  pointer-events:none;animation:ccPulse .9s ease-in-out infinite alternate;
+}
+.cc-drop-ind-dept{
+  height:3px;margin:6px 0;background:var(--primary);border-radius:2px;
+  box-shadow:0 0 0 3px rgba(99,55,216,.18);
+  pointer-events:none;animation:ccPulse .9s ease-in-out infinite alternate;
+}
+@keyframes ccPulse{from{opacity:.55}to{opacity:1}}
+.cc-drag-dept{opacity:.65;margin-right:2px;padding:2px 4px;border-radius:4px}
+.cc-drag-dept:hover{background:rgba(99,55,216,.08)}

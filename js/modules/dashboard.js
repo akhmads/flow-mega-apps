@@ -19,6 +19,7 @@ import {
   $, esc, friendlyDate, toDateStr, badgeClass, today, toast
 } from "../utils.js";
 import { getCurrentEmail, getCurrentProfile, isAdmin } from "../roles.js";
+import { t } from "../i18n.js";
 
 let unsubs = [];
 let latestIssues = [], latestTickets = [], inbound = [];
@@ -92,35 +93,27 @@ function renderGreeting() {
   const el = $("dashGreeting");
   if (!el) return;
   const me = getCurrentProfile();
-  const name = me?.name || (getCurrentEmail()?.split("@")[0] || "there");
+  const name = me?.name || (getCurrentEmail()?.split("@")[0] || t("dash.greet.fallbackName"));
   const hour = new Date().getHours();
-  let salute = "Hello";
-  if (hour < 11) salute = "Selamat pagi";
-  else if (hour < 15) salute = "Selamat siang";
-  else if (hour < 18) salute = "Selamat sore";
-  else salute = "Selamat malam";
+  let salute;
+  if (hour < 11)      salute = t("dash.greet.morning");
+  else if (hour < 15) salute = t("dash.greet.noon");
+  else if (hour < 18) salute = t("dash.greet.afternoon");
+  else                salute = t("dash.greet.evening");
 
   const dept = me?.department ? ` · ${esc(me.department)}` : "";
   el.innerHTML = `
     <div class="greetTop">
       <div>
-        <h2 class="greetHello">${salute}, ${esc(name)}!</h2>
-        <p class="greetSub">${getMotivation()}${dept}</p>
+        <h2 class="greetHello">${esc(salute)}, ${esc(name)}!</h2>
+        <p class="greetSub">${esc(getMotivation())}${dept}</p>
       </div>
     </div>
   `;
 }
 
 function getMotivation() {
-  const lines = [
-    "Let's make today count.",
-    "Move fast, fix things.",
-    "Build the systems Flow needs to scale.",
-    "Excellence is daily discipline.",
-    "Speed is a competitive advantage.",
-    "Small steps, compounded daily."
-  ];
-  return lines[new Date().getDate() % lines.length];
+  return t(`dash.motivation.${new Date().getDate() % 6}`);
 }
 
 // ============================================================
@@ -200,33 +193,33 @@ function renderKPIs(mode) {
   let tiles;
   if (mode === "ss") {
     tiles = [
-      kpi(openIssues, "Open Issues", "dailyIssue", { fltStatus: "Open", fltRange: "all" }),
-      kpi(critical, "Critical (Outbound)", "dailyIssue", { fltStatus: "Open", fltIssueSite: "Outbound", fltRange: "all" }),
-      kpi(openTickets, "Open Tickets", "ticketing", { tktStatus: "Open" }),
-      kpi(teamOpen, "Open Team Tasks", trk.menu, {})
+      kpi(openIssues, t("dash.kpi.openIssues"), "dailyIssue", { fltStatus: "Open", fltRange: "all" }),
+      kpi(critical, t("dash.kpi.critical"), "dailyIssue", { fltStatus: "Open", fltIssueSite: "Outbound", fltRange: "all" }),
+      kpi(openTickets, t("dash.kpi.openTickets"), "ticketing", { tktStatus: "Open" }),
+      kpi(teamOpen, t("dash.kpi.openTeamTasks"), trk.menu, {})
     ];
   } else if (mode === "ops") {
     tiles = [
-      kpi(inboundIn.length, "Inbound (range)", "inboundMonitoring", {}),
-      kpi(inboundDone, "Completed Inbound", "inboundMonitoring", {}),
-      kpi(onTimeRate, "On-Time Rate", "inboundMonitoring", {}),
-      kpi(openTickets, "Open Tickets", "ticketing", { tktStatus: "Open" })
+      kpi(inboundIn.length, t("dash.kpi.inboundRange"), "inboundMonitoring", {}),
+      kpi(inboundDone, t("dash.kpi.completedInbound"), "inboundMonitoring", {}),
+      kpi(onTimeRate, t("dash.kpi.onTimeRate"), "inboundMonitoring", {}),
+      kpi(openTickets, t("dash.kpi.openTickets"), "ticketing", { tktStatus: "Open" })
     ];
   } else if (mode === "sales" || mode === "ga") {
     tiles = [
-      kpi(teamTasksIn.length, "Team Tasks (range)", trk.menu, {}),
-      kpi(teamDone, "Done", trk.menu, {}),
-      kpi(teamPct, "Completion", trk.menu, {}),
-      kpi(openTickets, "Open Tickets", "ticketing", { tktStatus: "Open" })
+      kpi(teamTasksIn.length, t("dash.kpi.teamTasksRange"), trk.menu, {}),
+      kpi(teamDone, t("dash.kpi.done"), trk.menu, {}),
+      kpi(teamPct, t("dash.kpi.completion"), trk.menu, {}),
+      kpi(openTickets, t("dash.kpi.openTickets"), "ticketing", { tktStatus: "Open" })
     ];
   } else {
     // all / admin — org-wide
     const tasksIn = allTasks().filter(r => inRange(toDateStr(r.date)));
     tiles = [
-      kpi(openIssues, "Open Issues", "dailyIssue", { fltStatus: "Open", fltRange: "all" }),
-      kpi(openTickets, "Open Tickets", "ticketing", { tktStatus: "Open" }),
-      kpi(inboundIn.length, "Inbound (range)", "inboundMonitoring", {}),
-      kpi(tasksIn.length, "Tasks (range)", null, {})
+      kpi(openIssues, t("dash.kpi.openIssues"), "dailyIssue", { fltStatus: "Open", fltRange: "all" }),
+      kpi(openTickets, t("dash.kpi.openTickets"), "ticketing", { tktStatus: "Open" }),
+      kpi(inboundIn.length, t("dash.kpi.inboundRange"), "inboundMonitoring", {}),
+      kpi(tasksIn.length, t("dash.kpi.tasksRange"), null, {})
     ];
   }
 
@@ -279,7 +272,7 @@ function renderPanels(mode) {
 function panelIssues() {
   const rows = latestIssues.filter(i => inRange(toDateStr(i.complainDate)));
   const body = !rows.length
-    ? '<span class="small">No issues in this range.</span>'
+    ? `<span class="small">${esc(t("dash.empty.noIssues"))}</span>`
     : rows.slice(0, 5).map(i => `
       <div class="dashRow" data-nav="dailyIssue" data-id="${esc(i.id)}" role="button" tabindex="0"
            style="padding:10px 0;border-bottom:1px solid rgba(124,58,237,.08);cursor:pointer">
@@ -292,13 +285,13 @@ function panelIssues() {
         </div>
         <div class="small" style="margin-top:4px">${esc((i.categoriComplain || "") + " · " + (i.detailsComplain || "")).slice(0, 140)}</div>
       </div>`).join("");
-  return `<div class="card"><h2>Latest Issues</h2><div class="output">${body}</div></div>`;
+  return `<div class="card"><h2>${esc(t("dash.panel.latestIssues"))}</h2><div class="output">${body}</div></div>`;
 }
 
 function panelTickets() {
   const rows = latestTickets.filter(t => inRange(toDateStr(t.createdAt)));
   const body = !rows.length
-    ? '<span class="small">No tickets in this range.</span>'
+    ? `<span class="small">${esc(t("dash.empty.noTickets"))}</span>`
     : rows.slice(0, 5).map(t => `
       <div class="dashRow" data-nav="ticketing" data-id="${esc(t.id)}" role="button" tabindex="0"
            style="padding:10px 0;border-bottom:1px solid rgba(124,58,237,.08);cursor:pointer">
@@ -311,13 +304,13 @@ function panelTickets() {
         </div>
         <div class="small" style="margin-top:4px"><b>${esc(t.subject)}</b> · ${esc((t.description || "").slice(0, 100))}</div>
       </div>`).join("");
-  return `<div class="card"><h2>Latest Tickets</h2><div class="output">${body}</div></div>`;
+  return `<div class="card"><h2>${esc(t("dash.panel.latestTickets"))}</h2><div class="output">${body}</div></div>`;
 }
 
 function panelInbound() {
   const rows = inbound.filter(e => inRange(toDateStr(e.reportDate)));
   const body = !rows.length
-    ? '<span class="small">No inbound entries in this range.</span>'
+    ? `<span class="small">${esc(t("dash.empty.noInbound"))}</span>`
     : rows.slice(0, 5).map(e => `
       <div class="dashRow" data-nav="inboundMonitoring" role="button" tabindex="0"
            style="padding:10px 0;border-bottom:1px solid rgba(124,58,237,.08);cursor:pointer">
@@ -327,7 +320,7 @@ function panelInbound() {
         </div>
         <div class="small" style="margin-top:4px">${esc(e.poNumber || "")} · ${esc(e.vendor || "")} · ${esc(e.operator || "")}</div>
       </div>`).join("");
-  return `<div class="card"><h2>Recent Inbound</h2><div class="output">${body}</div></div>`;
+  return `<div class="card"><h2>${esc(t("dash.panel.recentInbound"))}</h2><div class="output">${body}</div></div>`;
 }
 
 function panelTeamTasks(mode) {
@@ -336,7 +329,7 @@ function panelTeamTasks(mode) {
     .filter(r => inRange(toDateStr(r.date)))
     .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   const body = !rows.length
-    ? '<span class="small">No team tasks in this range.</span>'
+    ? `<span class="small">${esc(t("dash.empty.noTeamTasks"))}</span>`
     : rows.slice(0, 5).map(r => `
       <div class="dashRow" data-nav="${esc(trk.menu)}" role="button" tabindex="0"
            style="padding:10px 0;border-bottom:1px solid rgba(124,58,237,.08);cursor:pointer">
@@ -346,7 +339,7 @@ function panelTeamTasks(mode) {
         </div>
         <div class="small" style="margin-top:4px">${esc((r.task || "").slice(0, 140))}</div>
       </div>`).join("");
-  return `<div class="card"><h2>Latest ${esc(trk.label)} Tasks</h2><div class="output">${body}</div></div>`;
+  return `<div class="card"><h2>${esc(t("dash.panel.latestTeamTasks", { label: trk.label }))}</h2><div class="output">${body}</div></div>`;
 }
 
 /** Wire every .dashRow so clicking navigates (and optionally opens a record). */
@@ -389,8 +382,8 @@ function renderMyActionItems() {
     el.innerHTML = `
       <div class="actEmpty">
         <div>
-          <b>You're all clear!</b>
-          <p class="small">No open tickets or tasks assigned to you right now.</p>
+          <b>${esc(t("dash.action.clear"))}</b>
+          <p class="small">${esc(t("dash.action.clearSub"))}</p>
         </div>
       </div>`;
     return;
@@ -400,7 +393,7 @@ function renderMyActionItems() {
     ${myTickets.length ? `
       <div class="actSection">
         <div class="actSectionHeader">
-          <b>My Tickets</b>
+          <b>${esc(t("dash.action.myTickets"))}</b>
           <span class="actCount">${myTickets.length}</span>
         </div>
         ${myTickets.map(renderTicketRow).join("")}
@@ -408,11 +401,11 @@ function renderMyActionItems() {
     ${myTasks.length ? `
       <div class="actSection">
         <div class="actSectionHeader">
-          <b>My Open Tasks</b>
+          <b>${esc(t("dash.action.myTasks"))}</b>
           <span class="actCount">${myTasks.length}</span>
         </div>
         ${myTasks.slice(0, 8).map(renderTaskRow).join("")}
-        ${myTasks.length > 8 ? `<div class="small" style="text-align:center;color:var(--muted);padding:6px">+ ${myTasks.length - 8} more — see Daily Tracker</div>` : ""}
+        ${myTasks.length > 8 ? `<div class="small" style="text-align:center;color:var(--muted);padding:6px">${esc(t("dash.action.moreTasks", { count: myTasks.length - 8 }))}</div>` : ""}
       </div>` : ""}
   `;
 
@@ -427,45 +420,48 @@ function renderMyActionItems() {
     }));
 }
 
-function renderTicketRow(t) {
-  const ageDays = t.createdAtMs ? Math.floor((Date.now() - t.createdAtMs) / 86400000) : 0;
-  const ageBadge = ageDays === 0
-    ? '<span class="actAge fresh">today</span>'
+function renderTicketRow(tk) {
+  const ageDays = tk.createdAtMs ? Math.floor((Date.now() - tk.createdAtMs) / 86400000) : 0;
+  const ageLabel = ageDays === 0
+    ? t("dash.age.today")
     : ageDays === 1
-      ? '<span class="actAge ok">1 day</span>'
-      : ageDays <= 3
-        ? `<span class="actAge ok">${ageDays} days</span>`
-        : `<span class="actAge stale">${ageDays} days</span>`;
-  const statusBadge = `<span class="${badgeClass(t.status)}">${esc(t.status)}</span>`;
-  const priorityBadge = `<span class="${badgeClass(t.priority)}">${esc(t.priority || "—")}</span>`;
+      ? t("dash.age.oneDay")
+      : t("dash.age.daysCount", { n: ageDays });
+  const ageBadge = ageDays === 0
+    ? `<span class="actAge fresh">${esc(ageLabel)}</span>`
+    : ageDays <= 3
+      ? `<span class="actAge ok">${esc(ageLabel)}</span>`
+      : `<span class="actAge stale">${esc(ageLabel)}</span>`;
+  const statusBadge = `<span class="${badgeClass(tk.status)}">${esc(tk.status)}</span>`;
+  const priorityBadge = `<span class="${badgeClass(tk.priority)}">${esc(tk.priority || "—")}</span>`;
   return `
     <div class="actItem">
       <div class="actMain">
         <div class="actTitle">
-          <b>${esc(t.number || "—")}</b> ${priorityBadge} ${statusBadge} ${ageBadge}
+          <b>${esc(tk.number || "—")}</b> ${priorityBadge} ${statusBadge} ${ageBadge}
         </div>
-        <div class="actSubj"><b>${esc(t.subject || "")}</b></div>
-        <div class="actMeta small">${esc(t.dept || "")} · from ${esc(t.requester || "—")}</div>
+        <div class="actSubj"><b>${esc(tk.subject || "")}</b></div>
+        <div class="actMeta small">${esc(tk.dept || "")} · ${esc(t("dash.action.from"))} ${esc(tk.requester || "—")}</div>
       </div>
       <div class="actActions">
-        ${t.status === "Open"
-          ? `<button class="primary iconBtn" data-ackticket="${t.id}" title="Acknowledge — set to In Progress">Ack</button>`
+        ${tk.status === "Open"
+          ? `<button class="primary iconBtn" data-ackticket="${tk.id}" title="${esc(t("dash.action.ackTitle"))}">${esc(t("dash.action.ack"))}</button>`
           : ""}
-        ${(t.status === "In Progress" || t.status === "Waiting")
-          ? `<button class="primary iconBtn" data-resticket="${t.id}" title="Mark resolved">Resolve</button>`
+        ${(tk.status === "In Progress" || tk.status === "Waiting")
+          ? `<button class="primary iconBtn" data-resticket="${tk.id}" title="${esc(t("dash.action.resolveTitle"))}">${esc(t("dash.action.resolve"))}</button>`
           : ""}
-        <button class="secondary iconBtn" data-opentkt="${t.id}" title="Open in Ticketing">↗</button>
+        <button class="secondary iconBtn" data-opentkt="${tk.id}" title="${esc(t("dash.action.openInTicketing"))}">↗</button>
       </div>
     </div>
   `;
 }
 
-function renderTaskRow(t) {
+function renderTaskRow(tk) {
   return `
     <div class="actItem">
       <div class="actMain">
-        <div class="actSubj"><b>${esc(t.task || "(untitled task)")}</b></div>
-        <div class="actMeta small">${esc(friendlyDate(t.date))} · <span class="${badgeClass(t.status)}">${esc(t.status)}</span></div>
+        <div class="actSubj"><b>${esc(tk.task || t("dash.action.untitledTask"))}</b></div>
+        <div class="actMeta small">${esc(friendlyDate(tk.date))} · <span class="${badgeClass(tk.status)}">${esc(tk.status)}</span></div>
       </div>
     </div>
   `;
@@ -474,8 +470,8 @@ function renderTaskRow(t) {
 async function updateTicketStatus(id, newStatus) {
   try {
     await updateDocument(COL.TICKETS, id, { status: newStatus });
-    toast(`Ticket → ${newStatus}`, "success");
+    toast(t("dash.toast.ticketUpdated", { status: newStatus }), "success");
   } catch (e) {
-    toast("Update failed: " + e.message, "error");
+    toast(t("dash.toast.updateFailed", { msg: e.message }), "error");
   }
 }

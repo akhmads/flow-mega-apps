@@ -100,6 +100,7 @@ import { initMasterData, bootstrapMasterData } from "./modules/master-data.js";
 import { initOneOnOne } from "./modules/one-on-one.js";
 import { initMasterConsole } from "./modules/master-console.js";
 import { initClientLinks } from "./modules/client-links.js";
+import { initCommandCenter } from "./modules/command-center.js";
 import { mountDebugPanel, mountReportButton, logBreadcrumb } from "./debug-panel.js";
 import { initMerger, initOrderProcessing, initDailyReconcile, initWeeklyReportGen, initForecastOrdersGen } from "./legacy/legacy-loader.js";
 import { initGlobalSearch } from "./modules/global-search.js";
@@ -134,6 +135,7 @@ const PAGES = {
   oneOnOne: { title: "1-on-1 Summarizer", sub: "Run structured 1-on-1s · AI summary", init: initOneOnOne },
   users: { title: "User Management", sub: "Manage team accounts and roles", init: initUsers },
   clientLinks: { title: "Marketplace Hub", sub: "Workspace akses seller center · pilih marketplace → pilih toko → connect", init: initClientLinks },
+  commandCenter: { title: "Command Center", sub: "Team-shared app launcher · every tool one click away", init: initCommandCenter },
   masterConsole: { title: "Master Console", sub: "Master-only controls · mode toggle, broadcast, kill switches", init: initMasterConsole }
 };
 
@@ -146,6 +148,20 @@ onLangChange(() => {
   if (_currentMenu && PAGES[_currentMenu]) {
     $("pageTitle").textContent = t(`page.${_currentMenu}.title`);
     $("pageSubtitle").textContent = t(`page.${_currentMenu}.sub`);
+    // Re-init the currently-open module so it picks up the new language.
+    // Modules that use t() will re-render translated; modules with
+    // hard-coded strings will simply rebuild (no-op visually). Wrapped in
+    // try/catch so a module without a clean re-init path can't break the
+    // language toggle.
+    try {
+      const page = PAGES[_currentMenu];
+      if (page && typeof page.init === "function") {
+        page.init();
+        if (typeof page.onShow === "function") page.onShow();
+      }
+    } catch (e) {
+      console.warn(`[i18n] re-init of ${_currentMenu} failed:`, e);
+    }
   }
 });
 

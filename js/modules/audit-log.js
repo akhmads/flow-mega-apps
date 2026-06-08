@@ -31,7 +31,9 @@ const KIND_LABELS = {
   oneOnOneQuestions: "1-on-1 Question",
   one_on_one_questions: "1-on-1 Question",
   one_on_ones: "1-on-1 Session",
-  users: "User"
+  users: "User",
+  command_center_depts: "Command Center · Department",
+  command_center_apps: "Command Center · App"
 };
 
 const ACTION_LABELS = {

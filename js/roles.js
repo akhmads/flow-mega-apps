@@ -45,6 +45,9 @@ const MASTER_EMAIL = "allen@flowgistik.id";
 // function, not an operational data edit.
 // ============================================================
 const USERS_COLLECTION = "users";  // mirrors COL.USERS — kept literal to avoid TDZ at module-eval time
+// Command Center collections — admins are explicitly allowed to manage
+// these (the rest of the app keeps admin as read-only).
+const COMMAND_CENTER_COLLECTIONS = ["command_center_depts", "command_center_apps"];
 setWriteGuard((colName) => {
   const role = currentRole;
   // Master: full write power everywhere, always. No guard.
@@ -60,9 +63,11 @@ setWriteGuard((colName) => {
     }
   }
   // Admin: read-only on operational data, but can still write to /users
-  // (assigning roles — an org-admin function).
+  // (assigning roles — an org-admin function) AND the Command Center
+  // launcher (per product spec — admins curate the team app list too).
   if (role === "admin" || role === "sales-admin" || role === "ss-admin") {
     if (colName === USERS_COLLECTION) return null;        // allowed
+    if (COMMAND_CENTER_COLLECTIONS.includes(colName)) return null;  // allowed
     return "Admin is read-only. Ask a Supervisor to make this change.";
   }
   // Supervisor: full edit power EVERYWHERE — including /users.
@@ -345,6 +350,7 @@ export function canViewModule(moduleId) {
     weeklyReportGen: true,             // shared tool
     forecastOrdersGen: true,           // shared tool
     clientLinks: true,                 // marketplace URL directory — everyone signed in
+    commandCenter: true,               // team-shared app launcher — everyone signed in (limited users can add apps, supervisors edit/delete)
     oneOnOne: false,                   // supervisor+admin only
     masterData: canViewMasterData(),   // everyone (view)
     auditLog: false,                   // supervisor+admin only

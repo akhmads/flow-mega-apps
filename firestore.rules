@@ -184,6 +184,28 @@ service cloud.firestore {
       allow delete: if isSupervisor();
     }
 
+    // ----- Command Center — team app launcher under Management ------
+    // Special permission carve-out: ADMINS are allowed to add/edit/delete
+    // here (everywhere else in the app, admin is read-only). LIMITED USERS
+    // can ADD apps only — they cannot create or modify departments, and
+    // they cannot delete anything. Supervisors and master have full power.
+    match /command_center_depts/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isSupervisor() || isAdmin();
+      allow update: if isSupervisor() || isAdmin();
+      allow delete: if isSupervisor() || isAdmin();
+    }
+    match /command_center_apps/{docId} {
+      allow read:   if isSignedIn();
+      // Users can create their own; supervisors + admins can create any.
+      allow create: if isSupervisor() || isAdmin()
+                     || (isLimitedUser() && createsAsSelf());
+      // Users CANNOT edit — only supervisor/admin/master.
+      allow update: if isSupervisor() || isAdmin();
+      // Only supervisor/admin/master can delete.
+      allow delete: if isSupervisor() || isAdmin();
+    }
+
     // ----- All other collections ------------------------------------
     // Operational data: tasks, tickets, projections, master data, etc.
     match /{collection}/{docId} {

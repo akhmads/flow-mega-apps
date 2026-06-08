@@ -251,6 +251,31 @@ function bindEvents() {
   // always matches the available viewer area without internal scrollbars.
   window.addEventListener("resize", fitFrame);
   document.addEventListener("fullscreenchange", fitFrame);
+
+  // Auto-refit whenever the viewer's own size changes — collapsing/expanding
+  // the sidebar, mobile drawer opening, parent containers reflowing, etc.
+  // ResizeObserver catches anything window.resize misses.
+  //
+  // Defer the call via requestAnimationFrame: fitFrame() writes to viewer.style.height,
+  // which itself counts as a resize. Without the rAF break, the observer would
+  // re-fire in the same frame and the browser would emit the "ResizeObserver
+  // loop completed with undelivered notifications" warning. The rAF puts the
+  // height write in the NEXT frame so the observer's current cycle finishes
+  // cleanly. A reentry flag stops any pending fit from stacking up.
+  const viewer = $("mh_viewer");
+  if (viewer && typeof ResizeObserver !== "undefined") {
+    if (viewer._fitObs) viewer._fitObs.disconnect();
+    let pending = false;
+    viewer._fitObs = new ResizeObserver(() => {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(() => {
+        pending = false;
+        fitFrame();
+      });
+    });
+    viewer._fitObs.observe(viewer);
+  }
 }
 
 // ============================================================
