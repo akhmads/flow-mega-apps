@@ -240,6 +240,12 @@ function writeAudit(colName, action, docId, data) {
   ).catch(() => { /* non-critical */ });
 }
 
+// Public audit hook — used by modules that must write through raw setDoc
+// (e.g. roles.js for /users) and still want the change in the Activity Log.
+export function recordAudit(colName, action, docId, data) {
+  writeAudit(colName, action, docId, data);
+}
+
 /** Convenience to expose the preview-store reset for debug tooling */
 export const _resetPreviewStore = isFirebaseConfigured
   ? () => { throw new Error("Reset is only available in preview mode."); }

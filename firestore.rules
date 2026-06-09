@@ -206,6 +206,43 @@ service cloud.firestore {
       allow delete: if isSupervisor() || isAdmin();
     }
 
+    // ----- Master Data — Admin + Supervisor can curate --------------
+    // Departments, clients, categories, marketplaces, and 1-on-1
+    // questions are reference data that both admin and supervisor
+    // can manage. Admin is read-only EVERYWHERE ELSE (operational
+    // data like tickets/issues/projections), so we carve these
+    // collections out explicitly rather than widening the catch-all.
+    match /departments/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isSupervisor() || isAdmin();
+      allow update: if isSupervisor() || isAdmin();
+      allow delete: if isSupervisor() || isAdmin();
+    }
+    match /clients/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isSupervisor() || isAdmin();
+      allow update: if isSupervisor() || isAdmin();
+      allow delete: if isSupervisor() || isAdmin();
+    }
+    match /issue_categories/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isSupervisor() || isAdmin();
+      allow update: if isSupervisor() || isAdmin();
+      allow delete: if isSupervisor() || isAdmin();
+    }
+    match /marketplaces/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isSupervisor() || isAdmin();
+      allow update: if isSupervisor() || isAdmin();
+      allow delete: if isSupervisor() || isAdmin();
+    }
+    match /one_on_one_questions/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isSupervisor() || isAdmin();
+      allow update: if isSupervisor() || isAdmin();
+      allow delete: if isSupervisor() || isAdmin();
+    }
+
     // ----- All other collections ------------------------------------
     // Operational data: tasks, tickets, projections, master data, etc.
     match /{collection}/{docId} {

@@ -33,7 +33,8 @@ const KIND_LABELS = {
   one_on_ones: "1-on-1 Session",
   users: "User",
   command_center_depts: "Command Center · Department",
-  command_center_apps: "Command Center · App"
+  command_center_apps: "Command Center · App",
+  app_settings: "Master Settings"
 };
 
 const ACTION_LABELS = {

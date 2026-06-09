@@ -102,7 +102,7 @@ function renderShell() {
               <option value="user">User</option>
             </select>
           </div>
-          <div class="field"><label>Department *</label>
+          <div class="field" id="usr_dept_row"><label id="usr_dept_label">Department *</label>
             <div id="usr_dept_dd" class="dd"></div>
             <input type="hidden" id="usr_dept"/>
           </div>
@@ -308,7 +308,29 @@ function openModal(email = null) {
     $("usr_password").value = "";
     $("usr_password_row").style.display = "";
   }
+  applyDeptVisibility();
+  // Re-apply whenever role changes
+  const roleSel = $("usr_role");
+  if (roleSel && !roleSel._deptToggleWired) {
+    roleSel._deptToggleWired = true;
+    roleSel.addEventListener("change", applyDeptVisibility);
+  }
   $("usrModal").classList.remove("hidden");
+}
+
+// Master + Admin are org-wide roles, not tied to a department. Hide
+// the field for those roles (and clear any stale value) so the form
+// asks for less and saveUser() doesn't trip the "Department required" guard.
+function applyDeptVisibility() {
+  const role = $("usr_role")?.value;
+  const orgWide = (role === "master" || role === "admin");
+  const row = $("usr_dept_row");
+  if (!row) return;
+  row.style.display = orgWide ? "none" : "";
+  if (orgWide) {
+    $("usr_dept").value = "";
+    userDeptDropdown?.setValue("");
+  }
 }
 
 function closeModal() {
@@ -326,7 +348,11 @@ async function saveUser() {
   if (!email) return toast("Email required", "error");
   if (!email.includes("@")) return toast("Invalid email", "error");
   if (!name) return toast("Display name required", "error");
-  if (!department) return toast("Department required — pick from the dropdown", "error");
+  // Master + Admin are org-wide roles — no department needed.
+  const orgWideRole = (role === "master" || role === "admin");
+  if (!orgWideRole && !department) {
+    return toast("Department required — pick from the dropdown", "error");
+  }
   // Password required on CREATE (both preview and production — production
   // now creates the Firebase Auth account from this UI).
   if (isCreate && (!password || password.length < 6)) {

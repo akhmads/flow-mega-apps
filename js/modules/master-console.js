@@ -40,10 +40,12 @@ import {
   isMaster, listUsers, upsertUserProfile, getCurrentEmail
 } from "../roles.js";
 import {
-  COL, doc, getDoc, setDoc, getDocs, collection, query, orderBy, limit, serverTimestamp
+  COL, doc, getDoc, setDoc, getDocs, collection, query, orderBy, limit, serverTimestamp,
+  addDocument
 } from "../firebase.js";
 import { FEATURES, FEATURE_DEFAULTS, APP_VERSION, BUILD_DATE } from "../features.js";
 import { snapshotNavLayout, applySidebarLayout } from "./sidebar-layout.js";
+import { recordAudit } from "../firebase.js";
 
 const SETTINGS_COL = "app_settings";
 const SETTINGS_DOC = "global";
@@ -465,6 +467,18 @@ async function setSetting(patch) {
       updatedAt: serverTimestamp(),
       updatedBy: getCurrentEmail() || "master"
     }, { merge: true });
+    // Activity log entry — what did the master change? Summarise the
+    // fields touched so the audit trail tells the story. Skip the AI key
+    // (sensitive) — log only that it changed, not the value.
+    const fields = Object.keys(patch).filter(k => k !== "updatedAt" && k !== "updatedBy");
+    const summary = fields.map(k => {
+      if (k === "aiApiKey") return "aiApiKey: (changed)";
+      const v = patch[k];
+      if (typeof v === "string") return `${k}: "${v.slice(0, 60)}"`;
+      if (Array.isArray(v)) return `${k}: [${v.length} items]`;
+      return `${k}: ${v}`;
+    }).join(", ");
+    recordAudit(SETTINGS_COL, "update", SETTINGS_DOC, { name: summary });
   } catch (e) {
     toast("Settings save failed: " + e.message, "error");
     throw e;
@@ -874,7 +888,7 @@ function addNewSidebarGroup() {
 // name, slugifies it for the menu id (e.g. "Finance" → "finance"), and
 // inserts an entry that materialises as a tracker page on every client.
 // Tasks live in their own Firestore collection: daily_tasks_<slug>.
-function addNewSidebarTracker() {
+async function addNewSidebarTracker() {
   const deptName = (prompt("Department name for this Daily Tracker (e.g. Finance, Legal)") || "").trim();
   if (!deptName) return;
   const slug = deptName.toLowerCase()
@@ -891,5 +905,25 @@ function addNewSidebarTracker() {
     label: `Daily Tracker — ${deptName}`
   });
   renderSidebarEditor();
-  toast(`Added · drag it under the "${deptName}" group, then Save`, "success");
+  // Also add the department to Master Data so:
+  //   • User Management's Dept dropdown lists it (you can assign users to it)
+  //   • Internal Tickets can be filed against it
+  //   • All the other places that source from Master Data → Departments see it
+  // De-duplicates server-side via existing checks; if it's already there,
+  // this is a no-op.
+  try {
+    const existing = await getDocs(collection(COL.DEPARTMENTS));
+    const already = existing.docs.some(d =>
+      (d.data().name || "").toLowerCase() === deptName.toLowerCase());
+    if (!already) {
+      await addDocument(COL.DEPARTMENTS, { name: deptName, archived: false });
+      toast(`Added · also created "${deptName}" in Master Data → Departments`, "success");
+    } else {
+      toast(`Added · drag it under the "${deptName}" group, then Save`, "success");
+    }
+  } catch (e) {
+    // Master Data sync is best-effort — the sidebar entry still got added.
+    console.warn("[SidebarEditor] could not sync dept to Master Data:", e.message);
+    toast(`Added · drag it under the "${deptName}" group, then Save`, "success");
+  }
 }

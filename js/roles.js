@@ -15,7 +15,7 @@
 // ============================================================
 
 import {
-  auth, db, COL, setWriteGuard, isFirebaseConfigured, createAuthUser,
+  auth, db, COL, setWriteGuard, isFirebaseConfigured, createAuthUser, recordAudit,
   doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, serverTimestamp
 } from "./firebase.js";
 
@@ -246,9 +246,12 @@ export function canManageUsers() {
   return isAdmin() || isSupervisor();
 }
 
-/** Can user edit master data? SUPERVISOR ONLY. Admins are read-only. */
+/** Can user edit master data? Supervisor + Admin (and Master via supervisor).
+ *  Admin was previously read-only across master data; they now share
+ *  full edit power with supervisor so org-level oversight can curate
+ *  departments/clients/categories without needing a supervisor sign-in. */
 export function canEditMasterData() {
-  return isSupervisor();
+  return isSupervisor() || isAdmin();
 }
 
 /** Can user view master data? Everyone logged in. */
@@ -266,9 +269,10 @@ export function canDelete() {
   return isSupervisor();
 }
 
-/** Can user hard-delete master data (irreversible)? Supervisor only. */
+/** Can user hard-delete master data (irreversible)? Supervisor + Admin.
+ *  Two-step safety still applies: callers must archive the row first. */
 export function canHardDelete() {
-  return isSupervisor();
+  return isSupervisor() || isAdmin();
 }
 
 /** Can current user create new records anywhere? Supervisor only.
@@ -512,6 +516,11 @@ export async function upsertUserProfile({ email, name, role, department, passwor
     profile.previewPassword = password.trim();
   }
   await setDoc(doc(COL.USERS, email), profile, { merge: true });
+  // Activity Log entry — User Management writes raw setDoc, so it has
+  // to opt-in to the audit trail explicitly.
+  recordAudit(COL.USERS, isCreate ? "create" : "update", email, {
+    name: profile.name, role: profile.role, department: profile.department
+  });
 }
 
 /** Reset a user's preview-mode password. Real production passwords
@@ -526,6 +535,7 @@ export async function resetUserPassword(email, newPassword) {
     updatedAt: serverTimestamp(),
     updatedBy: currentUser?.email || "system"
   }, { merge: true });
+  recordAudit(COL.USERS, "update", email, { name: "Password reset" });
 }
 
 /** Delete a user's profile. In production, this does NOT delete
@@ -536,6 +546,7 @@ export async function deleteUserProfile(email) {
     throw new Error("You cannot delete your own account");
   }
   await deleteDoc(doc(COL.USERS, email));
+  recordAudit(COL.USERS, "delete", email, { name: email });
 }
 
 // ============================================================
